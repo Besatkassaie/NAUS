@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/1c34b6e216c143e18346ba168cfe9612/artifacts
+end_time: 1729255725453
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1c34b6e216c143e18346ba168cfe9612
+run_name: whimsical-koi-406
+run_uuid: 1c34b6e216c143e18346ba168cfe9612
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729255673462
+status: 3
+tags: []
+user_id: bkassaie

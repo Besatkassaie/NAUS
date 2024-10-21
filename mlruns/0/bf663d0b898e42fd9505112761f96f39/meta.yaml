@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/bf663d0b898e42fd9505112761f96f39/artifacts
+end_time: 1729254991086
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: bf663d0b898e42fd9505112761f96f39
+run_name: sneaky-skunk-954
+run_uuid: bf663d0b898e42fd9505112761f96f39
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729254579222
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/8e0a62edd24b44a78795534cc4878756/artifacts
+end_time: 1729255526353
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8e0a62edd24b44a78795534cc4878756
+run_name: placid-hawk-576
+run_uuid: 8e0a62edd24b44a78795534cc4878756
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729255117022
+status: 3
+tags: []
+user_id: bkassaie

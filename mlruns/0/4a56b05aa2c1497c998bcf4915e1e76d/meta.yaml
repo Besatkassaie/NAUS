@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/4a56b05aa2c1497c998bcf4915e1e76d/artifacts
+end_time: 1729254397328
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4a56b05aa2c1497c998bcf4915e1e76d
+run_name: learned-wolf-957
+run_uuid: 4a56b05aa2c1497c998bcf4915e1e76d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729254359362
+status: 3
+tags: []
+user_id: bkassaie

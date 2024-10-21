@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/cfaba2ea642e4fcdb7d2431587cd01ae/artifacts
+end_time: 1729275014361
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: cfaba2ea642e4fcdb7d2431587cd01ae
+run_name: unleashed-goose-859
+run_uuid: cfaba2ea642e4fcdb7d2431587cd01ae
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729274895570
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/5ffe862b37ea466594f36d0e81ca7630/artifacts
+end_time: 1729284683611
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5ffe862b37ea466594f36d0e81ca7630
+run_name: efficient-elk-100
+run_uuid: 5ffe862b37ea466594f36d0e81ca7630
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729284571160
+status: 3
+tags: []
+user_id: bkassaie

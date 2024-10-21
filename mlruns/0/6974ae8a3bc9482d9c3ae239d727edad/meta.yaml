@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/6974ae8a3bc9482d9c3ae239d727edad/artifacts
+end_time: 1729252800238
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6974ae8a3bc9482d9c3ae239d727edad
+run_name: worried-turtle-575
+run_uuid: 6974ae8a3bc9482d9c3ae239d727edad
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729249725042
+status: 3
+tags: []
+user_id: bkassaie

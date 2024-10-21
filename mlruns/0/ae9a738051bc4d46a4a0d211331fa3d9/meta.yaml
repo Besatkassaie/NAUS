@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/ae9a738051bc4d46a4a0d211331fa3d9/artifacts
+end_time: 1729254354042
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ae9a738051bc4d46a4a0d211331fa3d9
+run_name: skittish-squid-414
+run_uuid: ae9a738051bc4d46a4a0d211331fa3d9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729254050542
+status: 3
+tags: []
+user_id: bkassaie

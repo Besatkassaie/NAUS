@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/065413f554f24b49a2c25409a3422c9e/artifacts
+end_time: 1729284564342
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 065413f554f24b49a2c25409a3422c9e
+run_name: secretive-cat-49
+run_uuid: 065413f554f24b49a2c25409a3422c9e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729283868737
+status: 3
+tags: []
+user_id: bkassaie

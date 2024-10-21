@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/fe752a576b2f41d4809495b7e7ccdd59/artifacts
+end_time: 1729287515581
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fe752a576b2f41d4809495b7e7ccdd59
+run_name: kindly-foal-532
+run_uuid: fe752a576b2f41d4809495b7e7ccdd59
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729287305950
+status: 3
+tags: []
+user_id: bkassaie

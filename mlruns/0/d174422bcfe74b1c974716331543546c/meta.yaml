@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/d174422bcfe74b1c974716331543546c/artifacts
+end_time: 1729299966968
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: d174422bcfe74b1c974716331543546c
+run_name: colorful-stork-866
+run_uuid: d174422bcfe74b1c974716331543546c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729299845371
+status: 3
+tags: []
+user_id: bkassaie

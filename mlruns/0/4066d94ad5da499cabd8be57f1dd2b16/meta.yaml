@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/4066d94ad5da499cabd8be57f1dd2b16/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4066d94ad5da499cabd8be57f1dd2b16
+run_name: bouncy-slug-651
+run_uuid: 4066d94ad5da499cabd8be57f1dd2b16
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729289912850
+status: 1
+tags: []
+user_id: bkassaie

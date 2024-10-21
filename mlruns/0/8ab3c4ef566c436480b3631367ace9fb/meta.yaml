@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/8ab3c4ef566c436480b3631367ace9fb/artifacts
+end_time: 1729284904426
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8ab3c4ef566c436480b3631367ace9fb
+run_name: skittish-rook-190
+run_uuid: 8ab3c4ef566c436480b3631367ace9fb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729284788560
+status: 3
+tags: []
+user_id: bkassaie

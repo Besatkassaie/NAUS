@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/7ea2358becb9411d944270cbd0bdff73/artifacts
+end_time: 1729289906286
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 7ea2358becb9411d944270cbd0bdff73
+run_name: luminous-colt-171
+run_uuid: 7ea2358becb9411d944270cbd0bdff73
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729289774682
+status: 3
+tags: []
+user_id: bkassaie

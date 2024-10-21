@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/6e6bb33726d0430fbae407eb7ffc912b/artifacts
+end_time: 1729253741540
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6e6bb33726d0430fbae407eb7ffc912b
+run_name: salty-donkey-369
+run_uuid: 6e6bb33726d0430fbae407eb7ffc912b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729253471462
+status: 3
+tags: []
+user_id: bkassaie

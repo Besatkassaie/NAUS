@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/fc82e05f62604503b5997703ddfc290c/artifacts
+end_time: 1729267980492
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fc82e05f62604503b5997703ddfc290c
+run_name: enthused-seal-944
+run_uuid: fc82e05f62604503b5997703ddfc290c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729265530366
+status: 3
+tags: []
+user_id: bkassaie

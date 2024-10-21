@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/b8874bc482fb469fa1de1ea0d1eedd16/artifacts
+end_time: 1729178653351
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b8874bc482fb469fa1de1ea0d1eedd16
+run_name: delightful-stork-814
+run_uuid: b8874bc482fb469fa1de1ea0d1eedd16
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729178473109
+status: 3
+tags: []
+user_id: bkassaie

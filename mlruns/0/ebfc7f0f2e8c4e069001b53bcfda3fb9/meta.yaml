@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/ebfc7f0f2e8c4e069001b53bcfda3fb9/artifacts
+end_time: 1729300066530
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ebfc7f0f2e8c4e069001b53bcfda3fb9
+run_name: orderly-tern-519
+run_uuid: ebfc7f0f2e8c4e069001b53bcfda3fb9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729299976944
+status: 3
+tags: []
+user_id: bkassaie

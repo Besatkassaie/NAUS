@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/68b7d9fb1de34bc3a1d9f42936263146/artifacts
+end_time: 1729262020019
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 68b7d9fb1de34bc3a1d9f42936263146
+run_name: sassy-flea-497
+run_uuid: 68b7d9fb1de34bc3a1d9f42936263146
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729261745671
+status: 3
+tags: []
+user_id: bkassaie

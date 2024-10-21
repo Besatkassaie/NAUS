@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/e4e71aa73edb4981888fe9e430e549e7/artifacts
+end_time: 1728064502057
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e4e71aa73edb4981888fe9e430e549e7
+run_name: caring-boar-262
+run_uuid: e4e71aa73edb4981888fe9e430e549e7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1728064417210
+status: 3
+tags: []
+user_id: bkassaie

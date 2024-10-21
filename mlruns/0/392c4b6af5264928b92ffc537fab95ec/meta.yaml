@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/392c4b6af5264928b92ffc537fab95ec/artifacts
+end_time: 1727973170824
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 392c4b6af5264928b92ffc537fab95ec
+run_name: vaunted-steed-889
+run_uuid: 392c4b6af5264928b92ffc537fab95ec
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1727973167340
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/a53add1085394e39825cd7460573f0cf/artifacts
+end_time: 1729270232259
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a53add1085394e39825cd7460573f0cf
+run_name: bald-donkey-187
+run_uuid: a53add1085394e39825cd7460573f0cf
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729270063022
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/e59d894b55054a36be20b8b8bdf19a71/artifacts
+end_time: 1727980240345
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e59d894b55054a36be20b8b8bdf19a71
+run_name: sedate-finch-395
+run_uuid: e59d894b55054a36be20b8b8bdf19a71
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1727980233754
+status: 3
+tags: []
+user_id: bkassaie

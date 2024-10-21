@@ -1,0 +1,15 @@
+CUDA_VISIBLE_DEVICES=0,1 python run_pretrain.py \
+  --task santos \
+  --batch_size 64 \
+  --lr 5e-5 \
+  --lm roberta \
+  --n_epochs 3 \
+  --max_len 128 \
+  --size 10000 \
+  --projector 768 \
+  --save_model \
+  --augment_op drop_col \
+  --fp16 \
+  --sample_meth tfidf_entity \
+  --table_order column \
+  --run_id 0

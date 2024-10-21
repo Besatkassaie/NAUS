@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/e92be3fe9f9c431886f181de9027cba4/artifacts
+end_time: 1728495739311
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e92be3fe9f9c431886f181de9027cba4
+run_name: masked-seal-373
+run_uuid: e92be3fe9f9c431886f181de9027cba4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1728495642485
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/a0a41f8b45a14b20b6905008cfc24830/artifacts
+end_time: 1729254573699
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a0a41f8b45a14b20b6905008cfc24830
+run_name: omniscient-zebra-173
+run_uuid: a0a41f8b45a14b20b6905008cfc24830
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729254402850
+status: 3
+tags: []
+user_id: bkassaie

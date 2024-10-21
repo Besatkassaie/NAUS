@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/2b016b8cfc894d289651265808ba7e5a/artifacts
+end_time: 1729261654698
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2b016b8cfc894d289651265808ba7e5a
+run_name: auspicious-snail-389
+run_uuid: 2b016b8cfc894d289651265808ba7e5a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729259847714
+status: 3
+tags: []
+user_id: bkassaie

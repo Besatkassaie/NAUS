@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/93ee6abf370e4cc09d2627fb2c46e099/artifacts
+end_time: 1729287815674
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 93ee6abf370e4cc09d2627fb2c46e099
+run_name: kindly-squirrel-562
+run_uuid: 93ee6abf370e4cc09d2627fb2c46e099
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729287635458
+status: 3
+tags: []
+user_id: bkassaie

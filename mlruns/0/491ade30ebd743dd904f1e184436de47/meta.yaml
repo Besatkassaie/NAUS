@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/491ade30ebd743dd904f1e184436de47/artifacts
+end_time: 1729272201148
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 491ade30ebd743dd904f1e184436de47
+run_name: sincere-hog-506
+run_uuid: 491ade30ebd743dd904f1e184436de47
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729270246274
+status: 3
+tags: []
+user_id: bkassaie

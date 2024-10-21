@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/646482e9f70f409ebaec419c2f5b8aa5/artifacts
+end_time: 1729178464533
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 646482e9f70f409ebaec419c2f5b8aa5
+run_name: adaptable-pug-659
+run_uuid: 646482e9f70f409ebaec419c2f5b8aa5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729178187563
+status: 3
+tags: []
+user_id: bkassaie

@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/3892368b7c9d497598bb3a2f43f16694/artifacts
+end_time: 1729284781118
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3892368b7c9d497598bb3a2f43f16694
+run_name: suave-mink-942
+run_uuid: 3892368b7c9d497598bb3a2f43f16694
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729284691055
+status: 3
+tags: []
+user_id: bkassaie

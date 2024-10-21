@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/a84e75fce0b84e799478e700b021a81f/artifacts
+end_time: 1729289325475
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a84e75fce0b84e799478e700b021a81f
+run_name: mercurial-sheep-273
+run_uuid: a84e75fce0b84e799478e700b021a81f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729289023406
+status: 3
+tags: []
+user_id: bkassaie

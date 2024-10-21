@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/4bce11a4dbbc4b2090661afbf1972f96/artifacts
+end_time: 1729261742302
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4bce11a4dbbc4b2090661afbf1972f96
+run_name: exultant-stoat-314
+run_uuid: 4bce11a4dbbc4b2090661afbf1972f96
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729261702998
+status: 3
+tags: []
+user_id: bkassaie

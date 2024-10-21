@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/ea01817b7b854f2e81baa06fb758e9c8/artifacts
+end_time: 1729255756408
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ea01817b7b854f2e81baa06fb758e9c8
+run_name: melodic-snake-851
+run_uuid: ea01817b7b854f2e81baa06fb758e9c8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729255728388
+status: 3
+tags: []
+user_id: bkassaie

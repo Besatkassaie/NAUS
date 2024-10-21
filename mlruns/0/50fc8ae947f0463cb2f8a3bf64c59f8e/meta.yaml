@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/50fc8ae947f0463cb2f8a3bf64c59f8e/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 50fc8ae947f0463cb2f8a3bf64c59f8e
+run_name: worried-wolf-968
+run_uuid: 50fc8ae947f0463cb2f8a3bf64c59f8e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729269516042
+status: 1
+tags: []
+user_id: bkassaie

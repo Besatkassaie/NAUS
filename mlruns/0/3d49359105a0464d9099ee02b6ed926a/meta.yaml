@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/3d49359105a0464d9099ee02b6ed926a/artifacts
+end_time: 1729269510129
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3d49359105a0464d9099ee02b6ed926a
+run_name: overjoyed-stork-813
+run_uuid: 3d49359105a0464d9099ee02b6ed926a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729269393386
+status: 3
+tags: []
+user_id: bkassaie

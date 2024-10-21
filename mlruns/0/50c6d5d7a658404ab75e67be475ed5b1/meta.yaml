@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/50c6d5d7a658404ab75e67be475ed5b1/artifacts
+end_time: 1727969843542
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 50c6d5d7a658404ab75e67be475ed5b1
+run_name: sedate-fox-322
+run_uuid: 50c6d5d7a658404ab75e67be475ed5b1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1727969842110
+status: 3
+tags: []
+user_id: bkassaie

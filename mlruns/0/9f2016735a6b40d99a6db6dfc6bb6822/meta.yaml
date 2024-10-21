@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/9f2016735a6b40d99a6db6dfc6bb6822/artifacts
+end_time: 1729272974563
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 9f2016735a6b40d99a6db6dfc6bb6822
+run_name: resilient-shoat-495
+run_uuid: 9f2016735a6b40d99a6db6dfc6bb6822
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729272655700
+status: 3
+tags: []
+user_id: bkassaie

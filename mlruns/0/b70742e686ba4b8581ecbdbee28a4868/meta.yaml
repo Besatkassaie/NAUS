@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/b70742e686ba4b8581ecbdbee28a4868/artifacts
+end_time: 1729269135786
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b70742e686ba4b8581ecbdbee28a4868
+run_name: delicate-ape-168
+run_uuid: b70742e686ba4b8581ecbdbee28a4868
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729269044518
+status: 3
+tags: []
+user_id: bkassaie

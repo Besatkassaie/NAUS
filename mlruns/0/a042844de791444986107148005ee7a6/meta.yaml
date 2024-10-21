@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/a042844de791444986107148005ee7a6/artifacts
+end_time: 1729253462073
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: a042844de791444986107148005ee7a6
+run_name: crawling-frog-438
+run_uuid: a042844de791444986107148005ee7a6
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729253242210
+status: 3
+tags: []
+user_id: bkassaie

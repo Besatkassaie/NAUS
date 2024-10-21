@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/6739b9dff9f446afa82df7e4923e34e1/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6739b9dff9f446afa82df7e4923e34e1
+run_name: unequaled-bug-277
+run_uuid: 6739b9dff9f446afa82df7e4923e34e1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729275020106
+status: 1
+tags: []
+user_id: bkassaie

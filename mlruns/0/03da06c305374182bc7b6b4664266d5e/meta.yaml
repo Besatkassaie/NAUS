@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/03da06c305374182bc7b6b4664266d5e/artifacts
+end_time: 1729269035072
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 03da06c305374182bc7b6b4664266d5e
+run_name: handsome-chimp-482
+run_uuid: 03da06c305374182bc7b6b4664266d5e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1729268790166
+status: 3
+tags: []
+user_id: bkassaie

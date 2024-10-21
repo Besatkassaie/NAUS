@@ -1,0 +1,15 @@
+artifact_uri: file:///u6/bkassaie/starmie/mlruns/0/61e2a4dd182743dd93c527b645098f8e/artifacts
+end_time: 1728492636898
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 61e2a4dd182743dd93c527b645098f8e
+run_name: suave-grouse-75
+run_uuid: 61e2a4dd182743dd93c527b645098f8e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1728492544095
+status: 3
+tags: []
+user_id: bkassaie
