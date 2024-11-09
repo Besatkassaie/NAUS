@@ -98,5 +98,7 @@ def calcMetrics(max_k, k_range, resultFile, gtPath=None, resPath=None, record=Tr
         mlflow.log_metric("mean_avg_precision", mean_avg_pr)
         mlflow.log_metric("prec_k", precision_array[max_k-1])
         mlflow.log_metric("recall_k", recall_array[max_k-1])
+        mlflow.log_metric("max_k", max_k)
+
 
     return mean_avg_pr, precision_array[max_k-1], recall_array[max_k-1] 

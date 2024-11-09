@@ -2,3 +2,108 @@
 .DS_Store
 data/
 results/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+# Usually contains platform-specific files
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+coverage.json
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# dotenv
+.env
+.env.*
+
+# virtualenv
+venv/
+ENV/
+env/
+venv.bak/
+venv.bk/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# Pyre type checker
+.pyre/
+
+# MyPy type checker
+.mypy_cache/
+
+# Pyright type checker
+.pyrightcache/
+
+# VS Code
+.vscode/
+
+# IDEs and editors
+.idea/
+*.sublime-workspace
+*.sublime-project
+.vscode/
+
+# macOS files
+.DS_Store
+
+# Logs
+*.log
+*.out
+
+# Local files
+*.local
+
+# Temporary files
+*.tmp
