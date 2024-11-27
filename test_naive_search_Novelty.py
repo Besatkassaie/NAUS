@@ -58,6 +58,51 @@ import csv
 
 
 
+ # build if does not exist , load if exists
+# data type either los(list of set) or lol(list of list)
+def getProcessedTables(text_processor, proccessed_file_name,processed_path, raw_data , dataType, tokenize, bot):
+        data_prc={}
+        processed_set_file_path=processed_path+proccessed_file_name
+        proccessed_set_exists = os.path.isfile(processed_set_file_path)
+        if proccessed_set_exists:
+        #load it  
+            print("loading proccessed data......")
+            with open(processed_set_file_path, 'rb') as file:
+                data_prc = pickle.load(file)
+        else: #build it
+            if(dataType=="los"):
+                list_of_lists=[]
+                
+                for key, value in raw_data.items():
+                    list_of_lists= value
+                    if(tokenize==1):
+                        list_of_lists=text_processor.processColumns(list_of_lists)
+                    #to remove duplicates
+                    list_of_sets = [set(inner_list) for inner_list in list_of_lists]
+                    if(bot==1):
+                        list_of_sets=text_processor.columnsToBagOfTokens(list_of_sets)
+                    data_prc[key]=list_of_sets
+                    
+            
+                    
+            else:
+                 for key, value in raw_data.items():
+                
+                    # The input sets must be a Python list of iterables (i.e., lists or sets).
+                    list_of_lists= []
+                    for col in value:
+                        list_of_lists.append(text_processor.process(col))
+                            
+                    data_prc[key]=list_of_lists
+       
+            with open(processed_set_file_path, 'wb') as file:
+                            pickle.dump(data_prc, file)   
+
+                
+     
+            
+        return data_prc
+
 
 #if __name__ == '__main__':
 def main(args2=None):
@@ -150,123 +195,41 @@ def main(args2=None):
     qfile = open(query_path,"rb")
     queries = pickle.load(qfile)
     # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
-    queries_raw={}
+    qfile.close()
+    
     queries_raw_org=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_raw)
     #I assume that the order  of columns are comming from the original csv files 
    
    
     # we preprocess the values in tables both query and data lake tables
     list_of_lists=[]
+    queries_raw={}
     
     q_tbls_processed_set_file_name="q_tbls_processed_set.pkl"
-    q_tbls_processed_set_file_path=processed_path+q_tbls_processed_set_file_name
-    q_proccessed_set_exists = os.path.isfile(q_tbls_processed_set_file_path)
-    if q_proccessed_set_exists:
-            #load it  
-        print("loading proccessed q data......")
-        with open(q_tbls_processed_set_file_path, 'rb') as file:
-              queries_raw = pickle.load(file)
-  
-    else: 
-        for key, value in queries_raw_org.items():
-            list_of_lists= value
-            if(hp.tokenize==1):
-                list_of_lists=text_processor.processColumns(list_of_lists)
-            #to remove duplicates
-            list_of_sets = [set(inner_list) for inner_list in list_of_lists]
-            if(hp.bot==1):
-                list_of_sets=text_processor.columnsToBagOfTokens(list_of_sets)
-            queries_raw[key]=list_of_sets
-            
-        with open(q_tbls_processed_set_file_path, 'wb') as file:
-                    pickle.dump(queries_raw, file)   
-    
-    
-   # print("Number of vectorized queries: %d" % (len(queries)))
-   # print("Number of raw queries: %d" % (len(queries_raw)))
+    queries_raw= getProcessedTables(text_processor, q_tbls_processed_set_file_name, processed_path, queries_raw_org,"los",hp.tokenize, hp.bot )
     tables_raw=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_raw)
     
-    #the normalized/tokenized/original with no duplicates  dl(data lake) tables are stored in table_raw_proccessed
+    #the normalized/tokenized/original with no duplicates  dl(data lake) tables are stored in table_raw_proccessed_los
     table_raw_proccessed_los={}
+    
         # write the proccessed result having columns as set to a pickle file 
     dl_tbls_processed_set_file_name="dl_tbls_processed_set.pkl"
-    dl_tbls_processed_set_file_path=processed_path+dl_tbls_processed_set_file_name
-    proccessed_set_exists = os.path.isfile(dl_tbls_processed_set_file_path)
-    if proccessed_set_exists:
-      #load it  
-        print("loading proccessed dl data......")
-        with open(dl_tbls_processed_set_file_path, 'rb') as file:
-              table_raw_proccessed_los = pickle.load(file)
-    else: #build it
     
-        for key, value in tables_raw.items():
-                
-                # The input sets must be a Python list of iterables (i.e., lists or sets).
-                list_of_lists= value
-                if(hp.tokenize==1):
-                    list_of_lists=text_processor.processColumns(list_of_lists)
-
-                #to remove duplicates
-                list_of_sets = [set(inner_list) for inner_list in list_of_lists]
-                if(hp.bot==1):
-                    list_of_sets=text_processor.columnsToBagOfTokens(list_of_sets)
-        
-                table_raw_proccessed_los[key]=list_of_sets
-        with open(dl_tbls_processed_set_file_path, 'wb') as file:
-                pickle.dump(table_raw_proccessed_los, file)   
-
+    table_raw_proccessed_los=getProcessedTables(text_processor, dl_tbls_processed_set_file_name, processed_path, tables_raw,"los", hp.tokenize, hp.bot)
      # process dl tables and save as list of lists 
      
     table_raw_lol_proccessed={}
         # write the proccessed result having columns as set to a pickle file 
     dl_tbls_processed_lol_file_name="dl_tbls_processed_lol.pkl"
-    dl_tbls_processed_lol_file_path=processed_path+dl_tbls_processed_lol_file_name
-    proccessed_lol_exists = os.path.isfile(dl_tbls_processed_lol_file_path)
-    if proccessed_lol_exists:
-      #load it  
-        print("loading proccessed dl data......")
-        with open(dl_tbls_processed_lol_file_path, 'rb') as file:
-              table_raw_lol_proccessed = pickle.load(file)
-    else: #build it
     
-        for key, value in tables_raw.items():
-                
-                # The input sets must be a Python list of iterables (i.e., lists or sets).
-                list_of_lists= []
-                for col in value:
-                    list_of_lists.append(text_processor.process(col))
-                        
-                table_raw_lol_proccessed[key]=list_of_lists
-       
-        with open(dl_tbls_processed_lol_file_path, 'wb') as file:
-                pickle.dump(table_raw_lol_proccessed, file)   
-
+    table_raw_lol_proccessed=getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path, tables_raw,"lol", hp.tokenize, hp.bot)
      
      # process q tables and save as list of lists 
      
     q_table_raw_lol_proccessed={}
         # write the proccessed result having columns as set to a pickle file 
     q_tbls_processed_lol_file_name="q_tbls_processed_lol.pkl"
-    q_tbls_processed_lol_file_path=processed_path+q_tbls_processed_lol_file_name
-    q_proccessed_lol_exists = os.path.isfile(q_tbls_processed_lol_file_path)
-    if q_proccessed_lol_exists:
-      #load it  
-        print("loading proccessed dl data......")
-        with open(q_tbls_processed_lol_file_path, 'rb') as file:
-              q_table_raw_lol_proccessed = pickle.load(file)
-    else: #build it
-    
-        for key, value in queries_raw_org.items():
-                
-                list_of_lists= []
-                for col in value:
-                    list_of_lists.append(text_processor.process(col))
-                        
-                q_table_raw_lol_proccessed[key]=list_of_lists
-       
-        with open(q_tbls_processed_lol_file_path, 'wb') as file:
-                pickle.dump( q_table_raw_lol_proccessed, file)     
-        
+    q_table_raw_lol_proccessed=getProcessedTables(text_processor, q_tbls_processed_lol_file_name,processed_path, queries_raw_org,"lol", hp.tokenize, hp.bot)
     # lets build the set similarity index here over data lakes and store 
     # the reslut in a dictionary from table name to its column index
 
@@ -281,7 +244,7 @@ def main(args2=None):
               table_raw_index = pickle.load(file)
     else:    
         
-        for key, value in table_raw_proccessed.items():
+        for key, value in table_raw_proccessed_los.items():
             
             index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
             table_raw_index[key]= index   
@@ -290,13 +253,11 @@ def main(args2=None):
         with open(index_file_path, 'wb') as file:
                 pickle.dump(table_raw_index, file)   
        
-     
-
-
+    
 
 
     
-    qfile.close()
+  
     # Call NaiveSearcher, which has linear search and bounds search, from naive_search.py
     searcher = NaiveSearcherNovelty(table_raw_lol_proccessed,table_path, hp.scal,table_raw_index, table_raw_proccessed_los,  hp.entropy)
     
@@ -329,7 +290,8 @@ def main(args2=None):
                          qres = searcher.topk(hp.penalty_degree,hp.encoder,raw_query_processed_los, query, hp.K, hp.penalty,threshold=hp.threshold)
                     else:     
                     #topk_late_penalty
-                     qres = searcher.topk_late_penalty(hp.penalty_degree,hp.encoder,raw_query_asList,q_table_raw_lol_proccessed,raw_query_processed_los, query, hp.K, hp.penalty,threshold=hp.threshold)
+                     qres = searcher.topk_late_penalty(hp.penalty_degree,hp.encoder,raw_query_asList,q_table_raw_lol_proccessed,
+                                                       raw_query_processed_los, query, hp.K, hp.penalty,threshold=hp.threshold)
                 else:
                     qres = searcher.topk_2(hp.encoder, query, hp.K, threshold=hp.threshold)
 

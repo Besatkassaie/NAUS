@@ -37,6 +37,7 @@ class TextProcessor:
         return processed_res
     
     
+    # tokenize input string and apply steps and retrun a list of tokens
     def processString(self, text):
         """Combines tokenization, case folding, and stemming."""
         # Tokenization
