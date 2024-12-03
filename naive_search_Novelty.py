@@ -514,71 +514,7 @@ class NaiveSearcherNovelty(object):
     # Return the maximum value in the set
         return max(valid_values)
     
-    def generateDiversityData(self, allowed_columns_table1,q_table_raw_lol_proccessed, table1_raw,table1,query_name,table2,dl_table_name, threshold):
-        '''  This function is static function called from GMC search 
-              for a given table and its subset of its columns  it finds its alignment with all other table in data lake and return a dataframe 
-              with diversity information
-              table1 ia considered query and table 2 is data lake table'''
-        
-        query_proccesed_table_lol=q_table_raw_lol_proccessed.get(query_name)
-        query_proccesed_table_los=table1_raw[query_name]
-        # project q tables on allowed_columns_table1
-        query_proccesed_table_lol = [query_proccesed_table_lol[int(i)] for i in allowed_columns_table1]
-        query_proccesed_table_los = [query_proccesed_table_los[int(i)] for i in allowed_columns_table1] 
-        table1 = [table1[int(i)] for i in allowed_columns_table1] 
-
-        
-        #m = Munkres()
-        nrow = len(table1)
-        ncol = len(table2)
-        graph = np.zeros(shape=(nrow,ncol),dtype=object)
-
-        for i in range(nrow):
-            for j in range(ncol):
-                sim = self._cosine_sim(table1[i],table2[j])
-                if sim > threshold:
-                    graph[i,j] = sim
-
-        max_graph = make_cost_matrix(graph, lambda cost: (self.get_max(graph) - cost) if (cost != DISALLOWED) else DISALLOWED)
-        m = Munkres()
-        indexes = m.compute(max_graph)
-        DSize=20
-         # Define the columns for the DataFrame
-        columns = ['DL_table', 'DL_column', 'Q_si_table', 'Qsi_column', 'dSize', 'distance', 'Lexsim']
-        diversity_data = pd.DataFrame(columns=columns)
-        #here we have the raw semantically matched and picked  columns we hope here 
-        # that the most semantically similar columns are being paired
-        
-        for row,col in indexes:
-            distance=0
-            #semsim=graph[row,col]
-            #get the comlumn from data lake table
-            dl_column=self.tb_dl_lol.get(dl_table_name)[col]
-            dl_column_set=self.tables_raw_data.get(dl_table_name)[col]
-
-            #compute distribution of the column
-            query_column=query_proccesed_table_lol[row]
-            #see what is the number of unique values in the query+ dl columns
-            # we have a threshold to determine the smallness of domain called DS(domain size)
-            domain_estimate=set.union(set(query_column),set(dl_column) )
-            if(len(domain_estimate)<DSize):
-                distance=self.Jensen_Shannon_distances(query_column,dl_column,domain_estimate)
-                # log the domian infomrmation
-            else: 
-                distance=0
-                      
-           #'DL_table', 'DL_column', 'Q_si_table', 'Qsi_column', 'dSize', 'distance', 'Lexsim'
-            #now compute the lexical similarity 
-            
-            lex_sim_=self._lexicalsim_Pair(query_proccesed_table_los[row],dl_column_set)
-        # Add the calculated values to the DataFrame
-            diversity_data.loc[len(diversity_data)] = [
-                dl_table_name, col, query_name, row, len(domain_estimate), distance, lex_sim_]
-
-       # return pair infomration as a datafram 
-        return diversity_data     
-    
-    
+  
     
     
     
