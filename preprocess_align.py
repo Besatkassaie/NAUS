@@ -187,6 +187,7 @@ def gmc_alignmnet_by_query( query_table,query_columns,dl_tables, embedding_type=
 
     groundtruth={query_table:dl_tables}
   
+
     
     start_time = time.time_ns()
     used_queries = 0
@@ -406,6 +407,7 @@ def gmc_alignmnet_by_query( query_table,query_columns,dl_tables, embedding_type=
                 
                 alignment_list.append([query_col[0], query_col[1],query_col[2], dl_col[0], dl_col[1],dl_col[2]])
             #export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment.csv")
+            #query_col[0] == "311_calls_historic_data_0.csv" && dl_col[0] == "311_calls_historic_data_3.csv" 
             return alignment_list
 
 
