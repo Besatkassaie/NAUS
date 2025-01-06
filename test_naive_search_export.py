@@ -91,10 +91,7 @@ def main(args2=None):
         query_path = "data/"+dataFolder+"/"+hp.encoder+"_query.pkl"
         table_path = "data/"+dataFolder+"/"+hp.encoder+"_datalake.pkl"
 
-   # load results 
-    equeries={}
-    gfile = open("top_N_Starmie_output.pkl","rb")
-    equeries = pickle.load(gfile)
+
    
     # Load the query file
     qfile = open(query_path,"rb")
@@ -127,12 +124,14 @@ def main(args2=None):
             for tpl in qres:
                 tmp = (tpl[0],tpl[1])
                 res.append(tmp)
-            returnedResults[query[0]] = [r[1] for r in res]
+                #with score
+                #returnedResults[query[0]] = [(r[1],r[0]) for r in res]
+                returnedResults[query[0]] = [r[1] for r in res]
             query_times.append(time.time() - query_start_time)
     print(returnedResults)        
-    with open("top_N_Starmie_output.pkl", 'wb') as file:
-                pickle.dump(returnedResults, file)   
-    print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
+    with open("top_50_Starmie_output_diluted.pkl", 'wb') as file:
+                 pickle.dump(returnedResults, file)   
+    # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
     print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))
     print("--- Total Query Time: %s seconds ---" % (time.time() - start_time))
 
@@ -151,6 +150,8 @@ def main(args2=None):
             elif hp.benchmark == 'tusLarge':
                 groundTruth = 'data/table-union-search-benchmark/large/tus-groundtruth/tusLabeledtusLargeUnionBenchmark'
 
+
+        
         calcMetrics(hp.K, k_range, returnedResults, gtPath=groundTruth)
  
 if __name__ == '__main__':

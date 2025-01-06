@@ -14,6 +14,9 @@ from numpy.linalg import norm
 from scipy.spatial import distance
 from collections import Counter
 import utilities as utl
+import pickle5 as p
+import matplotlib.pyplot as plt
+
 
 
 
@@ -425,10 +428,11 @@ class GMC_Search:
         total_div_score *= 2 * lmda
         return (total_sim_score + total_div_score)
 
-    def avg_div_sim(self, q_name, s_prime):
+    @staticmethod 
+    def avg_div_sim(q_name, s_prime, unionability_scores,diversity_scores ):
         'Besat code'
         # compute average of similarity component 
-        filtered_unionability_scores = self.unionability_scores[self.unionability_scores['q_table'] == q_name]
+        filtered_unionability_scores = unionability_scores[unionability_scores['q_table'] == q_name]
         sigma=0
         for s_i in s_prime:
             filtered_row = filtered_unionability_scores[filtered_unionability_scores['dl_table'] == s_i]
@@ -446,13 +450,13 @@ class GMC_Search:
                 s_i=s_prime[i]
                 s_j=s_prime[j] 
                 
-                row_1=self.diversity_scores[
-                (self.diversity_scores['q_main_table'] == q_name) &  
-                (self.diversity_scores['s_i'] == s_i) & (self.diversity_scores['s_j'] == s_j)]
+                row_1=diversity_scores[
+                (diversity_scores['q_main_table'] == q_name) &  
+                (diversity_scores['s_i'] == s_i) & (diversity_scores['s_j'] == s_j)]
                
-                row_2=self.diversity_scores[
-                (self.diversity_scores['q_main_table'] == q_name) &  
-                (self.diversity_scores['s_i'] == s_j) & (self.diversity_scores['s_j'] == s_i)]
+                row_2=diversity_scores[
+                (diversity_scores['q_main_table'] == q_name) &  
+                (diversity_scores['s_i'] == s_j) & (diversity_scores['s_j'] == s_i)]
                 
                 if(row_1.shape[0]==1): 
                     diversity_score = row_1['diversity_score'].values[0]
@@ -471,9 +475,10 @@ class GMC_Search:
         
         return res/2.0
         
-    def max_div_sim(self, q_name, s_prime):
+    @staticmethod 
+    def max_div_sim( q_name, s_prime, unionability_scores,diversity_scores):
         # Besat code
-        filtered_unionability_scores = self.unionability_scores[self.unionability_scores['q_table'] == q_name]
+        filtered_unionability_scores = unionability_scores[unionability_scores['q_table'] == q_name]
         
         filtered_rows_1= filtered_unionability_scores[
     (filtered_unionability_scores['dl_table'].isin(s_prime)) 
@@ -481,7 +486,7 @@ class GMC_Search:
         max_value_sim = filtered_rows_1['similarity_score'].max()
   
         '''Filter all rows those s_i and s_j is in s_prime'''
-        filtered_rows_2=self.diversity_scores[self.diversity_scores['q_main_table']==q_name]
+        filtered_rows_2=diversity_scores[diversity_scores['q_main_table']==q_name]
  
         filtered_rows = filtered_rows_2[
     (filtered_rows_2['s_i'].isin(s_prime)) &
@@ -491,10 +496,10 @@ class GMC_Search:
         overall_max = max(max_value_sim, max_value_div)
         return overall_max
 
-    
-    def min_div_sim(self, q_name, s_prime):  
+    @staticmethod 
+    def min_div_sim(q_name, s_prime,unionability_scores, diversity_scores):  
         '''Besat code: ind the minimum score amon all the sim and div scores for a q in S_prime'''
-        filtered_unionability_scores = self.unionability_scores[self.unionability_scores['q_table'] == q_name]
+        filtered_unionability_scores = unionability_scores[unionability_scores['q_table'] == q_name]
         
         filtered_rows_1= filtered_unionability_scores[
     (filtered_unionability_scores['dl_table'].isin(s_prime)) 
@@ -502,7 +507,7 @@ class GMC_Search:
         min_value_sim = filtered_rows_1['similarity_score'].min()
   
         '''Filter all rows those s_i and s_j is in s_prime'''
-        filtered_rows_2=self.diversity_scores[self.diversity_scores['q_main_table']==q_name]
+        filtered_rows_2=diversity_scores[diversity_scores['q_main_table']==q_name]
  
         filtered_rows = filtered_rows_2[
     (filtered_rows_2['s_i'].isin(s_prime)) &
@@ -513,7 +518,7 @@ class GMC_Search:
         # retrun minumum 
         return overall_min     
     # Besat designed function
-    def compute_metrics(self, result):
+    def compute_metrics_instancedBased(self, result):
   
         # Define column names
         columns = ["query_table", "avg_div_sim", "max_div_sim", "min_div_score", "k", "gmc_exec_time_secs"]
@@ -547,7 +552,7 @@ class GMC_Search:
             metrics_df = pd.concat([metrics_df, pd.DataFrame([new_row])], ignore_index=True)
 
 # Write the DataFrame to a CSV file
-        csv_file_path = "evaluation_metrics_gmc.csv"
+        csv_file_path = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/evaluation_metrics_gmc.csv"
         
         if os.path.exists(csv_file_path):
         # File exists, append without writing headers
@@ -559,6 +564,807 @@ class GMC_Search:
             print(f"Created new file and wrote data: {csv_file_path}")
         
         return csv_file_path
+   
+   
+    @staticmethod
+
+    def loadDictionaryFromPickleFile(dictionaryPath):
+        ''' Load the pickle file as a dictionary
+        Args:
+            dictionaryPath: path to the pickle file
+        Return: dictionary from the pickle file
+        '''
+        filePointer=open(dictionaryPath, 'rb')
+        dictionary = p.load(filePointer)
+        filePointer.close()
+        return dictionary
+    
+ 
+    @staticmethod
+    def Avg_executiontime_by_k(resultfile, caller_alg):
+        file_path = resultfile
+        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
+
+        # Extract column names for reference
+        column_names = df.columns.tolist()
+
+        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
+        k_column = column_names[3]  # Replace with the actual column name for k
+        time_column=column_names[2]
+        grouped = df.groupby(k_column)[time_column].mean()
+
+# Print the results
+        for k, avg_time in grouped.items():
+             print(f"k: {k}, Average execution time for {caller_alg} is: {avg_time*1000}")        
+  
+  
+  
+  # a function to calculate  precision recall and MAP for all queries all together
+    @staticmethod
+    def Cal_P_R_Map_Starmie(resultFile, gtPath):
+        ''' Calculate and log the performance metrics: MAP, Precision@k, Recall@k
+    Args:
+        max_k: the maximum K value (e.g. for SANTOS benchmark, max_k = 10. For TUS benchmark, max_k = 60)
+        k_range: different k s that are reported in the result
+        gtPath: file path to the groundtruth
+        resPath: file path to the raw results from the model
+    Return: MAP, P@K, R@K'''
+        groundtruth = GMC_Search.loadDictionaryFromPickleFile(gtPath)
+    # resultFile = loadDictionaryFromPickleFile(resPath)
+        file_path = resultFile
+        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
+
+        # Extract column names for reference
+        column_names = df.columns.tolist()
+
+        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
+        k_column = column_names[3]  # Replace with the actual column name for k
+        query_name_column = column_names[0]  # Replace with the actual column name for query name
+        tables_column = column_names[1]  # Replace with the actual column name for tables
+        unique_k_values = df[k_column].unique() # existing k
+        precision_array = []
+        recall_array = []
+        ideal_recall=[]
+        for k in unique_k_values:
+                # for this k go through the df and create a dictionary from query to list of returned tables 
+                filtered_df = df[df['k'] == k]
+
+                # Initialize the dictionary
+                resultFile = {}
+
+                # Iterate over filtered rows
+                for _, row in filtered_df.iterrows():
+                    query_name = row['query_name']
+                    tablenames_set = set(row['tables'].split(','))  # Split and convert to set for uniqueness
+                    
+                    # Add or update the dictionary
+                    if query_name not in resultFile:
+                        resultFile[query_name] = list(tablenames_set)
+                    else:
+                        resultFile[query_name] = list(set(resultFile[query_name]) | tablenames_set)
+
+                true_positive = 0
+                false_positive = 0
+                false_negative = 0
+                rec = 0
+                
+                for table in resultFile:
+                    # t28 tables have less than 60 results. So, skipping them in the analysis.
+                        if table in groundtruth:
+                            groundtruth_set = set(groundtruth[table])
+                            groundtruth_set = {x.split(".")[0] for x in groundtruth_set}
+                            result_set = resultFile[table][:k]
+                            result_set = [x.split(".")[0] for x in result_set]
+                            result_set = [item.strip() for item in result_set]
+
+                            # find_intersection = true positives
+                            find_intersection = set(result_set).intersection(groundtruth_set)
+                            tp = len(find_intersection)
+                            fp = k - tp
+                            fn = len(groundtruth_set) - tp
+                            if len(groundtruth_set)>=k: 
+                                true_positive += tp
+                                false_positive += fp
+                                false_negative += fn
+                            rec += tp / (tp+fn)
+                ideal_recall.append(k/float(len(groundtruth[table]))) 
+                precision = true_positive / (true_positive + false_positive)
+                recall = rec/len(resultFile)
+                precision_array.append(precision)
+                recall_array.append(recall)
+
+
+  
+  
+  
+    @staticmethod
+  # a function to calculate  precision recall and MAP per query
+    def Cal_P_R_Map(resultFile, gtPath, output_file_):
+        ''' Calculate and log the performance metrics: MAP, Precision@k, Recall@k
+    Args:
+        max_k: the maximum K value (e.g. for SANTOS benchmark, max_k = 10. For TUS benchmark, max_k = 60)
+        k_range: different k s that are reported in the result
+        gtPath: file path to the groundtruth
+        resPath: file path to the raw results from the model
+    Return: MAP, P@K, R@K'''
+        groundtruth = GMC_Search.loadDictionaryFromPickleFile(gtPath)
+    # resultFile = loadDictionaryFromPickleFile(resPath)
+        file_path = resultFile
+        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
+
+        # Extract column names for reference
+        column_names = df.columns.tolist()
+
+        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
+        k_column = column_names[3]  # Replace with the actual column name for k
+        query_name_column = column_names[0]  # Replace with the actual column name for query name
+        tables_column = column_names[1]  # Replace with the actual column name for tables
+        unique_k_values = df[k_column].unique() # existing k
+        precision_array = []
+        recall_array = []
+        ideal_recall=[]
+        result_query_k={}
+        for k in unique_k_values:
+                # for this k go through the df and create a dictionary from query to list of returned tables 
+                filtered_df = df[df['k'] == k]
+
+                # Initialize the dictionary
+                resultFile = {}
+
+                # Iterate over filtered rows
+                for _, row in filtered_df.iterrows():
+                    query_name = row['query_name']
+                    tablenames_set = set(row['tables'].split(','))  # Split and convert to set for uniqueness
+                    
+                    # Add or update the dictionary
+                    if query_name not in resultFile:
+                        resultFile[query_name] = list(tablenames_set)
+                    else:
+                        resultFile[query_name] = list(set(resultFile[query_name]) | tablenames_set)
+
+                true_positive = 0
+                false_positive = 0
+                false_negative = 0
+                rec = 0
+                
+                for table in resultFile:
+                    # t28 tables have less than 60 results. So, skipping them in the analysis.
+                        if table in groundtruth:
+                            groundtruth_set = set(groundtruth[table])
+                            groundtruth_set = {x.split(".")[0] for x in groundtruth_set}
+                            result_set = resultFile[table][:k]
+                            result_set = [x.split(".")[0] for x in result_set]
+                            result_set = [item.strip() for item in result_set]
+                            result_set = [item.replace("]", '') for item in result_set]
+
+
+                            # find_intersection = true positives
+                            find_intersection = set(result_set).intersection(groundtruth_set)
+                            tp = len(find_intersection)
+                            fp = k - tp
+                            fn = len(groundtruth_set) - tp
+                            if len(groundtruth_set)>=k: 
+                                true_positive += tp
+                                false_positive += fp
+                                false_negative += fn
+                            rec += tp / (tp+fn)
+                            pecs_q_k= tp/(tp+fp) # prec for k for query
+                            rec_q_k=tp / (tp+fn)
+                            if(k<len(groundtruth[table])):
+                                ideal_recall_q_k=k/len(groundtruth[table])
+                            else:
+                                ideal_recall_q_k=1
+                            result_query_k[(k, table)]=[pecs_q_k,rec_q_k,ideal_recall_q_k]
+                            
+                ideal_recall.append(k/float(len(groundtruth[table]))) 
+                precision = true_positive / (true_positive + false_positive)
+                recall = rec/len(resultFile)
+                precision_array.append(precision)
+                recall_array.append(recall)
+
+
+
+            
+        print("k values:")
+        print(unique_k_values)
+        print("precision_array")
+        print(precision_array)
+        print("ideal_recall")
+        print(ideal_recall)
+
+        print("recall_array")
+        print(recall_array)
+        
+        # Output CSV file name
+        output_file = output_file_
+
+        # Write data to CSV
+        with open(output_file, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            
+            # Write the header
+            writer.writerow(["k", "query", "Prec", "Recall", "Ideal Recall"])
+            
+            # Write the rows
+            for (k1, k2), values in result_query_k.items():
+                writer.writerow([k1, k2] + values)
+
+        print(f"Data successfully written to {output_file}")
+
+        #return mean_avg_pr, precision_array[max_k-1], recall_array[max_k-1] 
+        return None
+        
+    
+    
+    
+    @staticmethod
+      # Function to count rows where query_name appears in tables for each unique value of k
+    def compute_counts(dataframe, k_column,query_name_column, tables_column):
+        result = []
+        unique_k_values = dataframe[k_column].unique()
+        for k in unique_k_values:
+            filtered_df = dataframe[dataframe[k_column] == k]
+            count = filtered_df.apply(
+                lambda row: row[query_name_column] in row[tables_column].split(','), axis=1
+            ).sum()
+            result.append({'k': k, 'count': count})
+        return pd.DataFrame(result)
+    @staticmethod
+    def query_duplicate_returned(result_file, output_file):
+        
+        # Load the CSV file and read the first four columns, using the first row as column names
+        file_path = result_file  # Replace with the path to your CSV file
+        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
+
+        # Extract column names for reference
+        column_names = df.columns.tolist()
+
+        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
+        k_column = column_names[3]  # Replace with the actual column name for k
+        query_name_column = column_names[0]  # Replace with the actual column name for query name
+        tables_column = column_names[1]  # Replace with the actual column name for tables
+
+   
+
+        # Compute the results
+        results_df = GMC_Search.compute_counts(df, k_column,query_name_column, tables_column)
+
+        # Output the results
+   
+        results_df.to_csv(output_file, index=False)
+
+
+                
+    
+    @staticmethod 
+    def compute_metrics(result, alg_, csv_file_path, k,unionability_scores, diversity_scores):
+            '''alg_: {gmc, penal}'''
+            # Define column names
+            columns = ["query_table", "avg_div_sim", "max_div_sim", "min_div_score", "k", alg_+"_exec_time_secs"]
+
+    # Create an empty DataFrame with the specified columns
+            metrics_df = pd.DataFrame(columns=columns)
+
+            # go through result and for every query compute two functions: 
+            for q, r in result.items():
+                s_prime=r[0]
+                time_sec=r[1]
+        
+                if(q == 'workforce_management_information_a.csv' or q== 'workforce_management_information_b.csv'):
+                    continue 
+                print("Genarating Evaluation for query: "+q)
+                avg_div_sim=GMC_Search.avg_div_sim(q,s_prime,unionability_scores,diversity_scores)
+                max_div_sim=GMC_Search.max_div_sim(q,s_prime,unionability_scores,diversity_scores)
+                min_div_score=GMC_Search.min_div_sim(q,s_prime,unionability_scores,diversity_scores)
+                
+                # Define the row to add (values must match the column order)
+                new_row = {
+        "query_table": q,
+        "avg_div_sim": avg_div_sim,
+        "max_div_sim": max_div_sim, 
+        "min_div_score": min_div_score, 
+        "k":k,
+        alg_+"_exec_time_secs":time_sec
+    }
+
+    # Add the row to the DataFrame
+                metrics_df = pd.concat([metrics_df, pd.DataFrame([new_row])], ignore_index=True)
+
+    # Write the DataFrame to a CSV file
+            
+            if os.path.exists(csv_file_path):
+            # File exists, append without writing headers
+                metrics_df.to_csv(csv_file_path, mode='a', header=False, index=False)
+                print(f"Appended data to existing file: {csv_file_path}")
+            else:
+            # File does not exist, create new file with headers
+                metrics_df.to_csv(csv_file_path, mode='w', header=True, index=False)
+                print(f"Created new file and wrote data: {csv_file_path}")
+            
+            return csv_file_path
+  
+    
+   
+   
+    @staticmethod
+    def is_diluted_version(fname):
+       """if it has _dlt showes is diluted then retrun original file name 
+           else retrun -1"""
+       if('_dlt' in fname) :
+            return fname.replace('_dlt', '')
+       else: 
+        return -1   
+    
+    @staticmethod 
+    def get_ssnm_query(df_q, groundtruth_tables):
+       # list of unionable tables in groundtruth
+     
+       
+       tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+       tables_result_set=set(tables_result_list)
+       #these two holds the expected pair name of the visited file names which are not yet paired   
+       visited_diluted_waiting_for_set=set()
+       # the not deluted seen so far
+       visited_no_diluted_waiting_for_set=set()
+       
+       groundtruth_tables_set=set(groundtruth_tables)
+       G=len(tables_result_set.intersection(groundtruth_tables_set))
+       L=0.0  #number of unionable diluted comes alone in result
+       if (G==0):
+            print("no unionable tables in the results")
+            return -1, L, G # not valid snm exists for this query
+       else: 
+           for t in tables_result_list:
+                if t in groundtruth_tables_set: # is unionable
+                    deluted_=GMC_Search.is_diluted_version(t)
+                    if(deluted_==-1):
+                        # check whther you have seen its diluted pair or not 
+                         if(t in visited_diluted_waiting_for_set):
+                                visited_diluted_waiting_for_set.remove(t)    # pair is seen so remove from  waiting list
+                         else: 
+                             visited_no_diluted_waiting_for_set.add(t)
+                    
+                    else: 
+                        if deluted_ in visited_no_diluted_waiting_for_set:
+                            visited_no_diluted_waiting_for_set.remove(deluted_)  # good pair original came before dilutes
+                        else:    
+                            visited_diluted_waiting_for_set.add(deluted_)    # 
+                        
+       L= len(visited_diluted_waiting_for_set) # not paired with original
+       snm= 1-(float(L)/G)
+       return snm, L, G      
+           
+    
+    @staticmethod 
+    def get_snm_query(df_q, groundtruth_tables):
+       # list of unionable tables in groundtruth
+     
+       
+       tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+       tables_result_set=set(tables_result_list)
+       #these two holds the expected pair name of the visited file names which are not yet paired   
+       visited_diluted_waiting_for_set=set()
+       # the not deluted seen so far
+       visited_no_diluted_waiting_for_set=set()
+       
+       groundtruth_tables_set=set(groundtruth_tables)
+       G=len(tables_result_set.intersection(groundtruth_tables_set))
+       L=0.0  #number of unionable diluted comes alone in result
+       B=00.0 # diluted item comes before its original peer
+       if (G==0):
+            print("no unionable tables in the results")
+            return -1,B, L, G # not valid snm exists for this query
+       else: 
+           for t in tables_result_list:
+                if t in groundtruth_tables_set: # is unionable
+                    deluted_=GMC_Search.is_diluted_version(t)
+                    if(deluted_==-1):
+                        # check whther you have seen its diluted pair or not 
+                         if(t in visited_diluted_waiting_for_set):
+                                B=B+1 #update B
+                                visited_diluted_waiting_for_set.remove(t)    # pair is seen so remove from  waiting list
+                         else: 
+                             visited_no_diluted_waiting_for_set.add(t)
+                    
+                    else: 
+                        if deluted_ in visited_no_diluted_waiting_for_set:
+                            visited_no_diluted_waiting_for_set.remove(deluted_)  # good pair original came before dilutes
+                        else:    
+                            visited_diluted_waiting_for_set.add(deluted_)    # 
+                        
+       L= len(visited_diluted_waiting_for_set) # not paired with original
+       snm= 1-((float(B)+float(L))/G)
+       return snm, B, L, G
+       
+ 
+    @staticmethod 
+    def get_ssnm_average(df_k, groundtruth_dic):
+        """we go through all queries except for these two that do not exist in dust alignment 
+        workforce_management_information_a.csv
+        workforce_management_information_b.csv
+        """
+        exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+        queries = df_k['query_name'].unique()
+        number_queries=0
+        snm_total=0.0
+        q_not_valid_snm=set()
+        for q in queries:
+                        if q not in exclude: 
+                          df_k_q = df_k[df_k['query_name'] == q]
+                          groundtruth_dic_q=groundtruth_dic[q]
+                          q_snm,L, G=GMC_Search.get_ssnm_query(df_k_q, groundtruth_dic_q)
+                          if(q_snm==-1):
+                           q_not_valid_snm.add(q)
+                          else:
+                            number_queries=number_queries+1
+ 
+                            snm_total=snm_total+q_snm
+                        else: 
+                            print("excluded query is found")    
+        return  (float(snm_total)/ float(number_queries), q_not_valid_snm) 
+    
+    @staticmethod 
+    def get_snm_average(df_k, groundtruth_dic):
+        """we go through all queries except for these two that do not exist in dust alignment 
+        workforce_management_information_a.csv
+        workforce_management_information_b.csv
+        """
+        exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+        queries = df_k['query_name'].unique()
+        number_queries=0
+        snm_total=0.0
+        q_not_valid_snm=set()
+        for q in queries:
+                        if q not in exclude: 
+                          df_k_q = df_k[df_k['query_name'] == q]
+                          groundtruth_dic_q=groundtruth_dic[q]
+                          q_snm, B, L, G=GMC_Search.get_snm_query(df_k_q, groundtruth_dic_q)
+                          if(q_snm==-1):
+                           q_not_valid_snm.add(q)
+                          else:
+                            number_queries=number_queries+1
+ 
+                            snm_total=snm_total+q_snm
+                        else: 
+                            print("excluded query is found")    
+        return  (float(snm_total)/ float(number_queries), q_not_valid_snm)               
+
+    
+    @staticmethod 
+    def get_snm_whole(df_k, groundtruth_dic, k):
+        """we go through all queries except for these two that do not exist in dust alignment:
+        workforce_management_information_a.csv
+        workforce_management_information_b.csv
+        """
+        exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+        queries = df_k['query_name'].unique()
+        results_k = []
+        for q in queries:
+                        if q not in exclude: 
+                          df_k_q = df_k[df_k['query_name'] == q]
+                          groundtruth_dic_q=groundtruth_dic[q]
+                          q_snm, B, L, G=GMC_Search.get_snm_query(df_k_q, groundtruth_dic_q)
+                          results_k.append({'k': k, 'query': q,'snm': q_snm, 'B':B, 'L':L, 'G':G})
+                        else: 
+                            print("excluded query is found")    
+        return   results_k           
+
+    @staticmethod 
+    def get_ssnm_whole(df_k, groundtruth_dic, k):
+        """we go through all queries except for these two that do not exist in dust alignment:
+        workforce_management_information_a.csv
+        workforce_management_information_b.csv
+        """
+        exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+        queries = df_k['query_name'].unique()
+        results_k = []
+        for q in queries:
+                        if q not in exclude: 
+                          df_k_q = df_k[df_k['query_name'] == q]
+                          groundtruth_dic_q=groundtruth_dic[q]
+                          q_snm, L, G=GMC_Search.get_ssnm_query(df_k_q, groundtruth_dic_q)
+                          results_k.append({'k': k, 'query': q,'snm': q_snm, 'L':L, 'G':G})
+                        else: 
+                            print("excluded query is found")    
+        return   results_k     
+
+    @staticmethod
+    def perform_union(q_name, projection_group, query_path_ , table_path_): 
+        # each element in projection group has specific set of 
+        # columns as aligned columns and values are name of unionable tables 
+        # load the content to dictionaries  
+        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
+        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
+        
+        q_content=qs[q_name]
+        for key, values in projection_group:
+            
+            
+        
+        
+        
+        
+        
+
+        
+        
+        
+        
+    
+ 
+    @staticmethod
+    def compute_union_size_simple(result_file, output_file, alignments_file, query_path_ , table_path_, normalized=0):
+        """computes  union size between query table and data lake tables
+           result_file has at least columns: query_name, tables, and k  
+           alignments is alignemnts betweeen  columns of  query and tables  has query_table_name, query_column, query_column#, dl_table_name, dl_column#, dl_column
+           simple version means that we do not use outer union here so q, t1 and q,t2 might have different alignments which makes them distinct in counting
+           query_path_ and table_path_ are the content of the tables if it is for raw version we deal differently than  for normlized version 
+           normalized  0 means we are deeling with raw content of the tables 1 means that the content of each cell is normalized  
+        """
+        try:
+            # Load the CSV file into a pandas DataFrame
+               alignments_ = pd.read_csv(alignments_file)
+
+            # Verify that the required columns are present
+               required_columns = ['query_table_name', 'query_column', 'query_column#',
+                                'dl_table_name', 'dl_column#', 'dl_column']
+               if not all(column in alignments_.columns for column in required_columns):
+                missing_columns = [col for col in required_columns if col not in alignments_.columns]
+                raise ValueError(f"Missing required columns in data: {missing_columns}")
+
+               print("alignments_file loaded successfully")
+        
+        except FileNotFoundError:
+            print(f"Error: File not found at {alignments_file}")
+        
+        except ValueError as e:
+            print(f"Error: {e}")
+        
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            
+            
+        # find out how many groups of unionable there are in the alignment file for each query: 
+        # to do so find the unique combinations of  query_table_name, query_column#  for each query 
+        unique_queries = alignments_['query_table_name'].unique()    
+
+          
+            
+
+        columns_to_load = ['query_name', 'tables', 'k']
+        df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
+
+        # Get the unique values of 'k' in the dataframe
+        unique_k_values = df_search_results['k'].unique()    
+        
+        for k_ in unique_k_values:
+            # Filter the dataframe for the current value of 'k'
+              k_df_search_results= df_search_results[df_search_results['k'] == k_]
+              #DUST does not create alignemnt for these two queries
+              exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+              queries_k = k_df_search_results['query_name'].unique()
+              for q in queries_k:
+                # get the unionabe tables 
+                if q in exclude:
+                    print("a quesry that should not exist!!!")
+                else: 
+                    q_k_df_search_results= df_search_results[df_search_results['query_name'] == q]
+                    q_unionable_tables=q_k_df_search_results["tables"]
+                    
+                    projection_groups={}
+                    projection_columns={}
+                    unionable_size_projection_groups={}
+
+                    for dl_t in q_unionable_tables:
+                    # get from alignmnet which columns are aligned for each table 
+                      condition1 = alignments_['query_table_name'] == q
+                      condition2 = alignments_['dl_table_name'] == dl_t
+
+                      # Filter rows that satisfy both conditions
+                      filtered_align = alignments_[condition1 & condition2]
+                      for index_t, row in filtered_align.iterrows():
+                             q_col_ = row['query_column#']
+                             dl_col = row['dl_column#']   
+                             projection_columns[dl_t].add((q_col_,dl_col))
+                                                                       
+                      # for every dl_table we have a list of columns (q_com, dl_col) that are projected on 
+                      # Build the reverse mapping:  value -> keys (x, y)
+                      for key, value_set in projection_columns.items():
+                         for value in value_set:
+                            # value is a set of tuples that are aligned and key is the list of table names  
+                            projection_groups[value].add(key)
+                            
+                    # now for each group compute that union size 
+                #perform union
+                GMC_Search.perform_union(q,projection_groups, query_path_ , table_path_)    
+                    
+                       
+
+                    
+                
+        
+        
+        
+        
+                print("thete")
+
+    
+    @staticmethod 
+    def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_):
+        """
+        this function only makes sense to be run over diluted dataset
+        we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
+                            2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
+                            groundtruth: is the gound truth havinf unionable tables for each query
+        """                    
+        groundtruth = GMC_Search.loadDictionaryFromPickleFile(groundtruth_file)
+
+        input_file = search_result
+        columns_to_load = ['query_name', 'tables', 'k']
+        df = pd.read_csv(input_file, usecols=columns_to_load)
+
+        # Get the unique values of 'k' in the dataframe
+        unique_k_values = df['k'].unique()
+
+        # Initialize an empty list to collect the results
+        results = []
+        results_whole=[]
+
+        # Iterate over each unique 'k' and process the dataframe
+        for k in unique_k_values:
+            # Filter the dataframe for the current value of 'k'
+            subset_df = df[df['k'] == k]
+            
+            # Calculate the average SNM using the custom function
+            print("k is: "+str(k))
+            avg_snm, invalid_snm = GMC_Search.get_snm_average(subset_df, groundtruth)
+            temp_whole=GMC_Search.get_snm_whole(subset_df, groundtruth, k)
+            results_whole.extend(temp_whole)
+            # Append the result as a dictionary
+            results.append({'k': k, 'avg_snm': avg_snm, 'q_invalid_snm:':invalid_snm})
+           
+        # Convert the results into a dataframe
+        result_df = pd.DataFrame(results)
+    
+        # Write the result dataframe to a new CSV file
+        output_file_agv = snm_avg_result_path_
+        result_df.to_csv(output_file_agv, index=False)
+        
+        result_whole=pd.DataFrame(results_whole)
+        result_whole.to_csv(snm_whole_result_path_, index=False)
+
+      
+      
+        
+        
+        print("caluculate SNM for the input result file for different k")
+            
+   
+    @staticmethod 
+    def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_):
+        """
+        this function only makes sense to be run over diluted dataset
+        we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
+                            2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
+                            groundtruth: is the gound truth havinf unionable tables for each query
+        """                    
+        groundtruth = GMC_Search.loadDictionaryFromPickleFile(groundtruth_file)
+
+        input_file = search_result
+        columns_to_load = ['query_name', 'tables', 'k']
+        df = pd.read_csv(input_file, usecols=columns_to_load)
+
+        # Get the unique values of 'k' in the dataframe
+        unique_k_values = df['k'].unique()
+
+        # Initialize an empty list to collect the results
+        results = []
+        results_whole=[]
+
+        # Iterate over each unique 'k' and process the dataframe
+        for k in unique_k_values:
+            # Filter the dataframe for the current value of 'k'
+            subset_df = df[df['k'] == k]
+            
+            # Calculate the average SNM using the custom function
+            print("k is: "+str(k))
+            avg_snm, invalid_snm = GMC_Search.get_ssnm_average(subset_df, groundtruth)
+            temp_whole=GMC_Search.get_ssnm_whole(subset_df, groundtruth, k)
+            results_whole.extend(temp_whole)
+            # Append the result as a dictionary
+            results.append({'k': k, 'avg_snm': avg_snm, 'q_invalid_snm:':invalid_snm})
+           
+        # Convert the results into a dataframe
+        result_df = pd.DataFrame(results)
+    
+        # Write the result dataframe to a new CSV file
+        output_file_agv = snm_avg_result_path_
+        result_df.to_csv(output_file_agv, index=False)
+        
+        result_whole=pd.DataFrame(results_whole)
+        result_whole.to_csv(snm_whole_result_path_, index=False)
+
+      
+      
+        
+        
+        print("caluculate Simplified SNM for the input result file for different k")
+
+   
+    
+    #analyse the results 
+    @staticmethod
+
+    def analyse(file_penalize,file_gmc):
+
+
+            # Load the CSV files into DataFrames
+            x1 = pd.read_csv(file_penalize)  # Replace with your first CSV file name
+            x2 = pd.read_csv(file_gmc)  # Replace with your second CSV file name
+
+
+            # Find common queries
+            common_queries = set(x1['query']).intersection(set(x2['query']))
+
+            # Keep only rows with common queries
+            x1_filtered = x1[x1['query'].isin(common_queries)]
+            x2_filtered = x2[x2['query'].isin(common_queries)]
+
+    
+            
+ 
+            # Merge filtered DataFrames on 'query' and 'k' to align rows for comparison
+            merged = pd.merge(x1_filtered, x2_filtered, on=['query', 'k'], suffixes=('_x1', '_x2'))
+
+            # Compare precision values and group by 'k' to count queries with greater precision in x1
+            result = merged.groupby('k').apply(lambda df: (df['Prec_x1'] >= df['Prec_x2']).sum())
+
+            # Display the result
+            print("Number of queries with greater or equal precision in "+file_penalize+" for each k:")
+            print(result)
+ 
+            
+                        # Compare precision values and group by 'k' to count queries with greater precision in x1
+            result2 = merged.groupby('k').apply(lambda df: (df['Recall_x1'] >= df['Recall_x2']).sum())
+
+            # Display the result
+            print("Number of queries with greater or equal recall in "+file_penalize+" for each k:")
+            print(result2)
+
+            
+    # Group by 'k' and compute statistics for Prec, Recall, and Ideal Recall
+            stats_x1 = x1_filtered.groupby('k').agg({
+                'Prec': ['mean', 'median', 'std'],
+                'Recall': ['mean', 'median', 'std'],
+                'Ideal Recall': ['mean', 'median', 'std']
+            })
+
+            # Rename columns for clarity
+            stats_x1.columns = ['_'.join(col).strip() for col in stats_x1.columns.values]
+
+            # Display the statistics
+            print("Grouped Statistics for x1_filtered by k:")
+            print(stats_x1)
+    
+    
+            stats_x2 = x2_filtered.groupby('k').agg({
+                'Prec': ['mean', 'median', 'std'],
+                'Recall': ['mean', 'median', 'std'],
+                'Ideal Recall': ['mean', 'median', 'std']
+            })
+
+            # Rename columns for clarity
+            stats_x2.columns = ['_'.join(col).strip() for col in stats_x2.columns.values]
+
+            # Display the statistics
+            print("Grouped Statistics for x2_filtered by k:")
+            print(stats_x2)
+    
     
     def compute_metric_old(self, result, dl_embeddings:dict, query_embeddings:dict, lmda:float, k:float, print_results = False, normalize = False, metric = "", max_metric = True):
         computed_metrics = [] # list of dictionaries, each dict is a row in the evaluation dataframe. 
@@ -711,7 +1517,6 @@ class GMC_Search:
         # that are aligned for evaluting the diversity metrics I decided to represent each table as sum of their aligned vectors
         
         start_time = time.time_ns()
-        # q = np.mean(list(q_dict.values()), axis=0)
         R = set()
         ranked_div_result = []
         sim_dict = self.extract_d_sim(query_name) # index the similarity between each item in S and q for once so that we can re-use them.
@@ -879,7 +1684,7 @@ class GMC_Search:
     
     
     def calculate_diversity(self, precalculated_file):
-        
+        print("computing diversity scores...")
         """
            diversity between two tables are the average of diversity between theri columns for now 
          """
@@ -1036,7 +1841,8 @@ class GMC_Search:
       
                    
     def generate_alignment_for_diversity(self, file_path):
-        
+        print("genrating  alignment for gmc...")
+        res=[]
         if self.data is not None:
                 try:
                     # Initialize an empty list to store the results
@@ -1078,7 +1884,7 @@ class GMC_Search:
                                 # corresponding to alignments 
                                 S_j= self.data[self.data["query_table_name"] == q_main_table]["dl_table_name"].unique()
                                 res= self.export_alignment_for_diversity(q_main_table, s_i,S_j, dl_columns,file_path)
-        return res                        
+                return res                        
                                 
                                 
     def export_alignment_for_diversity(self, q_main_table,s_i,S_j, columns_,output_csv_path):
@@ -1124,8 +1930,8 @@ class GMC_Search:
         import re
 
         # Define the input and output file paths
-        input_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos.csv"
-        output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_cleaned.csv"
+        input_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_diluted.csv"
+        output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos__diluted_cleaned.csv"
         # input_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_small.csv"
         # output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_small_cleaned.csv"
     
@@ -1208,146 +2014,189 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
             div_dict[(current_s1, current_s2)] = current_div
     return div_dict
 
+
       
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/DUST_Alignment_Santos.csv"
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/DUST_Alignment_Diluted.csv"
     
-    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos.csv'
+    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_diluted.csv'
 
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/groundtruth/santos_union_groundtruth.pickle"    
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_50_Starmie_output_diluted.pkl"     
     
     
     
-    # input_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_cleaned.csv"
-    # output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/partial.csv"
+    if False:
+    
+        search_params = {"keyword": "example", "max_results": 10}
 
-    # # Load the CSV file into a DataFrame
-    # df = pd.read_csv(input_file)
+        gmc_search = GMC_Search(alignment_Dust, search_params)
 
-    # # Filter the DataFrame based on the given conditions
-    # filtered_df = df[
-    #     (df['q_main_table'] == 'biodiversity_a.csv') & 
-    #     ((df['s_i'] == 'biodiversity_4.csv') | (df['s_j_table_name'] == 'biodiversity_4.csv')) & 
-    #     ((df['s_i'] == 'tuition_assistance_program_tap_recipients_a.csv') | (df['s_j_table_name'] == 'tuition_assistance_program_tap_recipients_a.csv'))
-    # ]
-
-    # # Write the filtered rows into a new CSV file
-    # filtered_df.to_csv(output_file, index=False)
-
-    # print(f"Filtered rows have been written to {output_file}")
-    
-    
-    
-    
-    
-
-    
-    search_params = {"keyword": "example", "max_results": 10}
-
-    gmc_search = GMC_Search(alignment_Dust, search_params)
-
-    # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
-    # Starmie on Santos returning maximum 50 unionable dl tables  for each query
-    gmc_search.load_data()
-    gmc_search.load_unionable_tables(first_50_starmie)
-    
-    #generate and persist alignments for diversity function 
-    # first check if the file exist if not creat it by calling function 
-    file_exists = os.path.exists(alignment_for_diversity_gmc_file)
-    if file_exists:
-        print("alignments for diversity file exists")
-    else:
-        initialize_globally() # for DUST 
-        gmc_search.generate_alignment_for_diversity( alignment_for_diversity_gmc_file)
-            
-  
-    gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file()   
-    # Calculate unionability
-
-    uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_unionability_scores.csv"
-    file_exists = os.path.exists(uionability_file_path)
-    if not file_exists:
-        unionability_scores = gmc_search.calculate_unionability()
-
-        unionability_scores.to_csv(
-            uionability_file_path,
-            index=False,  # Do not include the index in the CSV
-            columns=unionability_scores.columns,  # Use DataFrame columns for the CSV
-            sep=",",  # Use a comma as the separator
-            quotechar='"',  # Handle quoted strings
-            encoding="utf-8",  # Set encoding
-        )
-    else: 
-            unionability_scores= pd.read_csv(
-            uionability_file_path,
-            sep=",",          # Use a comma as the delimiter
-            header=0)        # Treat the first row as the header (column names        )
+        # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
+        # Starmie on Santos returning maximum 50 unionable dl tables  for each query
+        gmc_search.load_data()
+        gmc_search.load_unionable_tables(first_50_starmie) 
         
-    gmc_search.unionability_scores=unionability_scores
+        
     
+        
+        
+        
+        #generate and persist alignments for diversity function 
+        # first check if the file exist if not creat it by calling function 
+        file_exists = os.path.exists(alignment_for_diversity_gmc_file)
+        if file_exists:
+            print("alignments for diversity file exists")
+        else:
+            initialize_globally() # for DUST 
+            gmc_search.generate_alignment_for_diversity( alignment_for_diversity_gmc_file)
+                
+
+        gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file()   
+        # Calculate unionability
+
+        uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_unionability_scores_diluted.csv"
+        file_exists = os.path.exists(uionability_file_path)
+        if not file_exists:
+            unionability_scores = gmc_search.calculate_unionability()
+
+            unionability_scores.to_csv(
+                uionability_file_path,
+                index=False,  # Do not include the index in the CSV
+                columns=unionability_scores.columns,  # Use DataFrame columns for the CSV
+                sep=",",  # Use a comma as the separator
+                quotechar='"',  # Handle quoted strings
+                encoding="utf-8",  # Set encoding
+            )
+        else: 
+                unionability_scores= pd.read_csv(
+                uionability_file_path,
+                sep=",",          # Use a comma as the delimiter
+                header=0)        # Treat the first row as the header (column names        )
+            
+        gmc_search.unionability_scores=unionability_scores
+        
+        
+        diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_diversity_scores_diluted.csv"
+        file_exists = os.path.exists(diveristy_file_path)
+        if not file_exists:
+    # Save DataFrame to CSV
+        
+            diversity_scores = gmc_search.calculate_diversity(gmc_search.alignment_for_diversity_gmc_file)
+
+            diversity_scores.to_csv(
+                diveristy_file_path,
+                index=False,  # Do not include the index in the CSV
+                columns=diversity_scores.columns,  # Use DataFrame columns for the CSV
+                sep=",",  # Use a comma as the separator
+                quotechar='"',  # Handle quoted strings
+                encoding="utf-8",  # Set encoding
+            )
+        else: 
+            diversity_scores= pd.read_csv(
+                diveristy_file_path,
+                sep=",",          # Use a comma as the delimiter
+                header=0) 
+            
+        gmc_search.diversity_scores=diversity_scores  
+
+        # create the represenation for tables 
+        #gmc_search.vectorize_tables()
+
+        output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv'
+        for i in range(2, 11): 
+                gmc_search.k=i
+
+                results = gmc_search.execute_search()
+                # Define the output CSV file path
+                
+
+            # Write the dictionary to a CSV file
+                if os.path.exists(output_csv_file):
+                    with open(output_csv_file, mode='a', newline='') as file:
+                        writer = csv.writer(file)
+                        # Write the data
+                        for query_name, (result, secs) in results.items():
+                            # Join the list of results into a string, if needed
+                            result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                            writer.writerow([query_name, result_str,secs,gmc_search.k])
+                else: 
+                    with open(output_csv_file, mode='w', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(['query_name', 'tables','gmc_execution_time', 'k'])
+
+                        # Write the data
+                        for query_name, (result, secs) in results.items():
+                            # Join the list of results into a string, if needed
+                            result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                            writer.writerow([query_name, result_str,secs,gmc_search.k])
+                        # Write the header
+
+            
+
+
+#             file=GMC_Search.compute_metrics(results, "gmc","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/evaluation_metrics_gmc.csv",gmc_search.k, gmc_search.unionability_scores, gmc_search.diversity_scores)
+#             GMC_Search.query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/queryDuplicate_results.csv")
+#             GMC_Search.Avg_executiontime_by_k("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv", "GMC")
+
+#         # evaluate the results 
+# # count duplicate query 
+#             GMC_Search.Cal_P_R_Map("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv","data/santos/santosUnionBenchmark.pickle","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_byQuery.csv" )
+
+
+#             GMC_Search.analyse("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_ByQuery.csv","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_byQuery.csv")
+
     
-    diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_diversity_scores.csv"
-    file_exists = os.path.exists(diveristy_file_path)
-    if not file_exists:
-# Save DataFrame to CSV
-     
-        diversity_scores = gmc_search.calculate_diversity(gmc_search.alignment_for_diversity_gmc_file)
-
-        diversity_scores.to_csv(
-            diveristy_file_path,
-            index=False,  # Do not include the index in the CSV
-            columns=diversity_scores.columns,  # Use DataFrame columns for the CSV
-            sep=",",  # Use a comma as the separator
-            quotechar='"',  # Handle quoted strings
-            encoding="utf-8",  # Set encoding
-        )
-    else: 
-         diversity_scores= pd.read_csv(
-            diveristy_file_path,
-            sep=",",          # Use a comma as the delimiter
-            header=0) 
-           
-    gmc_search.diversity_scores=diversity_scores  
-
-    # create the represenation for tables 
-    #gmc_search.vectorize_tables()
-    for i in range(2, 11): 
-            gmc_search.k=i
-
-            results = gmc_search.execute_search()
-            # Define the output CSV file path
-            output_csv_file = 'gmc_results.csv'
+    if False:
+        # evaluate Starmie 50 results at different k 
+        # unionable reuslts are loaded here:
+        first_50_starmie_with_scores="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_N_Starmie_output_WITHSCORE_diluted.pkl"
+        gmc_search.load_unionable_tables(first_50_starmie_with_scores) 
+        #ground truth is here  
+        gtruth="data/santos/santosUnionBenchmark.pickle"
+        #now convert the format of first_50_starmie_with_scores to gmc result format in csv: query_name, tables, execution time, k
+        # here we put zero for all execution time for now 
+        # Iterate over the dictionary and sort the values
+        sorted_unionable_data = {}
+        for query_name, tuples_list in gmc_search.unionable_data.items():
+            # Sort the list of tuples based on the second element
+            sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
+            # Store the sorted list in a new dictionary
+            sorted_unionable_data[query_name] = sorted_list    
+        starmie_search="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/starmie/starmie_results_diluted.csv"    
+        # now for k =2 to 20 create the file 
+        # Define the output CSV file path
+        output_csv_file = starmie_search
+            # Open the CSV file for writing
+        with open(output_csv_file, mode="a", newline="") as csv_file:
+            # Define the CSV writer
+            csv_writer = csv.writer(csv_file)
             
+            # Write the header row
+            csv_writer.writerow(["query_name", "tables", "execution_time", "k"])
+            for k_ in range(2, 11):
+            # Iterate over the sorted dictionary
+                    for query_name, tuples_list in sorted_unionable_data.items():
+                        utables=[]
+                        for i in range(0, k_):
+                            # Extract the first value of the tuple
+                            utables.append(tuples_list[i][0])
+                            
+                            # Write the row with k = 0 and time = 0
+                        csv_writer.writerow([query_name, utables, 0, k_])
+   
+   # make sure that we do not have extra character in result if you have remove them  
+   # GMC_Search.Cal_P_R_Map("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted.csv","data/santos/santosUnionBenchmark.pickle","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_results_byQuery_diluted.csv" )
+    GMC_Search.query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv", "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_duplicate_diluted.csv")
 
-        # Write the dictionary to a CSV file
-            if os.path.exists(output_csv_file):
-                with open(output_csv_file, mode='a', newline='') as file:
-                    writer = csv.writer(file)
-                    # Write the data
-                    for query_name, (result, _) in results.items():
-                        # Join the list of results into a string, if needed
-                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                        writer.writerow([query_name, result_str,gmc_search.k])
-            else: 
-                with open(output_csv_file, mode='w', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(['query_name', 'tables','k'])
+    # GMC_Search.compute_syntactic_novelty_measure_simplified("data/santos/santosUnionBenchmark.pickle",
+    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted.csv",
+    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_ssnm_diluted_avg.csv", 
+    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_ssnm_diluted_whole.csv")    
+    # print("next ...")    
+    # GMC_Search.compute_syntactic_novelty_measure_simplified("data/santos/santosUnionBenchmark.pickle",
+    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv",
+    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_ssnm_diluted_avg.csv", 
+    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_ssnm_diluted_whole.csv")    
 
-                    # Write the data
-                    for query_name, (result, _) in results.items():
-                        # Join the list of results into a string, if needed
-                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                        writer.writerow([query_name, result_str,gmc_search.k])
-                    # Write the header
-
-            
-
-            
-            file=gmc_search.compute_metrics(results)
-            
-            # evaluate the results 
-
-
-
-
+    

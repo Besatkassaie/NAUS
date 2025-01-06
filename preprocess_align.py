@@ -414,7 +414,7 @@ def gmc_alignmnet_by_query( query_table,query_columns,dl_tables, embedding_type=
 
 
  
-def gmc_alignmnet_export():   
+def DUST_alignmnet_export():   
     
     
     use_numeric_columns = True
@@ -426,8 +426,7 @@ def gmc_alignmnet_export():
     dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
     query_table_folder = r"data" + os.sep + benchmark_name + os.sep + "query"
     #groundtruth_file = r"groundtruth" + os.sep + benchmark_name + "_union_groundtruth.pickle"
-    groundtruth_file = r"groundtruth" + os.sep + benchmark_name + "_union_groundtruth.pickle"
-
+    groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/groundtruth/top_50_Starmie_output_diluted.pkl"
     query_tables = glob.glob(query_table_folder + os.sep + "*.csv")
     groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
     # # limit the ground truth to only one query and 10 unionables 
@@ -464,7 +463,7 @@ def gmc_alignmnet_export():
     # evaluation of align phase.
     for query_table in query_tables:
         query_table_name = query_table.rsplit(os.sep, 1)[-1]
-        print(query_table_name)
+        print("query name: "+query_table_name)
         if query_table_name == "workforce_management_information_a.csv" or query_table_name == "workforce_management_information_b.csv":
             continue
         column_embeddings = []
@@ -487,6 +486,7 @@ def gmc_alignmnet_export():
             # print(query_embeddings)
             # break
             used_queries += 1
+            print("working on query number: "+ str(used_queries))
             unionable_table_path = [dl_table_folder + os.sep + tab for tab in unionable_tables if tab != query_table_name]
             unionable_table_path = [path for path in unionable_table_path if os.path.exists(path)]
             
@@ -586,7 +586,7 @@ def gmc_alignmnet_export():
             clusterAlg_2_all_result_query_edges={}
             print("cluster numbers "+str(min_k)+" to "+str(max_k))
             for i in range(min_k, min(max_k, max_k)):
-                print("started "+str(i)+" cluster for "+ query_table_name)
+                #print("started "+str(i)+" cluster for "+ query_table_name)
                 #clusters = KMeans(n_clusters=14).fit(x)
                 clusters = AgglomerativeClustering(n_clusters=i, metric=clustering_metric,
                             compute_distances = True , linkage='average', connectivity = s)
@@ -656,15 +656,18 @@ def gmc_alignmnet_export():
             algorithm_k = max(all_distance, key=all_distance. get) 
             # get the best clustering algorithm as algorithm_k then retrive the result_dict
             final_alignment_4_query=clusterAlg_2_all_result_query_edges[algorithm_k][0]
-            export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment.csv")
-            
+            export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment_Diluted.csv")
+            print("-------------------------------------")
 
 
 
        
             
     end_time = time.time_ns()
+    total_time = int(end_time - start_time)/ 10 **9
 
+    print("Total time for exporting Dust Alignments: ", str(total_time))
+    print("-------------------------------------")
 
 
 # fasttext_model = ft.get_embedding_model()        
@@ -1300,8 +1303,8 @@ def main():
     # print(f"Unionable Query Data Lake File: {args.unionable_q_dl_file}")
     # print(f"Use Numeric Columns: {args.use_numeric_columns}")
 
-    gmc_alignmnet_export()
-    print("GMC Alignment Export completed.")
+    DUST_alignmnet_export()
+    print("DUST Alignment Export completed.")
     
 def initialize_globally():
     global random_seed, embedding_type, model, tokenizer, vec_length, tfidf_vectorizer

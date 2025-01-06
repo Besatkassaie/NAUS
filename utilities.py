@@ -29,7 +29,7 @@ def saveDictionaryAsPickleFile(dictionary, dictionaryPath):
 # load the pickle file as a dictionary
 def loadDictionaryFromPickleFile(dictionaryPath):
     print("Loading dictionary at:", dictionaryPath)
-    if dictionaryPath.rsplit(".")[-1] == "pickle":
+    if (dictionaryPath.rsplit(".")[-1] == "pickle" or dictionaryPath.rsplit(".")[-1] == "pkl"):
         filePointer=open(dictionaryPath, 'rb')
         dictionary = pickle.load(filePointer)
         filePointer.close()

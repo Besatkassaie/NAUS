@@ -26,7 +26,9 @@ def extractVectors(dfs, dataFolder, augment, sample, table_order, run_id, single
         model_path = "results/%s/model_%s_%s_%s_%dsingleCol.pt" % (dataFolder, augment, sample, table_order,run_id)
     else:
         model_path = "results/%s/model_%s_%s_%s_%d.pt" % (dataFolder, augment, sample, table_order,run_id)
-    ckpt = torch.load(model_path, map_location=torch.device('cuda'))
+    ckpt = torch.load(model_path, map_location=torch.device('cpu'))
+    #ckpt = torch.load(model_path, map_location=torch.device('cpu')) #Changed to mps to support metal in m4
+
     # load_checkpoint from sdd/pretain
     model, trainset = load_checkpoint(ckpt)
     return inference_on_tables(dfs, model, trainset, batch_size=1024)
