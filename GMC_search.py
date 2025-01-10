@@ -16,6 +16,10 @@ from collections import Counter
 import utilities as utl
 import pickle5 as p
 import matplotlib.pyplot as plt
+import re
+import nltk
+from nltk.tokenize import RegexpTokenizer
+from nltk.stem import PorterStemmer
 
 
 
@@ -796,10 +800,44 @@ class GMC_Search:
         
     
     
+    @staticmethod
+    def normalize(cell):
+        """apply three normalization  to  a cell
+           1- tokenization
+           2- case folding 
+           3- stemming
+           """
+        stemmer = PorterStemmer()
+           # Tokenizer to split by space, period, underscore, and dash
+        tokenizer = RegexpTokenizer(r'[^ \._\-]+')
+                # Tokenization
+        tokens = tokenizer.tokenize(cell)
+            # Case Folding
+        tokens = GMC_Search.case_fold(tokens)
+            # Stemming
+        stemmed_tokens = GMC_Search.stem(stemmer, tokens)
+        merged_string = ' '.join(stemmed_tokens)
+        return merged_string
+    
+    
+    @staticmethod
+    def case_fold(tokens):
+        """Converts all tokens to lowercase."""
+        return [token.lower() for token in tokens]
+    @staticmethod
+    def stem( stemmer, tokens):
+        """Applies stemming to the tokens."""
+        return [stemmer.stem(token) for token in tokens]
     
     @staticmethod
       # Function to count rows where query_name appears in tables for each unique value of k
     def compute_counts(dataframe, k_column,query_name_column, tables_column):
+        exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+        print("numebr of row before excluding two queries"+ str(len(dataframe)))
+        dataframe = dataframe[~dataframe[query_name_column].isin(exclude)]
+        print("numebr of row after excluding two queries"+ str(len(dataframe)))
+
         result = []
         unique_k_values = dataframe[k_column].unique()
         for k in unique_k_values:
@@ -811,6 +849,8 @@ class GMC_Search:
         return pd.DataFrame(result)
     @staticmethod
     def query_duplicate_returned(result_file, output_file):
+        
+    
         
         # Load the CSV file and read the first four columns, using the first row as column names
         file_path = result_file  # Replace with the path to your CSV file
@@ -931,8 +971,8 @@ class GMC_Search:
                             visited_diluted_waiting_for_set.add(deluted_)    # 
                         
        L= len(visited_diluted_waiting_for_set) # not paired with original
-       snm= 1-(float(L)/G)
-       return snm, L, G      
+       ssnm= 1-(float(L)/G)
+       return ssnm, L, G      
            
     
     @staticmethod 
@@ -1072,17 +1112,54 @@ class GMC_Search:
                             print("excluded query is found")    
         return   results_k     
 
-    @staticmethod
-    def perform_union(q_name, projection_group, query_path_ , table_path_): 
-        # each element in projection group has specific set of 
-        # columns as aligned columns and values are name of unionable tables 
+    @staticmethod 
+    def perform_union_get_size(q_name, aligned_columns_tbl,alignments_,qs, tables, normalize): 
+    # return: dataframe q_name, size of union of all the unionbales with query
         # load the content to dictionaries  
-        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
-        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
-        
-        q_content=qs[q_name]
-        for key, values in projection_group:
-            
+
+        all_tables_size=0
+        union_size=0
+        query_size=len(qs[q_name][0])
+
+
+        for key in aligned_columns_tbl.keys():
+           # key is a set of  query columns and values are table  names 
+           # sort key ascendingly and make a list of columns 
+            lst_query=qs[q_name]
+
+            # Selecting the columns specified by 'key'
+            lst_query_selected_cols = [lst_query[i] for i in list(key)]
+
+            # Transpose the column-major data to row-major for DataFrame creation
+            df_query = pd.DataFrame(data=list(zip(*lst_query_selected_cols)), columns=key)
+            df_all=df_query
+            values=    aligned_columns_tbl [key]
+            # Convert the set to a list and sort it in ascending order
+            sorted_list_q_cols= sorted(list(key))
+            # project the query on sorted_list_q_cols and add records to the union set
+            for tbl in values:
+                # get the aligned columns with sorted_list_q_cols and project on them and
+                condition1 = alignments_['query_table_name'] == q_name
+                condition2 = alignments_['dl_table_name'] == tbl
+                cols_tb=[] # same order as columns in sorted_list_q_cols
+                for qcol in sorted_list_q_cols:
+                    condition3= alignments_['query_column#']==qcol
+                    cols_tb.append(alignments_[condition1 & condition2 & condition3]['dl_column'].values[0])
+                lst_tbl=tables[tbl]
+                all_tables_size=all_tables_size+len(tables[tbl][0])
+                lst_tbl_selected_cols = [lst_tbl[i] for i in cols_tb]
+                df_tbl = pd.DataFrame(data=list(zip(*lst_tbl_selected_cols)), columns=cols_tb)    
+                df_tbl.columns=df_all.columns #doing this to align columns when appending the two dataframes 
+                df_all = pd.concat([df_all, df_tbl], ignore_index=True)
+                # cols_tb has the columns from dl table  
+                # project dl table and append to union_datframe_partition
+                
+
+            if(normalize==1):
+               df_all = df_all.applymap(GMC_Search.normalize) 
+            union_size=union_size+len(df_all.drop_duplicates())
+
+        return (union_size, all_tables_size, query_size)
             
         
         
@@ -1130,11 +1207,13 @@ class GMC_Search:
             
         # find out how many groups of unionable there are in the alignment file for each query: 
         # to do so find the unique combinations of  query_table_name, query_column#  for each query 
-        unique_queries = alignments_['query_table_name'].unique()    
 
-          
+        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
+        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
             
-
+        # Initialize an empty DataFrame with the desired columns
+        columns = ["query", "k", "union_size", "normalized"]
+        df_output = pd.DataFrame(columns=columns)  
         columns_to_load = ['query_name', 'tables', 'k']
         df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
 
@@ -1142,6 +1221,7 @@ class GMC_Search:
         unique_k_values = df_search_results['k'].unique()    
         
         for k_ in unique_k_values:
+              print("k: "+str(k_))
             # Filter the dataframe for the current value of 'k'
               k_df_search_results= df_search_results[df_search_results['k'] == k_]
               #DUST does not create alignemnt for these two queries
@@ -1151,47 +1231,48 @@ class GMC_Search:
               for q in queries_k:
                 # get the unionabe tables 
                 if q in exclude:
-                    print("a quesry that should not exist!!!")
+                    print("a query that should not exist!!!")
                 else: 
-                    q_k_df_search_results= df_search_results[df_search_results['query_name'] == q]
+                    q_k_df_search_results= k_df_search_results[k_df_search_results['query_name'] == q]
                     q_unionable_tables=q_k_df_search_results["tables"]
-                    
-                    projection_groups={}
-                    projection_columns={}
-                    unionable_size_projection_groups={}
-
-                    for dl_t in q_unionable_tables:
+                    print("query table: "+q)
+                    aligned_columns_tbl={}
+                    q_unionable_tables_list= [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
+                    for dl_t in q_unionable_tables_list:
                     # get from alignmnet which columns are aligned for each table 
                       condition1 = alignments_['query_table_name'] == q
                       condition2 = alignments_['dl_table_name'] == dl_t
 
                       # Filter rows that satisfy both conditions
                       filtered_align = alignments_[condition1 & condition2]
-                      for index_t, row in filtered_align.iterrows():
-                             q_col_ = row['query_column#']
-                             dl_col = row['dl_column#']   
-                             projection_columns[dl_t].add((q_col_,dl_col))
-                                                                       
-                      # for every dl_table we have a list of columns (q_com, dl_col) that are projected on 
-                      # Build the reverse mapping:  value -> keys (x, y)
-                      for key, value_set in projection_columns.items():
-                         for value in value_set:
-                            # value is a set of tuples that are aligned and key is the list of table names  
-                            projection_groups[value].add(key)
-                            
-                    # now for each group compute that union size 
+                      
+                      
+                      aligned_q_cols =tuple (sorted(set(filtered_align['query_column#'])))
+                      if aligned_q_cols in aligned_columns_tbl.keys():
+                        aligned_columns_tbl[aligned_q_cols].add(dl_t)
+                      else:   
+                        aligned_columns_tbl[aligned_q_cols]={dl_t}
+                      #aligned_columns_tbl  is a dictionary from set of columns in query to  datalake table names getting union on those columns  
                 #perform union
-                GMC_Search.perform_union(q,projection_groups, query_path_ , table_path_)    
+                    (union_size, all_tables_size, query_size)=GMC_Search.perform_union_get_size(q, aligned_columns_tbl,alignments_, qs , tbles_, normalized)    
                     
-                       
+                    new_row = {
+                            "query": q,
+                            "query_size":query_size, 
+                            "k": k_, 
+                            "union_size":union_size,
+                            "all_tables_size":all_tables_size,
+                            "normalized":  normalized
+                         }       
 
-                    
+                    df_output = pd.concat([df_output, pd.DataFrame([new_row])], ignore_index=True)
+    
                 
         
+        df_output.to_csv(output_file, index=False)
         
         
         
-                print("thete")
 
     
     @staticmethod 
@@ -2018,185 +2099,115 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
       
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/DUST_Alignment_Diluted.csv"
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted_restricted.csv"
     
-    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_diluted.csv'
+    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_diluted_restricted.csv'
 
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_50_Starmie_output_diluted.pkl"     
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"     
     
-    
-    
-    if False:
-    
-        search_params = {"keyword": "example", "max_results": 10}
+    search_params = {"keyword": "example", "max_results": 10}
 
-        gmc_search = GMC_Search(alignment_Dust, search_params)
+    gmc_search = GMC_Search(alignment_Dust, search_params)
 
-        # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
-        # Starmie on Santos returning maximum 50 unionable dl tables  for each query
-        gmc_search.load_data()
-        gmc_search.load_unionable_tables(first_50_starmie) 
+    # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
+    # Starmie on Santos returning maximum 50 unionable dl tables  for each query
+    gmc_search.load_data()
+    gmc_search.load_unionable_tables(first_50_starmie) 
         
-        
-    
-        
-        
-        
-        #generate and persist alignments for diversity function 
-        # first check if the file exist if not creat it by calling function 
-        file_exists = os.path.exists(alignment_for_diversity_gmc_file)
-        if file_exists:
-            print("alignments for diversity file exists")
-        else:
-            initialize_globally() # for DUST 
-            gmc_search.generate_alignment_for_diversity( alignment_for_diversity_gmc_file)
-                
-
-        gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file()   
-        # Calculate unionability
-
-        uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_unionability_scores_diluted.csv"
-        file_exists = os.path.exists(uionability_file_path)
-        if not file_exists:
-            unionability_scores = gmc_search.calculate_unionability()
-
-            unionability_scores.to_csv(
-                uionability_file_path,
-                index=False,  # Do not include the index in the CSV
-                columns=unionability_scores.columns,  # Use DataFrame columns for the CSV
-                sep=",",  # Use a comma as the separator
-                quotechar='"',  # Handle quoted strings
-                encoding="utf-8",  # Set encoding
-            )
-        else: 
-                unionability_scores= pd.read_csv(
-                uionability_file_path,
-                sep=",",          # Use a comma as the delimiter
-                header=0)        # Treat the first row as the header (column names        )
-            
-        gmc_search.unionability_scores=unionability_scores
-        
-        
-        diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_diversity_scores_diluted.csv"
-        file_exists = os.path.exists(diveristy_file_path)
-        if not file_exists:
-    # Save DataFrame to CSV
-        
-            diversity_scores = gmc_search.calculate_diversity(gmc_search.alignment_for_diversity_gmc_file)
-
-            diversity_scores.to_csv(
-                diveristy_file_path,
-                index=False,  # Do not include the index in the CSV
-                columns=diversity_scores.columns,  # Use DataFrame columns for the CSV
-                sep=",",  # Use a comma as the separator
-                quotechar='"',  # Handle quoted strings
-                encoding="utf-8",  # Set encoding
-            )
-        else: 
-            diversity_scores= pd.read_csv(
-                diveristy_file_path,
-                sep=",",          # Use a comma as the delimiter
-                header=0) 
-            
-        gmc_search.diversity_scores=diversity_scores  
-
-        # create the represenation for tables 
-        #gmc_search.vectorize_tables()
-
-        output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv'
-        for i in range(2, 11): 
-                gmc_search.k=i
-
-                results = gmc_search.execute_search()
-                # Define the output CSV file path
-                
-
-            # Write the dictionary to a CSV file
-                if os.path.exists(output_csv_file):
-                    with open(output_csv_file, mode='a', newline='') as file:
-                        writer = csv.writer(file)
-                        # Write the data
-                        for query_name, (result, secs) in results.items():
-                            # Join the list of results into a string, if needed
-                            result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                            writer.writerow([query_name, result_str,secs,gmc_search.k])
-                else: 
-                    with open(output_csv_file, mode='w', newline='') as file:
-                        writer = csv.writer(file)
-                        writer.writerow(['query_name', 'tables','gmc_execution_time', 'k'])
-
-                        # Write the data
-                        for query_name, (result, secs) in results.items():
-                            # Join the list of results into a string, if needed
-                            result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                            writer.writerow([query_name, result_str,secs,gmc_search.k])
-                        # Write the header
-
+    #generate and persist alignments for diversity function 
+    # first check if the file exist if not creat it by calling function 
+    file_exists = os.path.exists(alignment_for_diversity_gmc_file)
+    if file_exists:
+        print("alignments for diversity file exists")
+    else:
+        initialize_globally() # for DUST 
+        gmc_search.generate_alignment_for_diversity( alignment_for_diversity_gmc_file)
             
 
+    gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file()   
+    # Calculate unionability
 
-#             file=GMC_Search.compute_metrics(results, "gmc","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/evaluation_metrics_gmc.csv",gmc_search.k, gmc_search.unionability_scores, gmc_search.diversity_scores)
-#             GMC_Search.query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/queryDuplicate_results.csv")
-#             GMC_Search.Avg_executiontime_by_k("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv", "GMC")
+    uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_unionability_scores_diluted_restricted.csv"
+    file_exists = os.path.exists(uionability_file_path)
+    if not file_exists:
+        unionability_scores = gmc_search.calculate_unionability()
 
-#         # evaluate the results 
-# # count duplicate query 
-#             GMC_Search.Cal_P_R_Map("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results.csv","data/santos/santosUnionBenchmark.pickle","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_byQuery.csv" )
+        unionability_scores.to_csv(
+            uionability_file_path,
+            index=False,  # Do not include the index in the CSV
+            columns=unionability_scores.columns,  # Use DataFrame columns for the CSV
+            sep=",",  # Use a comma as the separator
+            quotechar='"',  # Handle quoted strings
+            encoding="utf-8",  # Set encoding
+        )
+    else: 
+            unionability_scores= pd.read_csv(
+            uionability_file_path,
+            sep=",",          # Use a comma as the delimiter
+            header=0)        # Treat the first row as the header (column names        )
+        
+    gmc_search.unionability_scores=unionability_scores
+    
+    
+    diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_diversity_scores_diluted_restricted.csv"
+    file_exists = os.path.exists(diveristy_file_path)
+    if not file_exists:
+# Save DataFrame to CSV
+    
+        diversity_scores = gmc_search.calculate_diversity(gmc_search.alignment_for_diversity_gmc_file)
+
+        diversity_scores.to_csv(
+            diveristy_file_path,
+            index=False,  # Do not include the index in the CSV
+            columns=diversity_scores.columns,  # Use DataFrame columns for the CSV
+            sep=",",  # Use a comma as the separator
+            quotechar='"',  # Handle quoted strings
+            encoding="utf-8",  # Set encoding
+        )
+    else: 
+        diversity_scores= pd.read_csv(
+            diveristy_file_path,
+            sep=",",          # Use a comma as the delimiter
+            header=0) 
+        
+    gmc_search.diversity_scores=diversity_scores  
+
+    # create the represenation for tables 
+    #gmc_search.vectorize_tables()
+
+    output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted_restricted.csv'
+    for i in range(2, 11): 
+            gmc_search.k=i
+
+            results = gmc_search.execute_search()
+            # Define the output CSV file path
+            
+
+        # Write the dictionary to a CSV file
+            if os.path.exists(output_csv_file):
+                with open(output_csv_file, mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    # Write the data
+                    for query_name, (result, secs) in results.items():
+                        # Join the list of results into a string, if needed
+                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                        writer.writerow([query_name, result_str,secs,gmc_search.k])
+            else: 
+                with open(output_csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['query_name', 'tables','gmc_execution_time', 'k'])
+
+                    # Write the data
+                    for query_name, (result, secs) in results.items():
+                        # Join the list of results into a string, if needed
+                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                        writer.writerow([query_name, result_str,secs,gmc_search.k])
+                    # Write the header
+
+        
 
 
-#             GMC_Search.analyse("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_ByQuery.csv","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_byQuery.csv")
 
     
-    if False:
-        # evaluate Starmie 50 results at different k 
-        # unionable reuslts are loaded here:
-        first_50_starmie_with_scores="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_N_Starmie_output_WITHSCORE_diluted.pkl"
-        gmc_search.load_unionable_tables(first_50_starmie_with_scores) 
-        #ground truth is here  
-        gtruth="data/santos/santosUnionBenchmark.pickle"
-        #now convert the format of first_50_starmie_with_scores to gmc result format in csv: query_name, tables, execution time, k
-        # here we put zero for all execution time for now 
-        # Iterate over the dictionary and sort the values
-        sorted_unionable_data = {}
-        for query_name, tuples_list in gmc_search.unionable_data.items():
-            # Sort the list of tuples based on the second element
-            sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
-            # Store the sorted list in a new dictionary
-            sorted_unionable_data[query_name] = sorted_list    
-        starmie_search="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/starmie/starmie_results_diluted.csv"    
-        # now for k =2 to 20 create the file 
-        # Define the output CSV file path
-        output_csv_file = starmie_search
-            # Open the CSV file for writing
-        with open(output_csv_file, mode="a", newline="") as csv_file:
-            # Define the CSV writer
-            csv_writer = csv.writer(csv_file)
-            
-            # Write the header row
-            csv_writer.writerow(["query_name", "tables", "execution_time", "k"])
-            for k_ in range(2, 11):
-            # Iterate over the sorted dictionary
-                    for query_name, tuples_list in sorted_unionable_data.items():
-                        utables=[]
-                        for i in range(0, k_):
-                            # Extract the first value of the tuple
-                            utables.append(tuples_list[i][0])
-                            
-                            # Write the row with k = 0 and time = 0
-                        csv_writer.writerow([query_name, utables, 0, k_])
+    
    
-   # make sure that we do not have extra character in result if you have remove them  
-   # GMC_Search.Cal_P_R_Map("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted.csv","data/santos/santosUnionBenchmark.pickle","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_results_byQuery_diluted.csv" )
-    GMC_Search.query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv", "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_duplicate_diluted.csv")
-
-    # GMC_Search.compute_syntactic_novelty_measure_simplified("data/santos/santosUnionBenchmark.pickle",
-    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted.csv",
-    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_ssnm_diluted_avg.csv", 
-    #                                               "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/penalized_ssnm_diluted_whole.csv")    
-    # print("next ...")    
-    # GMC_Search.compute_syntactic_novelty_measure_simplified("data/santos/santosUnionBenchmark.pickle",
-    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted.csv",
-    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_ssnm_diluted_avg.csv", 
-    #                                              "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_ssnm_diluted_whole.csv")    
-
-    

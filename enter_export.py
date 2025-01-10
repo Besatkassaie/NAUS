@@ -31,6 +31,6 @@ logging.basicConfig(level=logging.DEBUG)
 args2 = ['--encoder', 'cl', '--benchmark', 'santos', 
         '--augment_op', 'drop_col','--sample_meth', 'tfidf_entity',
         '--matching', 'exact',   '--table_order', 'column',
-        '--run_id', '0' ,   '--K','50', '--threshold', '0.7']
+        '--run_id', '0' ,   '--K','20', '--threshold', '0.7', '--restrict', '1']
 
 test_naive_search_export.main(args2)

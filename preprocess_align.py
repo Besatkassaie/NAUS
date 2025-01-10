@@ -426,7 +426,7 @@ def DUST_alignmnet_export():
     dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
     query_table_folder = r"data" + os.sep + benchmark_name + os.sep + "query"
     #groundtruth_file = r"groundtruth" + os.sep + benchmark_name + "_union_groundtruth.pickle"
-    groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/groundtruth/top_50_Starmie_output_diluted.pkl"
+    groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"
     query_tables = glob.glob(query_table_folder + os.sep + "*.csv")
     groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
     # # limit the ground truth to only one query and 10 unionables 
@@ -656,7 +656,7 @@ def DUST_alignmnet_export():
             algorithm_k = max(all_distance, key=all_distance. get) 
             # get the best clustering algorithm as algorithm_k then retrive the result_dict
             final_alignment_4_query=clusterAlg_2_all_result_query_edges[algorithm_k][0]
-            export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment_Diluted.csv")
+            export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment_Diluted_restricted.csv")
             print("-------------------------------------")
 
 

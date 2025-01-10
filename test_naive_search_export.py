@@ -65,11 +65,12 @@ def main(args2=None):
     parser.add_argument("--scal", type=float, default=1.00)
     # mlflow tag
     parser.add_argument("--mlflow_tag", type=str, default=None)
+    parser.add_argument("--restrict", type=int, default=0) # if is 1 means that restict your datalake only to unionables based on a ground truth 
 
     hp = parser.parse_args(args=args2)
 
     # mlflow logging
-    for variable in ["encoder", "benchmark", "augment_op", "sample_meth", "matching", "table_order", "run_id", "single_column", "K", "threshold", "scal"]:
+    for variable in ["encoder", "benchmark", "augment_op", "sample_meth", "matching", "table_order", "run_id", "single_column", "K", "threshold", "scal", "restrict"]:
         mlflow.log_param(variable, getattr(hp, variable))
 
     if hp.mlflow_tag:
@@ -117,7 +118,12 @@ def main(args2=None):
         # if query[0] in bucket:
             query_start_time = time.time()
             if hp.matching == 'exact':
-                qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold)
+                if(hp.restrict==0):
+                  qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold)
+                else:
+                  print("working on restricted data")
+                  qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold, restrict=1 , gth="data/santos/santosUnionBenchmark.pickle")
+  
             else: # Bounds matching
                 qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)
             res = []
@@ -125,11 +131,11 @@ def main(args2=None):
                 tmp = (tpl[0],tpl[1])
                 res.append(tmp)
                 #with score
-                #returnedResults[query[0]] = [(r[1],r[0]) for r in res]
-                returnedResults[query[0]] = [r[1] for r in res]
+                returnedResults[query[0]] = [(r[1],r[0]) for r in res]
+                #returnedResults[query[0]] = [r[1] for r in res]
             query_times.append(time.time() - query_start_time)
     print(returnedResults)        
-    with open("top_50_Starmie_output_diluted.pkl", 'wb') as file:
+    with open("top_20_Starmie_output_diluted_restricted_withscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults, file)   
     # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
     print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))

@@ -5,6 +5,7 @@ import heapq
 from munkres import Munkres, make_cost_matrix, DISALLOWED
 from numpy.linalg import norm
 from bounds import verify, upper_bound_bm, lower_bound_bm, get_edges
+import pickle5 as p
 
 class NaiveSearcher(object):
     def __init__(self,
@@ -23,7 +24,7 @@ class NaiveSearcher(object):
         print("From %d total data-lake tables, scale down to %d tables" % (len(tables), len(self.tables)))
         tfile.close()
 
-    def topk(self, enc, query, K, threshold=0.6):
+    def topk(self, enc, query, K, threshold=0.6, restrict=0, gth=""):
         ''' Exact top-k cosine similarity with full bipartite matching
         Args:
             enc (str): choice of encoder (e.g. 'sato', 'cl', 'sherlock') -- mainly to check if the encoder is 'sato'
@@ -47,10 +48,29 @@ class NaiveSearcher(object):
                 score = sherlockScore + satoScore
                 scores.append((score, table[0]))
         else:
-            scores = [(self._verify(query[1], table[1], threshold), table[0]) for table in self.tables]
+            if restrict==0:
+                scores = [(self._verify(query[1], table[1], threshold), table[0]) for table in self.tables]
+            else:
+                #open the bench mark  
+                print("verifying restricted data")
+                groundtruth =self.loadDictionaryFromPickleFile(gth)
+                Unionables=groundtruth[query[0]]
+                # for this query find the unionable tables names and stor them in U and if table[0] is in unionables then call verify     
+                scores = [(self._verify(query[1], table[1], threshold), table[0]) for table in self.tables if table[0] in Unionables]
         scores.sort(reverse=True)
         return scores[:K]
-
+    def loadDictionaryFromPickleFile(self, dictionaryPath):
+        ''' Load the pickle file as a dictionary
+        Args:
+            dictionaryPath: path to the pickle file
+        Return: dictionary from the pickle file
+        '''
+        filePointer=open(dictionaryPath, 'rb')
+        dictionary = p.load(filePointer)
+        filePointer.close()
+        return dictionary
+    
+    
     def topk_bounds(self, enc, query, K, threshold=0.6):
         ''' Algorithm: Pruning with Bounds
             Bounds Techique: reduce # of verification calls

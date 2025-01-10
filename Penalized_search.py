@@ -468,16 +468,16 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted.csv"
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_50_Starmie_output_diluted.pkl"    
-    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted.csv"
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted_restricted.csv"
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"    
+    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted_restricted.csv"
 
     
     
     for i in range(2,11):   
         penalize_search = Penalized_Search()
-        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_lexical_distance.csv"
-        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_similarity.csv"
+        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_lexical_distance_restricted.csv"
+        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_similarity_restricted.csv"
         penalize_search.load_column_alignment_data(alignment_Dust)
         penalize_search.load_unionable_tables(first_50_starmie)   
         k=i     
