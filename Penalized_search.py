@@ -468,20 +468,20 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted_restricted.csv"
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"    
-    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted_restricted.csv"
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted04_restricted.csv"
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 
     
     
     for i in range(2,11):   
         penalize_search = Penalized_Search()
-        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_lexical_distance_restricted.csv"
-        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_similarity_restricted.csv"
+        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_lexical_distance_restricted_dilut04.csv"
+        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_similarity_restricted_dilut04.csv"
         penalize_search.load_column_alignment_data(alignment_Dust)
         penalize_search.load_unionable_tables(first_50_starmie)   
         k=i     
-        p_degree=1            
+        p_degree=1          
         relsutls=penalize_search.perform_search_optimized(p_degree,k)
         result_dic={}
 
@@ -509,9 +509,4 @@ if __name__ == "__main__":
                         result_str = ', '.join(result) if isinstance(result, list) else str(result)
                         writer.writerow([key_[0], result_str,secs,key_[1],key_[2] ])
                         result_dic[key_[0]]=(result,secs)
-        # Convert the dictionary into a DataFrame
-        # prepare the result file for computing metrics: 
-        # file=GMC_Search.compute_metrics(result_dic, "penal","/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/evaluation_metrics_penalized.csv",k, unionability_scores, diversity_scores)
-        # GMC_Search.query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize.csv", "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/query_dup_in_result_penalize.csv")
-        # GMC_Search.Avg_executiontime_by_k("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize.csv", "Penalized")
-        # GMC_Search.Cal_P_R_Map("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize.csv","data/santos/santosUnionBenchmark.pickle", "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_ByQuery.csv")
+       

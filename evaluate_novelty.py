@@ -4,7 +4,11 @@ import pandas as pd
 from naive_search_Novelty import NaiveSearcherNovelty
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
-
+import numpy as np
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit
+from pyspark.sql.types import StructType, StructField, StringType, ArrayType
+import pyspark.sql.functions as F
 
 #This file containes all the metrics used in our paper to evalute the novelty/diversity 
 #of the reranking 
@@ -260,7 +264,7 @@ def Cal_P_R_Map(resultFile, gtPath, output_file_):
         return None
     
 
-def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_):
+def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_, remove_dup=0):
         """
         this function only makes sense to be run over diluted dataset
         we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
@@ -287,8 +291,8 @@ def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result
             
             # Calculate the average SNM using the custom function
             print("k is: "+str(k))
-            avg_snm, invalid_snm = get_ssnm_average(subset_df, groundtruth)
-            temp_whole=get_ssnm_whole(subset_df, groundtruth, k)
+            avg_snm, invalid_snm = get_ssnm_average(subset_df, groundtruth, remove_dup)
+            temp_whole=get_ssnm_whole(subset_df, groundtruth, k, remove_dup)
             results_whole.extend(temp_whole)
             # Append the result as a dictionary
             results.append({'k': k, 'avg_snm': avg_snm, 'q_invalid_snm:':invalid_snm})
@@ -309,7 +313,7 @@ def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result
         
         print("caluculate Simplified SNM for the input result file for different k")
 
-def get_ssnm_average(df_k, groundtruth_dic):
+def get_ssnm_average(df_k, groundtruth_dic, remove_dup):
         """we go through all queries except for these two that do not exist in dust alignment 
         workforce_management_information_a.csv
         workforce_management_information_b.csv
@@ -324,7 +328,7 @@ def get_ssnm_average(df_k, groundtruth_dic):
                         if q not in exclude: 
                           df_k_q = df_k[df_k['query_name'] == q]
                           groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm,L, G=get_ssnm_query(df_k_q, groundtruth_dic_q)
+                          q_snm,L, G=get_ssnm_query(df_k_q, groundtruth_dic_q, remove_dup)
                           if(q_snm==-1):
                            q_not_valid_snm.add(q)
                           else:
@@ -335,7 +339,7 @@ def get_ssnm_average(df_k, groundtruth_dic):
                             print("excluded query is found")    
         return  (float(snm_total)/ float(number_queries), q_not_valid_snm) 
        
-def get_ssnm_whole(df_k, groundtruth_dic, k):
+def get_ssnm_whole(df_k, groundtruth_dic, k, remove_duplicates):
         """we go through all queries except for these two that do not exist in dust alignment:
         workforce_management_information_a.csv
         workforce_management_information_b.csv
@@ -348,18 +352,21 @@ def get_ssnm_whole(df_k, groundtruth_dic, k):
                         if q not in exclude: 
                           df_k_q = df_k[df_k['query_name'] == q]
                           groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm, L, G=get_ssnm_query(df_k_q, groundtruth_dic_q)
+                          q_snm, L, G=get_ssnm_query(df_k_q, groundtruth_dic_q, remove_duplicates)
                           results_k.append({'k': k, 'query': q,'snm': q_snm, 'L':L, 'G':G})
                         else: 
                             print("excluded query is found")    
         return   results_k    
     
     
-def get_ssnm_query(df_q, groundtruth_tables):
+def get_ssnm_query(df_q, groundtruth_tables, remove_duplicates):
        # list of unionable tables in groundtruth
      
        
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+
+                     
+       
        tables_result_set=set(tables_result_list)
        #these two holds the expected pair name of the visited file names which are not yet paired   
        visited_diluted_waiting_for_set=set()
@@ -390,6 +397,17 @@ def get_ssnm_query(df_q, groundtruth_tables):
                             visited_diluted_waiting_for_set.add(deluted_)    # 
                         
        L= len(visited_diluted_waiting_for_set) # not paired with original
+       if remove_duplicates==1:
+           #consider blatant duplicates in the computation
+           query_name=df_q['query_name'].tolist()[0]
+           dilutedname_query_name=query_name.replace('.csv', '_dlt.csv')
+           if(query_name in tables_result_list and dilutedname_query_name in tables_result_list):
+               L=L+1
+           if(query_name in tables_result_list and dilutedname_query_name  not in tables_result_list):
+               L=L+1
+       
+       
+       
        ssnm= 1-(float(L)/G)
        return ssnm, L, G   
    
@@ -403,7 +421,7 @@ def is_diluted_version(fname):
         return -1    
     
     
-def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_):
+def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_, remove_duplicate=0):
         """
         this function only makes sense to be run over diluted dataset
         we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
@@ -430,8 +448,8 @@ def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_r
             
             # Calculate the average SNM using the custom function
             print("k is: "+str(k))
-            avg_snm, invalid_snm = get_snm_average(subset_df, groundtruth)
-            temp_whole=get_snm_whole(subset_df, groundtruth, k)
+            avg_snm, invalid_snm = get_snm_average(subset_df, groundtruth, remove_duplicate)
+            temp_whole=get_snm_whole(subset_df, groundtruth, k, remove_duplicate)
             results_whole.extend(temp_whole)
             # Append the result as a dictionary
             results.append({'k': k, 'avg_snm': avg_snm, 'q_invalid_snm:':invalid_snm})
@@ -452,7 +470,7 @@ def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_r
         
         print("caluculate SNM for the input result file for different k")   
        
-def get_snm_average(df_k, groundtruth_dic):
+def get_snm_average(df_k, groundtruth_dic, remove_duplicate):
         """we go through all queries except for these two that do not exist in dust alignment 
         workforce_management_information_a.csv
         workforce_management_information_b.csv
@@ -467,7 +485,7 @@ def get_snm_average(df_k, groundtruth_dic):
                         if q not in exclude: 
                           df_k_q = df_k[df_k['query_name'] == q]
                           groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm, B, L, G=get_snm_query(df_k_q, groundtruth_dic_q)
+                          q_snm, B, L, G=get_snm_query(df_k_q, groundtruth_dic_q, remove_duplicate)
                           if(q_snm==-1):
                            q_not_valid_snm.add(q)
                           else:
@@ -479,12 +497,15 @@ def get_snm_average(df_k, groundtruth_dic):
         return  (float(snm_total)/ float(number_queries), q_not_valid_snm) 
     
     
-def get_snm_query(df_q, groundtruth_tables):
+def get_snm_query(df_q, groundtruth_tables, remove_duplicates):
        # list of unionable tables in groundtruth
      
        
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
        tables_result_set=set(tables_result_list)
+       
+
+    
        #these two holds the expected pair name of the visited file names which are not yet paired   
        visited_diluted_waiting_for_set=set()
        # the not deluted seen so far
@@ -516,11 +537,23 @@ def get_snm_query(df_q, groundtruth_tables):
                             visited_diluted_waiting_for_set.add(deluted_)    # 
                         
        L= len(visited_diluted_waiting_for_set) # not paired with original
+       if remove_duplicates==1:
+           #consider blatant duplicates in the computation
+           query_name=df_q['query_name'].tolist()[0]
+           dilutedname_query_name=query_name.replace('.csv', '_dlt.csv')
+           if(query_name in tables_result_list and dilutedname_query_name in tables_result_list):
+               if(tables_result_list.index(query_name) < tables_result_list.index(dilutedname_query_name)):
+                       B=B+1
+           if(query_name in tables_result_list and dilutedname_query_name  not in tables_result_list):
+               L=L+1
+       
+       
+       
        snm= 1-((float(B)+float(L))/G)
        return snm, B, L, G             
    
 
-def get_snm_whole(df_k, groundtruth_dic, k):
+def get_snm_whole(df_k, groundtruth_dic, k, remove_duplicate):
         """we go through all queries except for these two that do not exist in dust alignment:
         workforce_management_information_a.csv
         workforce_management_information_b.csv
@@ -533,13 +566,360 @@ def get_snm_whole(df_k, groundtruth_dic, k):
                         if q not in exclude: 
                           df_k_q = df_k[df_k['query_name'] == q]
                           groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm, B, L, G=get_snm_query(df_k_q, groundtruth_dic_q)
+                          q_snm, B, L, G=get_snm_query(df_k_q, groundtruth_dic_q, remove_duplicate)
                           results_k.append({'k': k, 'query': q,'snm': q_snm, 'B':B, 'L':L, 'G':G})
                         else: 
                             print("excluded query is found")    
         return   results_k 
+
+
+
+def can_merge_sequential(row1, row2):
+    """
+    Determine if two rows can be merged.
+    """
+    for val1, val2 in zip(row1, row2):
+        if pd.notna(val1) and pd.notna(val2) and val1 != val2:
+            return False
+    return True
+
+def merge_rows_sequential(row1, row2):
+    """
+    Merge two rows into one.
+    """
+    return [val1 if pd.notna(val1) else val2 for val1, val2 in zip(row1, row2)]
+
+def merge_dataframe_sequential(df):
+    """
+    Merge rows in a DataFrame based on the given logic.
+    """
+    print("performing merge of original size " +str(len(df)))
     
     
+    rows = df.values.tolist()  # Convert to a list of rows for easier manipulation
+    merged = True
+
+    while merged:
+        merged = False
+        skip_indices = set()
+        new_rows = []
+
+        # Process rows efficiently
+        for i in range(len(rows)):
+            print("# number of merged so far "+ str(len(skip_indices)))
+            if i in skip_indices:
+                continue
+            merged_row = rows[i]
+            for j in range(i + 1, len(rows)):  # Only compare rows after the current one
+                if j not in skip_indices and can_merge_sequential(merged_row, rows[j]):
+                    merged_row = merge_rows_sequential(merged_row, rows[j])
+                    skip_indices.add(j)  # Skip merged row
+                    merged = True
+            new_rows.append(merged_row)
+        
+        rows = new_rows  # Update the rows for the next iteration
+
+    # Convert back to a DataFrame
+    print("return from merger")
+    return pd.DataFrame(rows, columns=df.columns)
+    
+    
+def can_merge_rowwise(row):
+    """
+    Row-wise merge logic for Cartesian join.
+    Returns True if two rows can be merged, False otherwise.
+    """
+    row1 = row['row1']
+    row2 = row['row2']
+    for val1, val2 in zip(row1, row2):
+        if pd.notna(val1) and pd.notna(val2) and val1 != val2:
+            return False
+    return True
+
+def merge_rows(row1, row2):
+    """
+    Merge two rows into one.
+    """
+    return [val1 if pd.notna(val1) else val2 for val1, val2 in zip(row1, row2)]
+
+def merge_dataframe(df):
+    """
+    Merge rows in a DataFrame using a Cartesian join for efficiency.
+    """
+    print(f"Performing merge for original DataFrame of size: {len(df)}")
+
+    rows = df.values.tolist()
+    merged = True
+
+    while merged:
+        merged = False
+        print(f"Performing merge for original DataFrame of size: {len(rows)}")
+        # Create a DataFrame for the Cartesian product
+        cartesian_df = pd.DataFrame({
+            'row1': rows,
+        }).merge(pd.DataFrame({
+            'row2': rows,
+        }), how='cross')
+
+        # Apply merge logic row-wise
+        cartesian_df['can_merge'] = cartesian_df.apply(can_merge_rowwise, axis=1)
+
+        # Identify mergeable pairs
+        mergeable_pairs = cartesian_df[cartesian_df['can_merge']]
+
+        if not mergeable_pairs.empty:
+            merged = True
+
+            # Take the first mergeable pair and merge
+            merged_rows = set()
+            new_rows = []
+            for _, row in mergeable_pairs.iterrows():
+                if tuple(row['row1']) not in merged_rows and tuple(row['row2']) not in merged_rows:
+                    new_row = merge_rows(row['row1'], row['row2'])
+                    new_rows.append(new_row)
+                    merged_rows.add(tuple(row['row1']))
+                    merged_rows.add(tuple(row['row2']))
+
+            # Add rows that were not merged
+            for row in rows:
+                if tuple(row) not in merged_rows:
+                    new_rows.append(row)
+
+            rows = new_rows
+
+    # Convert back to a DataFrame
+    print(f"Returning merged DataFrame of size: {len(rows)}")
+    return pd.DataFrame(rows, columns=df.columns)
+
+
+
+def merge_dataframe_spark(df, spark_session=None):
+    """
+    Merges rows in a DataFrame using PySpark. Accepts either pandas or PySpark DataFrame and
+    includes conversion logic.
+    
+    :param df: Input DataFrame (pandas or PySpark)
+    :param spark_session: SparkSession instance (required if input is pandas DataFrame)
+    :return: Merged PySpark DataFrame
+    """
+    # Ensure the input is a Spark DataFrame
+    if spark_session is None:
+        spark_session = SparkSession.builder.appName("MergeRows").master("local[10]"). config("spark.driver.memory", "60g") \
+    .config("spark.executor.memory", "40g") \
+    .config("spark.driver.maxResultSize", "40g")\
+    .getOrCreate()
+    df = spark_session.createDataFrame(df)
+
+   
+    def merge_rows(row1, row2):
+        """
+        Custom logic for merging two rows.
+        """
+        merged_row = []
+        for val1, val2 in zip(row1, row2):
+            if val1 is None and val2 is None:
+                merged_row.append(None)
+            elif val1 is None:
+                merged_row.append(val2)
+            elif val2 is None:
+                merged_row.append(val1)
+            elif val1 == val2:
+                merged_row.append(val1)
+            else:
+                # Return None if values conflict (no merge)
+                return None
+        return merged_row
+
+    # Define a UDF to apply merge_rows logic
+    def merge_udf(row1, row2):
+        merged = merge_rows(row1, row2)
+        return merged
+
+    merge_udf_spark = F.udf(merge_udf, ArrayType(StringType()))
+
+    merged = True
+
+    while merged:
+        # Perform Cartesian join
+        cartesian_df = df.alias("row1").crossJoin(df.alias("row2"))
+
+        # Apply merge_rows logic row-wise
+        cartesian_df = cartesian_df.withColumn(
+            "merged",
+            merge_udf_spark(
+                F.struct(*[col(f"row1.{c}") for c in df.columns]),
+                F.struct(*[col(f"row2.{c}") for c in df.columns])
+            )
+        )
+        print("merged ")
+        # Separate merged rows and unmerged rows
+        merged_rows_ = cartesian_df.filter(cartesian_df["merged"].isNotNull()).select("merged").distinct()
+        merged_rows=merged_rows_.collect()
+        unmerged_rows = df.subtract(
+            merged_rows.selectExpr([f"merged[{i}] AS {col}" for i, col in enumerate(df.columns)])
+        )
+
+        # Combine merged and unmerged rows
+        df = merged_rows.union(unmerged_rows)
+
+        # If no new merges occurred, stop the loop
+        if merged_rows.count() == 0:
+            merged = False
+
+    # Convert back to PySpark DataFrame format
+    return df.select([F.col(f"merged[{i}]").alias(df.columns[i]) for i in range(len(df.columns))])
+
+
+def perform_concat(q_name,dl_t_name,filtered_align,df_query,df_dl, normalized):
+    """This function do a special concat and retrun the result as dataframe"""   
+    print("performing concat for datalake table: "+dl_t_name)
+    q_num_columns = df_query.shape[1]
+    #retrive tuples (q_col#, dl_col#) from alignamnet
+    
+    # Create a list of tuples (query_column#, dl_column)
+    aligned_tuple_list = [(row['query_column#'], row['dl_column']) for _, row in filtered_align.iterrows()]
+
+    # Sort the list by the first element of each tuple (query_column#)
+    sorted_tuple_list = sorted(aligned_tuple_list, key=lambda x: x[0])
+    mapping = dict(sorted_tuple_list)
+    
+    # Mapping from q_df column indices to dl_df column names
+    #mapping = {0: 'a', 1: 'b'}  # Map q_df column 0 to dl_df column 'a', column 1 to 'b'
+
+    # Create a new DataFrame for dl_df with columns arranged as per mapping
+    mapped_dl_df = pd.DataFrame()
+
+    for col_index_q in range(q_num_columns):
+         q_column_name = df_query.columns[col_index_q]
+         if col_index_q in mapping:
+            dl_col = mapping[col_index_q]
+            mapped_dl_df[q_column_name]= df_dl.iloc[:, dl_col]
+         else:
+            mapped_dl_df[q_column_name] = np.nan # Column doesn't exist in  mapping
+
+
+    # Concatenate q_df and the newly arranged dl_df
+    result_df = pd.concat([df_query, mapped_dl_df], axis=0)
+    if(normalized==1):
+               print("performing normalization")
+               result_df = result_df.applymap(normalize) 
+    # Reset index to make it consistent
+    result_df.reset_index(drop=True, inplace=True)
+    return result_df
+    
+    
+    
+def compute_union_size_with_null(result_file, output_file, alignments_file, query_path_ , table_path_, normalized=0):
+        """computes  union size between query table and data lake tables
+           result_file has at least columns: query_name, tables, and k  
+           alignments is alignemnts betweeen  columns of  query and tables  has query_table_name, query_column, query_column#, dl_table_name, dl_column#, dl_column
+           simple version means that we do not use outer union here so q, t1 and q,t2 might have different alignments which makes them distinct in counting
+           query_path_ and table_path_ are the content of the tables if it is for raw version we deal differently than  for normlized version 
+           normalized  0 means we are deeling with raw content of the tables 1 means that the content of each cell is normalized  
+        """
+        try:
+            # Load the CSV file into a pandas DataFrame
+               alignments_ = pd.read_csv(alignments_file)
+
+            # Verify that the required columns are present
+               required_columns = ['query_table_name', 'query_column', 'query_column#',
+                                'dl_table_name', 'dl_column#', 'dl_column']
+               if not all(column in alignments_.columns for column in required_columns):
+                missing_columns = [col for col in required_columns if col not in alignments_.columns]
+                raise ValueError(f"Missing required columns in data: {missing_columns}")
+
+               print("alignments_file loaded successfully")
+        
+        except FileNotFoundError:
+            print(f"Error: File not found at {alignments_file}")
+        
+        except ValueError as e:
+            print(f"Error: {e}")
+        
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            
+            
+        # find out how many groups of unionable there are in the alignment file for each query: 
+        # to do so find the unique combinations of  query_table_name, query_column#  for each query 
+
+        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
+        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
+            
+        # Initialize an empty DataFrame with the desired columns
+        columns = ["query", "k", "null_union_size", "normalized"]
+        df_output = pd.DataFrame(columns=columns)  
+        columns_to_load = ['query_name', 'tables', 'k']
+        df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
+
+        # Get the unique values of 'k' in the dataframe
+        unique_k_values = df_search_results['k'].unique()    
+        
+        for k_ in [2,3,4]:
+              print("k: "+str(k_))
+            # Filter the dataframe for the current value of 'k'
+              k_df_search_results= df_search_results[df_search_results['k'] == k_]
+              #DUST does not create alignemnt for these two queries
+              exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+              queries_k = k_df_search_results['query_name'].unique()
+              for q in queries_k:
+                # get the unionabe tables 
+                if q in exclude:
+                    print("a query that should not exist!!!")
+                else: 
+                    q_k_df_search_results= k_df_search_results[k_df_search_results['query_name'] == q]
+                    q_unionable_tables=q_k_df_search_results["tables"]
+                    print("query table: "+q)
+                    q_unionable_tables_list= [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
+                    lst_query=qs[q]
+                    # Create column names as the indices of the inner lists
+                    columns_ = [i for i in range(len(lst_query))]
+
+                     # Transpose the column-major data to row-major for DataFrame creation
+                    df_query = pd.DataFrame(data=list(zip(*lst_query)), columns=columns_)
+                    #intially has tha same column as the query but grow horizontally and vertically
+                    df_constructed_table=df_query
+                    print("number of rows in the query dataframe+ "+str(len(df_query)))
+
+                    for dl_t in q_unionable_tables_list:
+                    # get from alignmnet which columns are aligned for each table 
+                      condition1 = alignments_['query_table_name'] == q
+                      condition2 = alignments_['dl_table_name'] == dl_t
+
+                      # Filter rows that satisfy both conditions
+                      filtered_align = alignments_[condition1 & condition2]
+                      # get datalake table and make if dataframe
+                      dl_list=tbles_[dl_t]
+                      columns_dl= [i for i in range(len(dl_list))]
+                      df_dl = pd.DataFrame(data=list(zip(*dl_list)), columns=columns_dl)
+
+
+                      print("number of rows in the concatinated dataframe+ "+str(len(df_constructed_table)))
+                      df_constructed_table=perform_concat(q,dl_t,filtered_align,df_constructed_table,df_dl, normalized )
+                      union_size=len(df_constructed_table.drop_duplicates())
+
+                    # union_result_null=merge_dataframe_spark(df_constructed_table)
+                    
+                    columns = ["query", "k", "null_union_size", "normalized"]
+
+                    print ("done with the merge")
+                    new_row = {
+                            "query": q,
+                            "k": k_, 
+                            "null_union_size":union_size,
+                            "all_tables_size_bofore_duplicate":df_constructed_table.shape[0],
+                            "normalized":  normalized
+                         }       
+
+                    df_output = pd.concat([df_output, pd.DataFrame([new_row])], ignore_index=True)
+    
+                
+        
+        df_output.to_csv(output_file, index=False)
+        
+        
+        
 def compute_union_size_simple(result_file, output_file, alignments_file, query_path_ , table_path_, normalized=0):
         """computes  union size between query table and data lake tables
            result_file has at least columns: query_name, tables, and k  
@@ -635,7 +1015,8 @@ def compute_union_size_simple(result_file, output_file, alignments_file, query_p
     
                 
         
-        df_output.to_csv(output_file, index=False)
+        df_output.to_csv(output_file, index=False)        
+        
               
 
 def perform_union_get_size(q_name, aligned_columns_tbl,alignments_,qs, tables, normalize): 
@@ -697,12 +1078,18 @@ def normalize(cell):
            # Tokenizer to split by space, period, underscore, and dash
         tokenizer = RegexpTokenizer(r'[^ \._\-]+')
                 # Tokenization
-        tokens = tokenizer.tokenize(cell)
-            # Case Folding
-        tokens = case_fold(tokens)
-            # Stemming
-        stemmed_tokens = stem(stemmer, tokens)
-        merged_string = ' '.join(stemmed_tokens)
+        merged_string=cell        
+        try:
+            tokens = tokenizer.tokenize(cell)
+                # Case Folding
+            tokens = case_fold(tokens)
+                # Stemming
+            stemmed_tokens = stem(stemmer, tokens)
+            merged_string = ' '.join(stemmed_tokens)
+        except Exception as e:
+                print("\033[31m exception happeded in normalization\033[0m")
+                if(cell==np.nan):
+                    merged_string=cell
         return merged_string     
     
 def case_fold(tokens):

@@ -33,6 +33,8 @@ def extractVectors(dfs, dataFolder, augment, sample, table_order, run_id, single
     model, trainset = load_checkpoint(ckpt)
     return inference_on_tables(dfs, model, trainset, batch_size=1024)
 
+
+
 def get_df(dataFolder):
     ''' Get the DataFrames of each table in a folder
     Args:
@@ -43,7 +45,11 @@ def get_df(dataFolder):
     dataFiles = glob.glob(dataFolder+"/*.csv")
     dataDFs = {}
     for file in dataFiles:
-        df = pd.read_csv(file,lineterminator='\n')
+        if "ugen_v2" in file: # added for ugen file 
+           print(f"reading file: {file}")
+           df= pd.read_csv(file, sep=';')
+        else:
+           df = pd.read_csv(file,lineterminator='\n')
         if len(df) > 1000:
             # get first 1000 rows
             df = df.head(1000)

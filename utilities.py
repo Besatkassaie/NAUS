@@ -40,6 +40,65 @@ def loadDictionaryFromPickleFile(dictionaryPath):
     return dictionary
 
 
+
+
+
+def load_alignment(alignmnet_file):
+        """
+        Load data from the specified source.
+
+        The schema for the data is expected as:
+        ['query_table_name', 'query_column', 'query_column#', 
+        'dl_table_name', 'dl_column#', 'dl_column']
+        """
+        try:
+            # Load the CSV file into a pandas DataFrame
+            data = pd.read_csv(alignmnet_file)
+
+            # Verify that the required columns are present
+            required_columns = ['query_table_name', 'query_column', 'query_column#',
+                                'dl_table_name', 'dl_column#', 'dl_column']
+            if not all(column in data.columns for column in required_columns):
+                missing_columns = [col for col in required_columns if col not in data.columns]
+                raise ValueError(f"Missing required columns in data: {missing_columns}")
+
+            print("alignment Data loaded successfully")
+            return data
+        
+        except FileNotFoundError:
+            print(f"Error: File not found at {alignmnet_file}")
+        
+        except ValueError as e:
+            print(f"Error: {e}")
+        
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            
+
+
+
+
+from collections import defaultdict
+
+def create_query_to_datalake_dict(csv_path):
+    """
+    Reads a CSV file with columns at least:
+      - query_table
+      - data_lake_table
+    Returns a dictionary mapping each query_table
+    to a set of data_lake_table values that appear.
+    """
+    query_to_datalake = defaultdict(set)
+    
+    with open(csv_path, mode='r', encoding='utf-8-sig', newline='') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            q_table = row['query_table']
+            d_table = row['data_lake_table']
+            query_to_datalake[q_table].add(d_table)
+    
+    return dict(query_to_datalake) 
+
 # load csv file as a dictionary. Further preprocessing may be required after loading
 def loadDictionaryFromCsvFile(filePath):
     if(os.path.isfile(filePath)):
@@ -52,6 +111,48 @@ def loadDictionaryFromCsvFile(filePath):
         sys.exit()
         return 0
     
+# load csv file as a dictionary. Further preprocessing may be required after loading
+def loadDictionaryFromCsvFile(filePath):
+    if(os.path.isfile(filePath)):
+        with open(filePath) as csv_file:
+            reader = csv.reader(csv_file)
+            dictionary = dict(reader)
+        return dictionary
+    else:
+        print("Sorry! the file is not found. Please try again later. Location checked:", filePath)
+        sys.exit()
+        return 0    
+ 
+
+# load csv file as a dictionary. Further preprocessing may be required after loading
+def loadDictionaryFromCsvFile_withheader(filePath):
+    with open(filePath, 'r') as f:
+            # Read the file as a DataFrame
+            main_df = pd.read_csv(f)
+            groundtruth_dict = main_df.groupby('query_table')['data_lake_table'].apply(list).to_dict()
+    return groundtruth_dict       
+
+def loadDictionaryFromCSV_ugenv2(filepath):
+                 # Path to the main CSV file
+       main_csv_file = filepath
+       print("testing common names")
+        # Open the main CSV file
+       with open(main_csv_file, 'r') as f:
+            # Read the file as a DataFrame
+            main_df = pd.read_csv(f)
+            
+        # Filter rows where the third column is 1 or 2 mean uionable: 1 means joinable (or unionable with 1-column) and 2 means unionable.
+       filtered_df = main_df[(main_df['manual_unionable'] == 1) | (main_df['manual_unionable'] == 2)]
+       filtered_df = filtered_df[['query_table', 'data_lake_table']]
+       groundtruth_dict = filtered_df.groupby('query_table')['data_lake_table'].apply(list).to_dict()
+       #add '_ugen_v2' to all file names 
+   
+       groundtruth_dict = {
+    f"{key[:-4]}_ugen_v2.csv": [f"{value[:-4]}_ugen_v2.csv" for value in values]
+    for key, values in groundtruth_dict.items()
+}
+   
+       return groundtruth_dict
 # --------------------------------------------------------------------------------
 # New functions specific to this project
 # --------------------------------------------------------------------------------
@@ -205,9 +306,12 @@ def LinePlot(dict_lists, xlabel, ylabel, figname,title):
     plt.savefig(figname)
     plt.clf()
 
+
 def read_csv_file(gen_file):
     data = []
     try:
+        if "ugen_v2" in gen_file:
+           return pd.read_csv(gen_file, sep=';')
         data = pd.read_csv(gen_file, lineterminator='\n', low_memory=False)
         if data.shape[1] < 2:
             data = pd.read_csv(gen_file, sep='|')

@@ -102,6 +102,7 @@ def main(args2=None):
     # Call NaiveSearcher, which has linear search and bounds search, from naive_search.py
     searcher = NaiveSearcher(table_path, hp.scal)
     returnedResults = {}
+    returnedResults_noscore = {}
     start_time = time.time()
     # For error analysis of tables
     analysis = hp.analysis
@@ -132,11 +133,13 @@ def main(args2=None):
                 res.append(tmp)
                 #with score
                 returnedResults[query[0]] = [(r[1],r[0]) for r in res]
-                #returnedResults[query[0]] = [r[1] for r in res]
+                returnedResults_noscore[query[0]] = [r[1] for r in res]
             query_times.append(time.time() - query_start_time)
-    print(returnedResults)        
-    with open("top_20_Starmie_output_diluted_restricted_withscore.pkl", 'wb') as file:
+    #print(returnedResults)        
+    with open("top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults, file)   
+    with open("top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
+                 pickle.dump(returnedResults_noscore, file)                
     # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
     print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))
     print("--- Total Query Time: %s seconds ---" % (time.time() - start_time))

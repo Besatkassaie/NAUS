@@ -34,13 +34,17 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from model_classes import BertClassifierPretrained, BertClassifier
 import csv
-
+from scipy.sparse.csgraph import connected_components
 import argparse
 
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+import difflib
 
 
 # %%
 def init():
+    print("init() is called .....")
     available_embeddings = ["bert", "bert_serialized", "roberta", "roberta_serialized", "sentence_bert", "sentence_bert_serialized", "glove", "fasttext", "dust", "dust_serialized", "starmie"]
 
     embedding_type = available_embeddings[3] #change it to fasttext or bert for using the respective embeddings.
@@ -411,263 +415,322 @@ def gmc_alignmnet_by_query( query_table,query_columns,dl_tables, embedding_type=
             return alignment_list
 
 
+def remove_problematic_alignments(final_alignment_4_query, queries_with_problematic_alignments, track_columns_reverse):
+    output=set()
+    seen=set()
+    # Group second elements by their first element
+    for col_pair in final_alignment_4_query:
+        dl_col = track_columns_reverse[col_pair[1]]
+        query_col= track_columns_reverse[col_pair[0]]
+        query_table_name=query_col[0]
+        query_column=query_col[1]
+        query_columnnumber=query_col[2] 
+        dl_table_name=dl_col[0]
+        dl_column=dl_col[1]
+        dl_columnnumber=dl_col[2]
+        temp=(query_columnnumber, dl_table_name) 
+        if temp  in   seen: 
+                if query_table_name in queries_with_problematic_alignments:
+                      queries_with_problematic_alignments[query_table_name].add(col_pair)
+                else:
+                      queries_with_problematic_alignments[query_table_name] = {col_pair}
+             
+        else:
+          seen.add(temp)  
+          output.add(col_pair)  
+    
+    return  output, queries_with_problematic_alignments
+    
+    
+
+                       
+                        
+ 
+                 
+    
+    
+
+
 
 
  
-def DUST_alignmnet_export():   
+def DUST_alignmnet_export(output_file, dl_table_folder,query_table_folder, benchmark_name,groundtruth_file, excluded_queries):   
     
+   if os.path.exists(output_file):
+        print(f"{output_file} exists.")
+   else:
+        use_numeric_columns = True
+        #benchmark_name = "tus_benchmark" 
     
-    use_numeric_columns = True
-    #benchmark_name = "tus_benchmark" 
-    benchmark_name = "santos" 
-    clustering_metric = "cosine" # "cosine"
-    single_col = 0
+        clustering_metric = "cosine" # "cosine"
+        #clustering_metric = "cityblock" # "cosine"
 
-    dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
-    query_table_folder = r"data" + os.sep + benchmark_name + os.sep + "query"
-    #groundtruth_file = r"groundtruth" + os.sep + benchmark_name + "_union_groundtruth.pickle"
-    groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"
-    query_tables = glob.glob(query_table_folder + os.sep + "*.csv")
-    groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
-    # # limit the ground truth to only one query and 10 unionables 
-    # # Limit the ground truth to one query and 10 unionables
-    # limited_groundtruth = {}
-    # if groundtruth:
-    #     # Pick a single query (the first one in this case)
-    #     single_query = next(iter(groundtruth))
+        query_tables = glob.glob(query_table_folder + os.sep + "*.csv")
+        if benchmark_name=='santos':
+            groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
+        if   benchmark_name=='ugen_v2':
+            groundtruth = utl.loadDictionaryFromCSV_ugenv2(groundtruth_file)
+        if benchmark_name=='tus_benchmark': 
+            groundtruth=utl.create_query_to_datalake_dict(groundtruth_file)
+            
 
-    #     # Extract the query name without the file extension
-    #     query_name = single_query.split(".")[0]
+        # # limit the ground truth to only one query and 10 unionables 
+        # # Limit the ground truth to one query and 10 unionables
+        # limited_groundtruth = {}
+        # if groundtruth:
+        #     # Pick a single query (the first one in this case)
+        #     #single_query = next(iter(groundtruth))
 
-    #     # Split the query name into individual substrings
-    #     query_substrings = set(query_name.split("_"))
+        #     # Extract the query name without the file extension
+        #     #query_name = single_query.split(".")[0]
+        #     query_name =  "World-History_GW90JPKL_ugen_v2.csv"
+        #     # Split the query name into individual substrings
+        #     query_substrings = set(query_name.split("_"))
 
-    #     # Filter unionables based on the condition
-    #     unionables = [
-    #         table for table in groundtruth[single_query]
-    #         if sum(1 for substr in table.split("_") if substr in query_substrings) <= 1
-    #     ][:10]  # Limit to 10 unionables
+        #     # Filter unionables based on the condition
+        #     # unionables = [
+        #     #     table for table in groundtruth[single_query]
+        #     #     if sum(1 for substr in table.split("_") if substr in query_substrings) <= 1
+        #     # ][:10]  # Limit to 10 unionables
 
-    #     # Only include the filtered unionables
-    #     limited_groundtruth[single_query] = unionables
+        #     # Only include the filtered unionables
+        #     #limited_groundtruth[single_query] = unionables
+        #     limited_groundtruth[query_name] = ["World-History_VZK3I8BZ_ugen_v2.csv"]
 
-    # groundtruth = limited_groundtruth
+        #groundtruth = limited_groundtruth
 
-    
-    
 
-    
-    
-    start_time = time.time_ns()
-    used_queries = 0
-    # evaluation of align phase.
-    for query_table in query_tables:
-        query_table_name = query_table.rsplit(os.sep, 1)[-1]
-        print("query name: "+query_table_name)
-        if query_table_name == "workforce_management_information_a.csv" or query_table_name == "workforce_management_information_b.csv":
-            continue
-        column_embeddings = []
-        track_tables = {}
-        track_columns = {}
-        #mapping from universal comlumn id to (table, column#)
-        track_columns_reverse={}
-        record_same_cluster = {}
-        query_column_ids = set()
-        i = 0
-        if query_table_name not in groundtruth:
-            continue
-        else:
-            unionable_tables = groundtruth[query_table_name]
-            # get embeddings for query table columns.
-            query_embeddings = compute_embeddings([query_table], embedding_type, use_numeric_columns=use_numeric_columns)
-            if len(query_embeddings) == 0:
-                print("Not enough rows. Ignoring this query table.")
+        start_time = time.time_ns()
+        used_queries = 0
+        queries_with_problematic_alignments={}
+        # evaluation of align phase.
+        for query_table in query_tables:
+            query_table_name = query_table.rsplit(os.sep, 1)[-1]
+            print("query name: "+query_table_name)
+            if query_table_name in excluded_queries:
                 continue
-            # print(query_embeddings)
-            # break
-            used_queries += 1
-            print("working on query number: "+ str(used_queries))
-            unionable_table_path = [dl_table_folder + os.sep + tab for tab in unionable_tables if tab != query_table_name]
-            unionable_table_path = [path for path in unionable_table_path if os.path.exists(path)]
-            
-            if benchmark_name == "tus_benchmark":
-                unionable_table_path = random.sample(unionable_table_path, min(10, len(unionable_table_path))) 
-                # for e in unionable_table_path:
-                #     f_name = os.path.basename(e)
-                #     destination_path = os.path.join(destination_folder, f_name)
-                #     shutil.copyfile(e, destination_path)
-                # continue
-            print("starting dl embedings------")
-            dl_embeddings = compute_embeddings(unionable_table_path, embedding_type, use_numeric_columns= use_numeric_columns)
-            print("end dl embedings----")
-            if len(dl_embeddings) == 0:
-                print("Not enough rows in any data lake tables. Ignoring this cluster.")
-            for column in query_embeddings:
-                column_embeddings.append(query_embeddings[column])
-                track_columns[column] = i
-                track_columns_reverse[i]=column
-                if column[0] not in track_tables:
-                    track_tables[column[0]] = {i}
-                else:
-                    track_tables[column[0]].add(i)
-                if column[1] not in record_same_cluster:
-                    record_same_cluster[column[1]] =  {i}
-                else:
-                    record_same_cluster[column[1]].add(i)
-                query_column_ids.add(i)
-                i += 1
-            for column in dl_embeddings:
-                column_embeddings.append(dl_embeddings[column])
-                track_columns[column] = i
-                track_columns_reverse[i]=column
-                if column[0] not in track_tables:
-                    track_tables[column[0]] = {i}
-                else:
-                    track_tables[column[0]].add(i)
-                if column[1] not in record_same_cluster:
-                    record_same_cluster[column[1]] =  {i}
-                else:
-                    record_same_cluster[column[1]].add(i)
-                i += 1
+            column_embeddings = []
+            track_tables = {}
+            track_columns = {}
+            #mapping from universal comlumn id to (table, column#)
+            track_columns_reverse={}
+            record_same_cluster = {}
+            query_column_ids = set()
+            i = 0
+            if query_table_name not in groundtruth:
+                print("query is not considered")
+                continue
+            else:
+                unionable_tables = groundtruth[query_table_name]
+                # get embeddings for query table columns.
+                query_embeddings = compute_embeddings([query_table], embedding_type, use_numeric_columns=use_numeric_columns)
+                if len(query_embeddings) == 0:
+                    print("Not enough rows. Ignoring this query table.")
+                    continue
+                # print(query_embeddings)
+                # break
+                used_queries += 1
+                print("working on query number: "+ str(used_queries))
+                unionable_table_path = [dl_table_folder + os.sep + tab for tab in unionable_tables if tab != query_table_name]
+                unionable_table_path = [path for path in unionable_table_path if os.path.exists(path)]
                 
-            all_true_edges = set() 
-            all_true_query_edges = set()
-            for col_index_set in record_same_cluster:
-                set1 = record_same_cluster[col_index_set]
-                set2 = record_same_cluster[col_index_set]
-                current_true_edges = set()
-                current_true_query_edges = set()
-                for s1 in set1:
-                    for s2 in set2:
-                        current_true_edges.add(tuple(sorted((s1,s2))))
-                        if s1 in query_column_ids or s2 in query_column_ids:
-                            current_true_query_edges.add(tuple(sorted((s1,s2))))
-                all_true_edges = all_true_edges.union(current_true_edges)  
-                all_true_query_edges = all_true_query_edges.union(current_true_query_edges) 
-            column_embeddings = list(column_embeddings)
-            x = np.array(column_embeddings)
-            
-            zero_positions = set()
-            for table in track_tables:
-                indices = track_tables[table]
-                all_combinations = findsubsets(indices, 2)
-                for each in all_combinations:
-                    zero_positions.add(each)
-            
-            arr = np.zeros((len(track_columns),len(track_columns)))
-            for i in range(0, len(track_columns)-1):
-                for j in range(i+1, len(track_columns)):
-                    #print(i, j)
-                    if (i, j) not in zero_positions and (j, i) not in zero_positions and i !=j:
-                        arr[i][j] = 1
-                        arr[j][i] = 1
-            # convert to sparse matrix representation 
-            s = csr_matrix(arr)  
-    # with  s he is taking care of not having columns from the same table to appear in the same cluster 
-            all_distance = {}
-            all_labels = {}
-            record_current_precision = {}
-            record_current_recall = {}
-            record_current_f_measure = {}
-            record_current_query_precision = {}
-            record_current_query_recall = {}
-            record_current_query_f_measure = {}
-            min_k = len(query_embeddings)
-            max_k = 0
-            record_result_edges = {}
-            record_result_query_edges = {}
-            
-            for item in track_tables:
-                #print(item, len(track_tables[item]))
-                if len(track_tables[item])> min_k:
-                    min_k = len(track_tables[item])
-                max_k += len(track_tables[item])
-            
-            clusterAlg_2_all_result_query_edges={}
-            print("cluster numbers "+str(min_k)+" to "+str(max_k))
-            for i in range(min_k, min(max_k, max_k)):
-                #print("started "+str(i)+" cluster for "+ query_table_name)
-                #clusters = KMeans(n_clusters=14).fit(x)
-                clusters = AgglomerativeClustering(n_clusters=i, metric=clustering_metric,
-                            compute_distances = True , linkage='average', connectivity = s)
-                clusters.fit_predict(x)
-                labels = (clusters.labels_) #.tolist()
-                all_labels[i]= labels.tolist()
-                #The silhouette ranges from −1 to +1, where a high value indicates that the object is
-                # well matched to its own cluster and poorly matched to neighboring clusters. If most objects
-                # have a high value, then the clustering configuration is appropriate. If many points have a low or negative value, 
-                # then the clustering configuration may have too many or too few clusters
-                # . A clustering with an average silhouette width of over 0.7 is considered to
-                # be "strong", a value over 0.5 "reasonable" and over 0.25 "weak",
-                all_distance[i] = metrics.silhouette_score(x, labels)
-                result_dict = {}
-                wrong_results = set()
-                for (col_index, label) in enumerate(all_labels[i]):
-                    if label in result_dict:
-                        result_dict[label].add(col_index)
+                if benchmark_name == "tus_benchmark":
+                    unionable_table_path = random.sample(unionable_table_path, min(10, len(unionable_table_path))) 
+                    # for e in unionable_table_path:
+                    #     f_name = os.path.basename(e)
+                    #     destination_path = os.path.join(destination_folder, f_name)
+                    #     shutil.copyfile(e, destination_path)
+                    # continue
+            #   print("starting dl embedings------")
+                dl_embeddings = compute_embeddings(unionable_table_path, embedding_type, use_numeric_columns= use_numeric_columns)
+            #  print("end dl embedings----")
+                if len(dl_embeddings) == 0:
+                    print("Not enough rows in any data lake tables. Ignoring this cluster.")
+                for column in query_embeddings:
+                    column_embeddings.append(query_embeddings[column])
+                    track_columns[column] = i
+                    track_columns_reverse[i]=column
+                    if column[0] not in track_tables:
+                        track_tables[column[0]] = {i}
                     else:
-                        result_dict[label] = {col_index}
-                #result_dict is a mapping from cluster label to columns in the cluster 
-                all_result_edges = set() 
-                all_result_query_edges = set()
-                for col_index_set in result_dict:
-                    set1 = result_dict[col_index_set]
-                    set2 = result_dict[col_index_set]
-                    current_result_edges = set()
-                    current_result_query_edges = set()
+                        track_tables[column[0]].add(i)
+                    if column[1] not in record_same_cluster:
+                        record_same_cluster[column[1]] =  {i}
+                    else:
+                        record_same_cluster[column[1]].add(i)
+                    query_column_ids.add(i)
+                    i += 1
+                for column in dl_embeddings:
+                    column_embeddings.append(dl_embeddings[column])
+                    track_columns[column] = i
+                    track_columns_reverse[i]=column
+                    if column[0] not in track_tables:
+                        track_tables[column[0]] = {i}
+                    else:
+                        track_tables[column[0]].add(i)
+                    if column[1] not in record_same_cluster:
+                        record_same_cluster[column[1]] =  {i}
+                    else:
+                        record_same_cluster[column[1]].add(i)
+                    i += 1
+                    
+                all_true_edges = set() 
+                all_true_query_edges = set()
+                for col_index_set in record_same_cluster:
+                    set1 = record_same_cluster[col_index_set]
+                    set2 = record_same_cluster[col_index_set]
+                    current_true_edges = set()
+                    current_true_query_edges = set()
                     for s1 in set1:
                         for s2 in set2:
-                            current_result_edges.add(tuple(sorted((s1,s2))))
+                            current_true_edges.add(tuple(sorted((s1,s2))))
                             if s1 in query_column_ids or s2 in query_column_ids:
-                                current_result_query_edges.add(tuple(sorted((s1,s2))))
-                    all_result_edges = all_result_edges.union(current_result_edges)
-                    all_result_query_edges = all_result_query_edges.union(current_result_query_edges)
-                current_true_positive = len(all_true_edges.intersection(all_result_edges))
-                current_precision = current_true_positive/len(all_result_edges)
-                current_recall = current_true_positive/len(all_true_edges)
+                                current_true_query_edges.add(tuple(sorted((s1,s2))))
+                    all_true_edges = all_true_edges.union(current_true_edges)  
+                    all_true_query_edges = all_true_query_edges.union(current_true_query_edges) 
+                column_embeddings = list(column_embeddings)
+                x = np.array(column_embeddings)
+                
+                zero_positions = set()
+                for table in track_tables:
+                    indices = track_tables[table]
+                    all_combinations = findsubsets(indices, 2)
+                    for each in all_combinations:
+                        zero_positions.add(each)
+                
+                arr = np.zeros((len(track_columns),len(track_columns)))
+                for i in range(0, len(track_columns)-1):
+                    for j in range(i+1, len(track_columns)):
+                        #print(i, j)
+                        if (i, j) not in zero_positions and (j, i) not in zero_positions and i !=j:
+                            arr[i][j] = 1
+                            arr[j][i] = 1
+                # convert to sparse matrix representation 
+                s = csr_matrix(arr)  
+                
+                ## checking the number of connected components in the connectivity graph 
+                n_components, labels = connected_components(csgraph=s, directed=False, connection='weak')
+                if n_components>1:
+                    print (f"{query_table} has a connectivity graph with more than 1 connected component")
+        # with  s he is taking care of not having columns from the same table to appear in the same cluster 
+                all_distance = {}
+                all_labels = {}
+                record_current_precision = {}
+                record_current_recall = {}
+                record_current_f_measure = {}
+                record_current_query_precision = {}
+                record_current_query_recall = {}
+                record_current_query_f_measure = {}
+                min_k = len(query_embeddings)
+                max_k = 0
+                record_result_edges = {}
+                record_result_query_edges = {}
+                
+                for item in track_tables:
+                    #print(item, len(track_tables[item]))
+                    if len(track_tables[item])> min_k:
+                        min_k = len(track_tables[item])
+                    max_k += len(track_tables[item])
+                
+                clusterAlg_2_all_result_query_edges={}
+                
 
-                current_query_true_positive = len(all_true_query_edges.intersection(all_result_query_edges))
-                current_query_precision = current_query_true_positive/len(all_result_query_edges)
-                current_query_recall = current_query_true_positive/len(all_true_query_edges)
+                #print("cluster numbers "+str(min_k)+" to "+str(max_k))
+                for i in range(min_k, min(max_k, max_k)):
+                    #print("started "+str(i)+" cluster for "+ query_table_name)
+                    #clusters = KMeans(n_clusters=14).fit(x)
+                    clusters = AgglomerativeClustering(n_clusters=i, metric=clustering_metric,
+                                compute_distances = True , linkage='average', connectivity = s)
+                    clusters.fit_predict(x)
+            
+
+                    labels = (clusters.labels_) #.tolist()
+                    all_labels[i]= labels.tolist()
+                    #The silhouette ranges from −1 to +1, where a high value indicates that the object is
+                    # well matched to its own cluster and poorly matched to neighboring clusters. If most objects
+                    # have a high value, then the clustering configuration is appropriate. If many points have a low or negative value, 
+                    # then the clustering configuration may have too many or too few clusters
+                    # . A clustering with an average silhouette width of over 0.7 is considered to
+                    # be "strong", a value over 0.5 "reasonable" and over 0.25 "weak",
+                    all_distance[i] = metrics.silhouette_score(x, labels)
+                    result_dict = {}
+                    wrong_results = set()
+                    for (col_index, label) in enumerate(all_labels[i]):
+                        if label in result_dict:
+                            result_dict[label].add(col_index)
+                        else:
+                            result_dict[label] = {col_index}
+                    #result_dict is a mapping from cluster label to columns in the cluster 
+                    all_result_edges = set() 
+                    all_result_query_edges = set()
+                    for col_index_set in result_dict:
+                        set1 = result_dict[col_index_set]
+                        set2 = result_dict[col_index_set]
+                        current_result_edges = set()
+                        current_result_query_edges = set()
+                        for s1 in set1:
+                            for s2 in set2:
+                                current_result_edges.add(tuple(sorted((s1,s2))))
+                                if s1 in query_column_ids or s2 in query_column_ids:
+                                    current_result_query_edges.add(tuple(sorted((s1,s2))))
+                        all_result_edges = all_result_edges.union(current_result_edges)
+                        all_result_query_edges = all_result_query_edges.union(current_result_query_edges)
+                    current_true_positive = len(all_true_edges.intersection(all_result_edges))
+                    current_precision = current_true_positive/len(all_result_edges)
+                    current_recall = current_true_positive/len(all_true_edges)
+
+                    current_query_true_positive = len(all_true_query_edges.intersection(all_result_query_edges))
+                    current_query_precision = current_query_true_positive/len(all_result_query_edges)
+                    current_query_recall = current_query_true_positive/len(all_true_query_edges)
+
+                    
+                    clusterAlg_2_all_result_query_edges[i]=(all_result_query_edges,result_dict)
+    
+    
+                    record_current_precision[i] = current_precision
+                    record_current_recall[i] = current_recall
+                    record_current_f_measure[i] = 0
+                    if (current_precision + current_recall) > 0:
+                        record_current_f_measure[i] = (2 * current_precision * current_recall)/ (current_precision + current_recall)              
+                    record_result_edges[i] = all_result_edges
+
+                    record_current_query_precision[i] = current_query_precision
+                    record_current_query_recall[i] = current_query_recall
+                    record_current_query_f_measure[i] = 0
+                    if (current_query_precision + current_query_recall) > 0:
+                        record_current_query_f_measure[i] = (2 * current_query_precision * current_query_recall)/ (current_query_precision + current_query_recall)              
+                    record_result_query_edges[i] = all_result_query_edges
+                    #print("Ended "+str(i)+" cluster for "+ query_table_name)
 
                 
-                clusterAlg_2_all_result_query_edges[i]=(all_result_query_edges,result_dict)
-   
-   
-                record_current_precision[i] = current_precision
-                record_current_recall[i] = current_recall
-                record_current_f_measure[i] = 0
-                if (current_precision + current_recall) > 0:
-                    record_current_f_measure[i] = (2 * current_precision * current_recall)/ (current_precision + current_recall)              
-                record_result_edges[i] = all_result_edges
-
-                record_current_query_precision[i] = current_query_precision
-                record_current_query_recall[i] = current_query_recall
-                record_current_query_f_measure[i] = 0
-                if (current_query_precision + current_query_recall) > 0:
-                    record_current_query_f_measure[i] = (2 * current_query_precision * current_query_recall)/ (current_query_precision + current_query_recall)              
-                record_result_query_edges[i] = all_result_query_edges
-                print("Ended "+str(i)+" cluster for "+ query_table_name)
-
-            
-            distance_list = all_distance.items()
-            distance_list = sorted(distance_list) 
-            x, y = zip(*distance_list)
-            algorithm_k = max(all_distance, key=all_distance. get) 
-            # get the best clustering algorithm as algorithm_k then retrive the result_dict
-            final_alignment_4_query=clusterAlg_2_all_result_query_edges[algorithm_k][0]
-            export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment_Diluted_restricted.csv")
-            print("-------------------------------------")
+                distance_list = all_distance.items()
+                distance_list = sorted(distance_list) 
+                x, y = zip(*distance_list)
+                algorithm_k = max(all_distance, key=all_distance. get) 
+                # get the best clustering algorithm as algorithm_k then retrive the result_dict
+                final_alignment_4_query=clusterAlg_2_all_result_query_edges[algorithm_k][0]
+                # we have obsereved that some times one column of query is aligned with more than one column of a datalake table;
+                # here before writing the alignment I would delete the extra alignments with this logic: 
+                # just keep the fist one  "randomly" 
+                final_alignment_4_query,queries_with_problematic_alignments =remove_problematic_alignments(final_alignment_4_query,queries_with_problematic_alignments, track_columns_reverse)                    
+                export_alignment_to_csv(final_alignment_4_query, track_columns_reverse,output_file )
+                print("-------------------------------------")
 
 
 
-       
-            
-    end_time = time.time_ns()
-    total_time = int(end_time - start_time)/ 10 **9
+        
+                
+        end_time = time.time_ns()
+        total_time = int(end_time - start_time)/ 10 **9
 
-    print("Total time for exporting Dust Alignments: ", str(total_time))
-    print("-------------------------------------")
+        print("Total time for exporting Dust Alignments: ", str(total_time))
+        print("-------------------------------------")
+        print("----------probmeletic alignments for queries-------------------")
+        print("number of queries with probmeletic alignments whihc are corrected"+str(len(queries_with_problematic_alignments)))
+        total_1 = 0
+        for key, value in queries_with_problematic_alignments.items():
+          total_1 +=  len(value)
+        print("number of all columns with problematic alignmnets: which are corrected"+str(total_1))
 
 
 # fasttext_model = ft.get_embedding_model()        
@@ -1035,277 +1098,210 @@ def plot_accuracy_range(original_dict, embedding_type, benchmark_name, metric = 
     plt.clf()
 
 
-# # %%
-# # Opening JSON file
 
 
-# # benchmarn_name = "labeled_benchmark"
-# final_precision = {}
-# final_recall = {}
-# final_f_measure = {}
-# final_query_precision = {}
-# final_query_recall = {}
-# final_query_f_measure = {}
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
+def visualize_tsne_subset_labels_columns_only(
+    x, 
+    track_columns_reverse, 
+    random_seed=42, 
+    perplexity=30,
+    num_labels=50
+):
+    """
+    Visualize column embeddings in 2D using t-SNE.
+    - Colors each point by the table name (distinct hue per table).
+    - Labels each point with ONLY the column name (no table prefix).
+    - Labels only a random subset of points to reduce clutter.
 
+    Parameters
+    ----------
+    x : np.ndarray
+        (n_columns, embedding_dim) array of column embeddings.
+    track_columns_reverse : dict
+        Maps each row index i -> (table_name, column_name, col_idx).
+    random_seed : int
+        Random seed for reproducibility in t-SNE and subset sampling.
+    perplexity : int
+        The perplexity parameter for t-SNE (typical range [5..50]).
+    num_labels : int
+        How many points to label with text (randomly chosen).
+        For many columns, labeling all can lead to excessive overlap.
+    """
 
-    
-    
-    
-# # %%
-# # Besat function
+    # 1. Fit t-SNE to get 2D embeddings
+    tsne = TSNE(
+        n_components=2, 
+        random_state=random_seed, 
+        perplexity=perplexity, 
+        init='pca'
+    )
+    x_2d = tsne.fit_transform(x)  # shape: (n_columns, 2)
 
-    
-    
-# start_time = time.time_ns()
-# used_queries = 0
-# # evaluation of align phase.
-# for query_table in query_tables:
-#     query_table_name = query_table.rsplit(os.sep, 1)[-1]
-#     print(query_table_name)
-#     if query_table_name == "workforce_management_information_a.csv" or query_table_name == "workforce_management_information_b.csv":
-#         continue
-#     column_embeddings = []
-#     track_tables = {}
-#     track_columns = {}
-#     record_same_cluster = {}
-#     query_column_ids = set()
-#     i = 0
-#     if query_table_name not in groundtruth:
-#         continue
-#     else:
-#         unionable_tables = groundtruth[query_table_name]
-#         # get embeddings for query table columns.
-#         query_embeddings = compute_embeddings([query_table], embedding_type, use_numeric_columns=use_numeric_columns)
-#         if len(query_embeddings) == 0:
-#             print("Not enough rows. Ignoring this query table.")
-#             continue
-#         # print(query_embeddings)
-#         # break
-#         used_queries += 1
-#         unionable_table_path = [dl_table_folder + os.sep + tab for tab in unionable_tables if tab != query_table_name]
-#         unionable_table_path = [path for path in unionable_table_path if os.path.exists(path)]
-        
-#         if benchmark_name == "tus_benchmark":
-#             unionable_table_path = random.sample(unionable_table_path, min(10, len(unionable_table_path))) 
-#             # for e in unionable_table_path:
-#             #     f_name = os.path.basename(e)
-#             #     destination_path = os.path.join(destination_folder, f_name)
-#             #     shutil.copyfile(e, destination_path)
-#             # continue
-#         print("starting dl embedings------")
-#         dl_embeddings = compute_embeddings(unionable_table_path, embedding_type, use_numeric_columns= use_numeric_columns)
-#         print("end dl embedings----")
-#         if len(dl_embeddings) == 0:
-#             print("Not enough rows in any data lake tables. Ignoring this cluster.")
-#         for column in query_embeddings:
-#             column_embeddings.append(query_embeddings[column])
-#             track_columns[column] = i
-#             if column[0] not in track_tables:
-#                 track_tables[column[0]] = {i}
-#             else:
-#                 track_tables[column[0]].add(i)
-#             if column[1] not in record_same_cluster:
-#                 record_same_cluster[column[1]] =  {i}
-#             else:
-#                 record_same_cluster[column[1]].add(i)
-#             query_column_ids.add(i)
-#             i += 1
-#         for column in dl_embeddings:
-#             column_embeddings.append(dl_embeddings[column])
-#             track_columns[column] = i
-#             if column[0] not in track_tables:
-#                 track_tables[column[0]] = {i}
-#             else:
-#                 track_tables[column[0]].add(i)
-#             if column[1] not in record_same_cluster:
-#                 record_same_cluster[column[1]] =  {i}
-#             else:
-#                 record_same_cluster[column[1]].add(i)
-#             i += 1
-            
-#         all_true_edges = set() 
-#         all_true_query_edges = set()
-#         for col_index_set in record_same_cluster:
-#             set1 = record_same_cluster[col_index_set]
-#             set2 = record_same_cluster[col_index_set]
-#             current_true_edges = set()
-#             current_true_query_edges = set()
-#             for s1 in set1:
-#                 for s2 in set2:
-#                     current_true_edges.add(tuple(sorted((s1,s2))))
-#                     if s1 in query_column_ids or s2 in query_column_ids:
-#                         current_true_query_edges.add(tuple(sorted((s1,s2))))
-#             all_true_edges = all_true_edges.union(current_true_edges)  
-#             all_true_query_edges = all_true_query_edges.union(current_true_query_edges) 
-#         column_embeddings = list(column_embeddings)
-#         x = np.array(column_embeddings)
-        
-#         zero_positions = set()
-#         for table in track_tables:
-#             indices = track_tables[table]
-#             all_combinations = findsubsets(indices, 2)
-#             for each in all_combinations:
-#                 zero_positions.add(each)
-        
-#         arr = np.zeros((len(track_columns),len(track_columns)))
-#         for i in range(0, len(track_columns)-1):
-#             for j in range(i+1, len(track_columns)):
-#                 #print(i, j)
-#                 if (i, j) not in zero_positions and (j, i) not in zero_positions and i !=j:
-#                     arr[i][j] = 1
-#                     arr[j][i] = 1
-#         # convert to sparse matrix representation 
-#         s = csr_matrix(arr)  
-#   # with  s he is taking care of not having columns from the same table to appear in the same cluster 
-#         all_distance = {}
-#         all_labels = {}
-#         record_current_precision = {}
-#         record_current_recall = {}
-#         record_current_f_measure = {}
-#         record_current_query_precision = {}
-#         record_current_query_recall = {}
-#         record_current_query_f_measure = {}
-#         min_k = len(query_embeddings)
-#         max_k = 0
-#         record_result_edges = {}
-#         record_result_query_edges = {}
-        
-#         for item in track_tables:
-#             #print(item, len(track_tables[item]))
-#             if len(track_tables[item])> min_k:
-#                 min_k = len(track_tables[item])
-#             max_k += len(track_tables[item])
-        
-#         print("cluster numbers "+str(min_k)+" to "+str(max_k))
-#         for i in range(min_k, min(max_k, max_k)):
-#             print("started "+str(i)+" cluster for "+ query_table_name)
-#             #clusters = KMeans(n_clusters=14).fit(x)
-#             clusters = AgglomerativeClustering(n_clusters=i, metric=clustering_metric,
-#                         compute_distances = True , linkage='average', connectivity = s)
-#             clusters.fit_predict(x)
-#             labels = (clusters.labels_) #.tolist()
-#             all_labels[i]= labels.tolist()
-#             #The silhouette ranges from −1 to +1, where a high value indicates that the object is
-#             # well matched to its own cluster and poorly matched to neighboring clusters. If most objects
-#             # have a high value, then the clustering configuration is appropriate. If many points have a low or negative value, 
-#             # then the clustering configuration may have too many or too few clusters
-#             # . A clustering with an average silhouette width of over 0.7 is considered to
-#             # be "strong", a value over 0.5 "reasonable" and over 0.25 "weak",
-#             all_distance[i] = metrics.silhouette_score(x, labels)
-#             result_dict = {}
-#             wrong_results = set()
-#             for (col_index, label) in enumerate(all_labels[i]):
-#                 if label in result_dict:
-#                     result_dict[label].add(col_index)
-#                 else:
-#                     result_dict[label] = {col_index}
-#             #result_dict is a mapping from cluster label to columns in the cluster 
-#             all_result_edges = set() 
-#             all_result_query_edges = set()
-#             for col_index_set in result_dict:
-#                 set1 = result_dict[col_index_set]
-#                 set2 = result_dict[col_index_set]
-#                 current_result_edges = set()
-#                 current_result_query_edges = set()
-#                 for s1 in set1:
-#                     for s2 in set2:
-#                         current_result_edges.add(tuple(sorted((s1,s2))))
-#                         if s1 in query_column_ids or s2 in query_column_ids:
-#                             current_result_query_edges.add(tuple(sorted((s1,s2))))
-#                 all_result_edges = all_result_edges.union(current_result_edges)
-#                 all_result_query_edges = all_result_query_edges.union(current_result_query_edges)
-#             current_true_positive = len(all_true_edges.intersection(all_result_edges))
-#             current_precision = current_true_positive/len(all_result_edges)
-#             current_recall = current_true_positive/len(all_true_edges)
+    # 2. Collect table info & column names
+    table_names = []
+    short_labels = []
+    for i in range(x.shape[0]):
+        table_name, col_name, _ = track_columns_reverse[i]
+        table_names.append(table_name)
+        # Label with only the column name (omit table)
+        short_labels.append(col_name)
 
-#             current_query_true_positive = len(all_true_query_edges.intersection(all_result_query_edges))
-#             current_query_precision = current_query_true_positive/len(all_result_query_edges)
-#             current_query_recall = current_query_true_positive/len(all_true_query_edges)
-#             print("result_dict")
-#             print(result_dict)
+    unique_tables = sorted(set(table_names))
+    n_tables = len(unique_tables)
 
-#             record_current_precision[i] = current_precision
-#             record_current_recall[i] = current_recall
-#             record_current_f_measure[i] = 0
-#             if (current_precision + current_recall) > 0:
-#                 record_current_f_measure[i] = (2 * current_precision * current_recall)/ (current_precision + current_recall)              
-#             record_result_edges[i] = all_result_edges
+    # Create a list of distinct colors spaced around the HSV color wheel
+    # endpoint=False to avoid wrapping hue=1 (which is same as hue=0).
+    colors = plt.cm.hsv(np.linspace(0, 1, n_tables, endpoint=False))
 
-#             record_current_query_precision[i] = current_query_precision
-#             record_current_query_recall[i] = current_query_recall
-#             record_current_query_f_measure[i] = 0
-#             if (current_query_precision + current_query_recall) > 0:
-#                 record_current_query_f_measure[i] = (2 * current_query_precision * current_query_recall)/ (current_query_precision + current_query_recall)              
-#             record_result_query_edges[i] = all_result_query_edges
-#             print("Ended "+str(i)+" cluster for "+ query_table_name)
+    # Map each table name to a color
+    color_map = {}
+    for i, tname in enumerate(unique_tables):
+        color_map[tname] = colors[i]
 
-        
-#         distance_list = all_distance.items()
-#         distance_list = sorted(distance_list) 
-#         x, y = zip(*distance_list)
-#         algorithm_k = max(all_distance, key=all_distance. get) 
-#         final_precision[query_table_name] = record_current_precision[algorithm_k]
-#         final_recall[query_table_name] = record_current_recall[algorithm_k]
-#         final_f_measure[query_table_name] = record_current_f_measure[algorithm_k]
-#         final_query_precision[query_table_name] = record_current_query_precision[algorithm_k]
-#         final_query_recall[query_table_name] = record_current_query_recall[algorithm_k]
-#         final_query_f_measure[query_table_name] = record_current_query_f_measure[algorithm_k]
-#         overlapping = 1
-#         #continue
-#         plt.plot(x, y)
-#         plt.title(query_table_name)
-#         plt.xlabel("number of clusters")
-#         plt.ylabel("silhouette score")
-#         plt.axvline(x = len(record_same_cluster), color = 'red', linestyle = "dashed", label = 'groundtruth k', alpha=overlapping, lw=3)
-#         plt.axvline(x = algorithm_k, linestyle = "dotted", color = 'green', label = 'algorithm k', alpha=overlapping, lw=3)
-#         plt.axvline(x = min_k, color = 'black', label = 'min k')
-#         #plt.axvline(x = max_k, color = 'black', label = 'max k')
-#         #plt.legend(bbox_to_anchor = (1.0, 1), loc = 'lower right', borderaxespad=3)
-#         plt.show()
-#         # print(query_embeddings)
-# end_time = time.time_ns()
+    # 3. Create the figure
+    plt.figure(figsize=(16, 12))
+    np.random.seed(random_seed)
 
-# # %%
-# total_time = int(end_time - start_time)/ 10 **9
-# print("Method:", embedding_type, "|| Benchmark: ", benchmark_name)
-# print("-------------------------------------")
-# print("Total time:", total_time)
-# print("-------------------------------------")
-# print("Results with query as ground truth:")
-# print_metrics(final_query_precision, final_query_recall, final_query_f_measure)
-# print("-------------------------------------")
-# print("Average time per query = ", total_time / used_queries)
+    # 4. Plot all points, colored by table
+    for i in range(x.shape[0]):
+        tname = table_names[i]
+        plt.scatter(
+            x_2d[i, 0],
+            x_2d[i, 1],
+            c=[color_map[tname]],
+            alpha=0.7,
+            s=20,
+            edgecolors='k',
+            zorder=2
+        )
 
-# print("Results without query as ground truth:")
-# print_metrics(final_precision, final_recall, final_f_measure)
-# #plot_accuracy_range(final_query_f_measure, embedding_type, benchmark_name, metric = "F1-score", save = True, save_folder= align_plot_folder)
+    # 5. Randomly pick which points to label
+    n_points = x.shape[0]
+    if num_labels > n_points:
+        num_labels = n_points
+    indices_to_label = np.random.choice(range(n_points), size=num_labels, replace=False)
 
+    # 6. Annotate ONLY the chosen subset (column name only)
+    for i in indices_to_label:
+        plt.annotate(
+            short_labels[i],
+            xy=(x_2d[i, 0], x_2d[i, 1]),
+            xytext=(4, 2),
+            textcoords="offset points",
+            fontsize=8,
+            color='black',
+            zorder=3
+        )
 
-# Your existing imports and code...
+    # 7. Build a legend (one entry per table)
+    handles = []
+    for tname in unique_tables:
+        handles.append(
+            plt.Line2D(
+                [0], [0],
+                marker='o',
+                color='w',
+                markerfacecolor=color_map[tname],
+                markeredgecolor='k',
+                label=tname,
+                markersize=8
+            )
+        )
+    plt.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.title("t-SNE of Column Embeddings (Column Name Labels Only)")
+    plt.xlabel("t-SNE dimension 1")
+    plt.ylabel("t-SNE dimension 2")
+    plt.tight_layout()
+    plt.show()
+
+import numpy as np
+from scipy.spatial.distance import cosine
+
+def build_distance_matrix(column_embeddings, track_columns_reverse):
+    """
+    Build a precomputed distance matrix for hierarchical clustering.
+    If two columns come from the same table, their distance is set to a huge value (1e9).
+    Otherwise, use 1 - cosine_similarity as the distance.
+
+    Parameters
+    ----------
+    column_embeddings : list or np.ndarray
+        shape (n_columns, embedding_dim). The embedding for each column.
+    track_columns_reverse : dict
+        Maps each integer column index i -> (table_name, column_name, col_idx).
+        E.g. track_columns_reverse[0] = ("tableA.csv", "colA", 0)
+
+    Returns
+    -------
+    dist_matrix : np.ndarray
+        shape (n_columns, n_columns), storing pairwise distances.
+    """
+    n_cols = len(column_embeddings)
+    dist_matrix = np.zeros((n_cols, n_cols), dtype=np.float32)
+
+    for i in range(n_cols):
+        for j in range(n_cols):
+            if i == j:
+                dist_matrix[i, j] = 0.0
+            else:
+                # Check if both columns are from the same table
+                table_i = track_columns_reverse[i][0]
+                table_j = track_columns_reverse[j][0]
+                if table_i == table_j:
+                    # "Infinite" distance => cannot merge
+                    dist_matrix[i, j] = 1e9
+                else:
+                    # Actual distance; e.g., 1 - cosine_similarity
+                    v1 = column_embeddings[i]
+                    v2 = column_embeddings[j]
+                    cos_sim = 1 - cosine(v1, v2)   # This is the cosine similarity
+                    dist_matrix[i, j] = 1 - cos_sim  # so distance = 1 - similarity
+    return dist_matrix
+
 
 def main():
-    # parser = argparse.ArgumentParser(description="Run GMC Alignment Export")
-    # parser.add_argument(
-    #     "--unionable_q_dl_file",
-    #     type=str,
-    #     default="default_unionable_file.csv",  # Placeholder for default value
-    #     help="Path to the unionable query data lake file. Default: 'default_unionable_file.csv'",
-    # )
-    # parser.add_argument(
-    #     "--use_numeric_columns",
-    #     action="store_true",
-    #     help="Flag to use numeric columns for embeddings. Default: False",
-    # )
-    # args = parser.parse_args()
 
-    # print("Running GMC Alignment Export with the following settings:")
-    # print(f"Unionable Query Data Lake File: {args.unionable_q_dl_file}")
-    # print(f"Use Numeric Columns: {args.use_numeric_columns}")
+    dataset="tus_benchmark"
+    if dataset==  "santos small":   
+        excluded_queries={"workforce_management_information_a.csv", "workforce_management_information_b.csv" }
+        #benchmark_name = "tus_benchmark" 
+        benchmark_name = "santos" 
+        dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
+        query_table_folder = r"data" + os.sep + benchmark_name + os.sep + "query"
+        #groundtruth_file = r"groundtruth" + os.sep + benchmark_name + "_union_groundtruth.pickle"
+        groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"
+        outputfile= f"DUST_Alignment_4gtruth_{benchmark_name}.csv"
 
-    DUST_alignmnet_export()
-    print("DUST Alignment Export completed.")
+            
+        
     
+    elif  dataset==  "ugen_v2":   
+        excluded_queries={ }
+        #benchmark_name = "tus_benchmark" 
+        benchmark_name = "ugen_v2" 
+        dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
+        query_table_folder = r"data" + os.sep + benchmark_name + os.sep + "query"
+        groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/ugen_v2/manual_benchmark_validation_results/ugen_v2_eval_groundtruth.csv"
+        outputfile= f"DUST_Alignment_4gtruth_{benchmark_name}.csv"
+  
+           
+    elif dataset==  "tus_benchmark":   
+        excluded_queries={ }
+        benchmark_name = "tus_benchmark" 
+        dl_table_folder = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/datalake"
+        query_table_folder = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/query"
+        groundtruth_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth.csv"
+        outputfile= f"/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/DUST_Alignment_4gtruth_{benchmark_name}.csv"
+
+    DUST_alignmnet_export(outputfile,dl_table_folder,query_table_folder, benchmark_name,groundtruth_file, excluded_queries)
+    print(f"DUST Alignment Export for {dataset} completed.")
+    
+        
 def initialize_globally():
     global random_seed, embedding_type, model, tokenizer, vec_length, tfidf_vectorizer
 
