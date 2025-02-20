@@ -66,8 +66,8 @@ single_col = 0
 
 dl_table_folder = os.path.join("data", benchmark_name, "datalake")
 query_table_folder = os.path.join("data", benchmark_name, "query")
-groundtruth_file = os.path.join("data", benchmark_name,benchmark_name + "_union_groundtruth.pickle")
-output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_CL_KMEANS_euclidean_alignment.csv"
+groundtruth_file = os.path.join("data", benchmark_name,benchmark_name + "_union_groundtruth_diluted.pickle")
+output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
 align_plot_folder = os.path.join("plots_align")
 
 query_tables = glob.glob(os.path.join(query_table_folder, "*.csv"))
@@ -449,7 +449,7 @@ def process_query(query_table):
         must_link = []
         cannot_link = list(zero_positions)
         try:
-            labels, centers = cop_kmeans(dataset=x, k=k_candidate, ml=must_link, cl=cannot_link,distance_metric='euclidean')
+            labels, centers = cop_kmeans(dataset=x, k=k_candidate, ml=must_link, cl=cannot_link,distance_metric='cosine')
         except Exception as err:
             print(f"Error for k={k_candidate}: {err}")
             continue
@@ -572,8 +572,8 @@ def verify_groungtruth(groundtruth_file, query_folder):
 # ---------------------------- Main Multiprocessing Block ----------------------------
 def main():
     
-    queries_are_dulicated=all_query_in_datalake(query_table_folder,datalake_folder=dl_table_folder)
-    if queries_are_dulicated:
+    queries_are_duplicated=all_query_in_datalake(query_table_folder,datalake_folder=dl_table_folder)
+    if queries_are_duplicated:
         # make sure for every query you have mapping beween queries in the ground truth 
         grthrut_has_query=verify_groungtruth(groundtruth_file, query_table_folder)
         if grthrut_has_query:

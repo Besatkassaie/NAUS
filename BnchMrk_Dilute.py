@@ -182,7 +182,33 @@ def dilute_datalake_by_column_lable(dilation_degree,query_directory,datalake_dir
                 
                 
  
-def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path,alignment_file,notdiluted_file, dataset):
+def refine_ground_truth(missing_queries, ground_truth_path, refined_ground_truth_path):
+       if('csv' in ground_truth_path):
+          groundtruth_dict=utl.loadDictionaryFromCsvFile_withheader(ground_truth_path)
+       else: 
+          groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
+        
+        # Iterate over a copy of the keys to safely modify the dictionary.
+       for key in list(groundtruth_dict.keys()):
+            # Remove the entire entry if the key is in missing_queries.
+            if key in missing_queries:
+                del groundtruth_dict[key]
+            else:
+                # Now, if the value is a list, filter out any element that is in missing_queries.
+                value = groundtruth_dict[key]
+                if isinstance(value, list):
+                    filtered_value = [v for v in value if v not in missing_queries]
+                    groundtruth_dict[key] = filtered_value
+                # (Optional) If the value is a single string and you wish to remove it if it's missing:
+                elif isinstance(value, str) and value in missing_queries:
+                    del groundtruth_dict[key]
+     # Write the updated dictionary to a pickle file
+       with open(refined_ground_truth_path, 'wb') as f:
+            pickle.dump(groundtruth_dict, f)
+          
+    
+
+def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path,alignment_file,notdiluted_file, dataset, missingfiles):
    
        if('csv' in ground_truth_path):
           groundtruth_dict=utl.loadDictionaryFromCsvFile_withheader(ground_truth_path)
@@ -287,7 +313,7 @@ def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_direct
             for key, values in no_common_column.items():
                 writer.writerow((key, values))
         # Write the list to a text file
-       with open(f"missing_files_dltdegree0.4{dataset}.csv", mode="w") as file:
+       with open(missingfiles, mode="w") as file:
             file.write("Missing files in data lake which exist in ground truth:\n")
             for item in missing_files_in_datalake:
                 file.write(f"{item}\n")
@@ -407,7 +433,7 @@ def dilute_datalake_ugen(dilation_degree,query_directory,datalake_directory,dilu
 
 
 
-def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_tnames_file, missing_tables): 
+def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_tnames_file): 
   #  modify the ground truth to accomodate diluted tables: 
     notdiluted_tnames = {}
     notdiluted_tnames= utl.loadDictionaryFromCsvFile(notdiluted_tnames_file)
@@ -462,7 +488,22 @@ def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_t
         
         
 
-      
+
+def add_dlt_to_csv_filenames(folder_path):
+    # Iterate over all files in the specified folder
+    for filename in os.listdir(folder_path):
+        # Check if the file has a .csv extension
+        if filename.endswith('.csv'):
+            # Split the filename into the base name and extension
+            base, ext = os.path.splitext(filename)
+            # Create the new filename by appending '_dlt' before the extension
+            new_filename = f"{base}_dlt{ext}"
+            # Form full file paths
+            old_path = os.path.join(folder_path, filename)
+            new_path = os.path.join(folder_path, new_filename)
+            # Rename the file
+            os.rename(old_path, new_path)
+            print(f"Renamed: {filename} --> {new_filename}")      
            
 if __name__ == "__main__":
   # we need to call these function once 
@@ -479,15 +520,24 @@ if __name__ == "__main__":
         ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_groundtruth.pickle"  
         alignmnet_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_CL_KMEANS_alignment_cosine.csv"
         notdiluted04_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/notdiluted04_file.csv"
-        
-        
-        # if the dataset if ugenv2 we do not have queries as unionable in the data lake and also in the 
-        #dilute_datalake_by_column_lable(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path, dataset) 
+        missingfiles=f"/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
+        refined_ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_refined_groundtruth.pickle"  
+
+        #depricated: dilute_datalake_by_column_lable(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path, dataset) 
        
-             # make sure that all queries are in the 
-        dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
-                                       diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset)
-             #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,missing_tables )
+        #1-make sure that all queries are in the 
+        # dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
+        #                                diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
+        
+        # remove from ground truth the queries that do not have their files in datalake  listed in missingfiles:
+        # I manullay open the file and copied not existed files 
+        # missin_files_names={"stockport_contracts_4.csv"}
+        # refine_ground_truth(missin_files_names,ground_truth_path, refined_ground_truth_path)
+         
+         # modify the file names 
+        #add_dlt_to_csv_filenames(diluted_datalake_directory)
+        
+        dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
 
     elif dataset=='ugen-v2':
         query_directory_withindex="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/ugen_v2/query_original"

@@ -816,6 +816,7 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
            simple version means that we do not use outer union here so q, t1 and q,t2 might have different alignments which makes them distinct in counting
            query_path_ and table_path_ are the content of the tables if it is for raw version we deal differently than  for normlized version 
            normalized  0 means we are deeling with raw content of the tables 1 means that the content of each cell is normalized  
+           multiset if 0 eans that we get rid of duplicate rows before reporting the uniona size
         """
         try:
             # Load the CSV file into a pandas DataFrame
@@ -855,7 +856,7 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
         # Get the unique values of 'k' in the dataframe
         unique_k_values = df_search_results['k'].unique()    
         
-        for k_ in [2,3,4]:
+        for k_ in unique_k_values:
               print("k: "+str(k_))
             # Filter the dataframe for the current value of 'k'
               k_df_search_results= df_search_results[df_search_results['k'] == k_]
@@ -897,7 +898,10 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
 
                       print("number of rows in the concatinated dataframe+ "+str(len(df_constructed_table)))
                       df_constructed_table=perform_concat(q,dl_t,filtered_align,df_constructed_table,df_dl, normalized )
+                      # union size will have the final value in the last iteration
                       union_size=len(df_constructed_table.drop_duplicates())
+                    
+   
 
                     # union_result_null=merge_dataframe_spark(df_constructed_table)
                     
@@ -920,104 +924,7 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
         
         
         
-def compute_union_size_simple(result_file, output_file, alignments_file, query_path_ , table_path_, normalized=0):
-        """computes  union size between query table and data lake tables
-           result_file has at least columns: query_name, tables, and k  
-           alignments is alignemnts betweeen  columns of  query and tables  has query_table_name, query_column, query_column#, dl_table_name, dl_column#, dl_column
-           simple version means that we do not use outer union here so q, t1 and q,t2 might have different alignments which makes them distinct in counting
-           query_path_ and table_path_ are the content of the tables if it is for raw version we deal differently than  for normlized version 
-           normalized  0 means we are deeling with raw content of the tables 1 means that the content of each cell is normalized  
-        """
-        try:
-            # Load the CSV file into a pandas DataFrame
-               alignments_ = pd.read_csv(alignments_file)
-
-            # Verify that the required columns are present
-               required_columns = ['query_table_name', 'query_column', 'query_column#',
-                                'dl_table_name', 'dl_column#', 'dl_column']
-               if not all(column in alignments_.columns for column in required_columns):
-                missing_columns = [col for col in required_columns if col not in alignments_.columns]
-                raise ValueError(f"Missing required columns in data: {missing_columns}")
-
-               print("alignments_file loaded successfully")
-        
-        except FileNotFoundError:
-            print(f"Error: File not found at {alignments_file}")
-        
-        except ValueError as e:
-            print(f"Error: {e}")
-        
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            
-            
-        # find out how many groups of unionable there are in the alignment file for each query: 
-        # to do so find the unique combinations of  query_table_name, query_column#  for each query 
-
-        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
-        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
-            
-        # Initialize an empty DataFrame with the desired columns
-        columns = ["query", "k", "union_size", "normalized"]
-        df_output = pd.DataFrame(columns=columns)  
-        columns_to_load = ['query_name', 'tables', 'k']
-        df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
-
-        # Get the unique values of 'k' in the dataframe
-        unique_k_values = df_search_results['k'].unique()    
-        
-        for k_ in unique_k_values:
-              print("k: "+str(k_))
-            # Filter the dataframe for the current value of 'k'
-              k_df_search_results= df_search_results[df_search_results['k'] == k_]
-              #DUST does not create alignemnt for these two queries
-              exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
-              queries_k = k_df_search_results['query_name'].unique()
-              for q in queries_k:
-                # get the unionabe tables 
-                if q in exclude:
-                    print("a query that should not exist!!!")
-                else: 
-                    q_k_df_search_results= k_df_search_results[k_df_search_results['query_name'] == q]
-                    q_unionable_tables=q_k_df_search_results["tables"]
-                    print("query table: "+q)
-                    aligned_columns_tbl={}
-                    q_unionable_tables_list= [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
-                    for dl_t in q_unionable_tables_list:
-                    # get from alignmnet which columns are aligned for each table 
-                      condition1 = alignments_['query_table_name'] == q
-                      condition2 = alignments_['dl_table_name'] == dl_t
-
-                      # Filter rows that satisfy both conditions
-                      filtered_align = alignments_[condition1 & condition2]
-                      
-                      
-                      aligned_q_cols =tuple (sorted(set(filtered_align['query_column#'])))
-                      if aligned_q_cols in aligned_columns_tbl.keys():
-                        aligned_columns_tbl[aligned_q_cols].add(dl_t)
-                      else:   
-                        aligned_columns_tbl[aligned_q_cols]={dl_t}
-                      #aligned_columns_tbl  is a dictionary from set of columns in query to  datalake table names getting union on those columns  
-                #perform union
-                    (union_size, all_tables_size, query_size)=perform_union_get_size(q, aligned_columns_tbl,alignments_, qs , tbles_, normalized)    
-                    
-                    new_row = {
-                            "query": q,
-                            "query_size":query_size, 
-                            "k": k_, 
-                            "union_size":union_size,
-                            "all_tables_size":all_tables_size,
-                            "normalized":  normalized
-                         }       
-
-                    df_output = pd.concat([df_output, pd.DataFrame([new_row])], ignore_index=True)
-    
-                
-        
-        df_output.to_csv(output_file, index=False)        
-        
-              
+           
 
 def perform_union_get_size(q_name, aligned_columns_tbl,alignments_,qs, tables, normalize): 
     # return: dataframe q_name, size of union of all the unionbales with query

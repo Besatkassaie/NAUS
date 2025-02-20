@@ -130,8 +130,8 @@ class Penalized_Search:
             table_path = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
             query_path_raw = "data/"+dataFolder+"/"+"query"
             table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            processed_path="data/processed/"+dataFolder+"/"
-            index_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
+            processed_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/proccessed/"
+            index_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -468,16 +468,16 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted04_restricted.csv"
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 
     
     
     for i in range(2,11):   
         penalize_search = Penalized_Search()
-        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_lexical_distance_restricted_dilut04.csv"
-        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/column_based_similarity_restricted_dilut04.csv"
+        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/column_based_lexical_distance_restricted_dilut04.csv"
+        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/column_based_similarity_restricted_dilut04.csv"
         penalize_search.load_column_alignment_data(alignment_Dust)
         penalize_search.load_unionable_tables(first_50_starmie)   
         k=i     

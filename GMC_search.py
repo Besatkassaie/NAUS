@@ -5,7 +5,7 @@ from SetSimilaritySearch import SearchIndex
 from  process_column import TextProcessor
 import pickle
 import os
-from preprocess_align import gmc_alignmnet_by_query
+from preprocess_align import gmc_alignmnet_by_query_efficient
 from preprocess_align import initialize_globally
 import csv
 import numpy as np
@@ -30,7 +30,7 @@ class GMC_Search:
     GMC_Search: A class for performing Greedy  Marginal  Contribution (GMC) for Novelty based  unionable  table search.
     """
 
-    def __init__(self, data_source, search_parameters=None):
+    def __init__(self, data_source, alignment_for_diversity_gmc_file,search_parameters=None):
         """
         Initializes the GMC_Search instance.
 
@@ -47,7 +47,7 @@ class GMC_Search:
         self.diversity_scores=None
         self.unionability_scores=None
         self.unionable_data=None
-        self.alignment_for_diversity_gmc_file=None
+        self.alignment_for_diversity_gmc_file=alignment_for_diversity_gmc_file
         self.query_dl_table_vector_df=None # vector represenation of tables given (query) 
         self.query_s_i_s_j_vector_df=None # vector representation of tables given (query and si)
 
@@ -1755,10 +1755,10 @@ class GMC_Search:
          """
         #load required data here 
         dataFolder="santos"
-        table_path = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        table_path_raw = "data/"+dataFolder+"/"+"datalake"
-        processed_path="data/processed/"+dataFolder+"/"
-        index_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
+        table_path = "data/"+dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        table_path_raw = "data/"+dataFolder+"/datalake"
+        processed_path="data/"+dataFolder+"/proccessed/"
+        index_file_path="data/"+dataFolder+"/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
         
         
         text_processor = TextProcessor()
@@ -1947,9 +1947,72 @@ class GMC_Search:
                                 # corresponding to alignments 
                                 S_j= self.data[self.data["query_table_name"] == q_main_table]["dl_table_name"].unique()
                                 res= self.export_alignment_for_diversity(q_main_table, s_i,S_j, dl_columns,file_path)
-                return res                        
-                                
-                                
+                return res  
+                                  
+    # Define a helper function that only computes the alignment result.
+    def compute_alignment(self,task):
+        q_main_table, s_i, dl_columns = task
+        # Retrieve the unionable DL tables for the current query.
+        S_j = self.data[self.data["query_table_name"] == q_main_table]["dl_table_name"].unique()
+        print(f"Processing Q_table: {q_main_table}, s_i: {s_i}, Columns: {dl_columns}")
+        # Compute the alignment result (using your existing function)
+        alignment_result = gmc_alignmnet_by_query_efficient(s_i, dl_columns, S_j)
+        if alignment_result is not None:
+            # Prepend q_main_table to each row
+            for row in alignment_result:
+                row.insert(0, q_main_table)
+            return alignment_result
+        else:
+            return []
+                       
+    def generate_alignment_for_diversity_parallel(self):
+        print("Generating alignment for diversity...")
+        diversity_pairs = []
+        try:
+            # Group the data by query_table_name
+            grouped = self.data.groupby('query_table_name')
+            i=0
+            for q_table, group in grouped: ##TODO: Remove the limit
+                # Further group by dl_table_name within each query group.
+                # if i>1:
+                #     break
+                # i+=1
+
+                dl_grouped = group.groupby('dl_table_name')
+                for dl_table, dl_group in dl_grouped:
+                    # Get the set of DL_columns for this q_table and dl_table
+                    dl_columns_set = set(dl_group['dl_column'])
+                    diversity_pairs.append((q_table, dl_table, dl_columns_set))
+            print("Diversity pairing complete.")
+        except KeyError as e:
+            print(f"Error: Missing required column in data - {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
+
+    # Use a multiprocessing Pool to compute alignments in parallel.
+        from multiprocessing import Pool, cpu_count
+        with Pool(processes=cpu_count(), initializer=initialize_globally) as pool:
+            results = pool.map(self.compute_alignment, diversity_pairs)
+
+        # Now, sequentially write the alignment results to CSV to avoid race conditions.
+        output_csv_path = alignment_for_diversity_gmc_file2
+        file_exists = os.path.exists(output_csv_path)
+        try:
+            with open(output_csv_path, mode="a", newline="") as csvfile:
+                csv_writer = csv.writer(csvfile)
+                if not file_exists:
+                    csv_writer.writerow(["q_main_table", "s_i", "s_i_column", "s_i_column#", "s_j_table_name", "s_j_column#", "s_j_column"])
+                for alignment_result in results:
+                    if alignment_result:
+                        csv_writer.writerows(alignment_result)
+                        # Optionally, log which query's results were written.
+                        print(f"Alignment results written for query {alignment_result[0][0]}")
+        except Exception as e:
+            print(f"Error writing alignment results to CSV: {e}")
+
+        return results                          
     def export_alignment_for_diversity(self, q_main_table,s_i,S_j, columns_,output_csv_path):
         """
         get  diversity data for each DL_table and s_i pair 
@@ -1960,7 +2023,7 @@ class GMC_Search:
         """
 
 
-        alignment_result=gmc_alignmnet_by_query(s_i,columns_,S_j)
+        alignment_result=gmc_alignmnet_by_query_efficient(s_i,columns_,S_j)
         
         
         output_rows = []
@@ -2081,16 +2144,17 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
       
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/DUST_Alignment_Diluted04_restricted.csv"
+    global alignment_for_diversity_gmc_file2
+    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
     
-    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_diluted04_restricted.csv'
+    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/alignment_for_diversity_gmc_Santos_diluted04_restricted.csv'
 
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/top_20_Starmie_output_diluted_restricted_noscore.pkl"     
+    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
     
     limit_queries='1' # if we want to only limit the runs to the queries with more than k unionale results this is 1 otherwise zero. 
     search_params = {"keyword": "example", "max_results": 10}
 
-    gmc_search = GMC_Search(alignment_Dust, search_params)
+    gmc_search = GMC_Search(alignment_Dust, search_params,alignment_for_diversity_gmc_file)
 
     # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
     # Starmie on Santos returning maximum 50 unionable dl tables  for each query
@@ -2104,13 +2168,14 @@ if __name__ == "__main__":
         print("alignments for diversity file exists")
     else:
         initialize_globally() # for DUST 
-        gmc_search.generate_alignment_for_diversity( alignment_for_diversity_gmc_file)
+        alignment_for_diversity_gmc_file2=alignment_for_diversity_gmc_file
+        gmc_search.generate_alignment_for_diversity_parallel()
             
 
     gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file(alignment_for_diversity_gmc_file)   
     # Calculate unionability
 
-    uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_unionability_scores_diluted04_restricted.csv"
+    uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/gmc_unionability_scores_diluted04_restricted.csv"
     file_exists = os.path.exists(uionability_file_path)
     if not file_exists:
         unionability_scores = gmc_search.calculate_unionability()
@@ -2132,7 +2197,7 @@ if __name__ == "__main__":
     gmc_search.unionability_scores=unionability_scores
     
     
-    diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/gmc_diversity_scores_diluted04_restricted.csv"
+    diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/gmc_diversity_scores_diluted04_restricted.csv"
     file_exists = os.path.exists(diveristy_file_path)
     if not file_exists:
 # Save DataFrame to CSV
@@ -2158,11 +2223,11 @@ if __name__ == "__main__":
     # create the represenation for tables 
     #gmc_search.vectorize_tables()
 
-    output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/gmc/gmc_results_diluted04_restricted'+limit_queries+'.csv'
+    output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv'
     for i in range(2, 11): 
             gmc_search.k=i
 
-            results = gmc_search.execute_search(limit_queries)
+            results = gmc_search.execute_search()
             # Define the output CSV file path
             
 

@@ -24,7 +24,7 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-
+# we run this to export result of native starmie 
 
 
 

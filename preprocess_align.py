@@ -40,7 +40,7 @@ import argparse
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import difflib
-
+from copkmeans.cop_kmeans2 import cop_kmeans
 
 # %%
 def init():
@@ -413,6 +413,299 @@ def gmc_alignmnet_by_query( query_table,query_columns,dl_tables, embedding_type=
             #export_alignment_to_csv(final_alignment_4_query, track_columns_reverse, "DUST_Alignment.csv")
             #query_col[0] == "311_calls_historic_data_0.csv" && dl_col[0] == "311_calls_historic_data_3.csv" 
             return alignment_list
+
+def gmc_alignmnet_by_query(query_table, query_columns, dl_tables, embedding_type='roberta_serialized'):
+    """
+    Compute column alignments between a query table and its unionable datalake tables
+    using COP-KMeans clustering from cop_kmeans2 in a more efficient manner.
+    
+    Parameters:
+      query_table (str): Filename (or table identifier) for the query table.
+      query_columns (list): List of column indices (integers) from the query table to use.
+      dl_tables (list): List of datalake table names (or filenames) that are unionable with the query.
+      embedding_type (str): Embedding type to use (default 'roberta_serialized').
+      
+    Returns:
+      alignment_list (list): A list of aligned column pairs. Each element is a list:
+          [query_table, query_column, query_column_index, dl_table, dl_column, dl_column_index]
+      or None if no valid clustering is found.
+    """
+    import os
+    import itertools
+    import numpy as np
+    from sklearn import metrics
+    from copkmeans.cop_kmeans2 import cop_kmeans
+
+    # --- Setup and Data Loading ---
+    use_numeric_columns = True
+    benchmark_name = "santos"
+    dl_table_folder = os.path.join("data", benchmark_name, "datalake")
+    # Create a simple groundtruth mapping for this query.
+    groundtruth = { query_table: dl_tables }
+    query_table_name = os.path.basename(query_table)
+    if query_table_name in ["workforce_management_information_a.csv", "workforce_management_information_b.csv"]:
+        return None
+
+    # --- Compute Embeddings ---
+    # Query table embeddings
+    query_path = os.path.join(dl_table_folder, query_table)
+    query_embeddings = compute_embeddings_single_table(query_path, embedding_type, use_numeric_columns=use_numeric_columns)
+    if not query_embeddings:
+        print(f"No query embeddings for {query_table_name}; skipping.")
+        return None
+
+    # Filter query embeddings to only desired query columns.
+    query_cols_set = set(query_columns)
+    query_embeddings = { k: emb for k, emb in query_embeddings.items() if k[2] in query_cols_set }
+    if not query_embeddings:
+        print(f"No valid query columns after filtering for {query_table_name}.")
+        return None
+
+    # DL embeddings from unionable tables.
+    unionable_table_paths = [
+        os.path.join(dl_table_folder, tab)
+        for tab in groundtruth.get(query_table_name, [])
+        if tab != query_table_name and os.path.exists(os.path.join(dl_table_folder, tab))
+    ]
+    dl_embeddings = compute_embeddings(unionable_table_paths, embedding_type, use_numeric_columns=use_numeric_columns)
+    if not dl_embeddings:
+        print(f"No datalake embeddings for {query_table_name}.")
+        return None
+
+    # --- Combine Embeddings and Track Sources ---
+    column_embeddings = []
+    track_columns_reverse = {}  # index -> (table_name, column_name, col_index)
+    track_tables = {}           # table_name -> set of indices
+    query_indices = set()       # indices from the query table
+    idx = 0
+
+    # Process query embeddings.
+    for key, emb in query_embeddings.items():
+        column_embeddings.append(emb)
+        track_columns_reverse[idx] = key
+        track_tables.setdefault(key[0], set()).add(idx)
+        query_indices.add(idx)
+        idx += 1
+
+    # Process datalake embeddings.
+    for key, emb in dl_embeddings.items():
+        column_embeddings.append(emb)
+        track_columns_reverse[idx] = key
+        track_tables.setdefault(key[0], set()).add(idx)
+        idx += 1
+
+    if not column_embeddings:
+        return None
+
+    X = np.array(column_embeddings)
+
+    # --- Build Cannot-Link Constraints ---
+    cannot_link = [pair for indices in track_tables.values() for pair in itertools.combinations(indices, 2)]
+
+    # --- Determine Candidate Cluster Range ---
+    min_k = len(query_embeddings)  # at least one cluster per query column
+    max_k = len(track_columns_reverse)
+    # If the candidate range is large, sample 20 evenly spaced candidate k's.
+    if (max_k - min_k + 1) > 20:
+        candidate_k_values = np.unique(np.linspace(min_k, max_k, num=20, dtype=int))
+    else:
+        candidate_k_values = range(min_k, max_k + 1)
+
+    best_score = -1
+    best_labels = None
+    best_k_candidate = None
+
+    # --- Run COP-KMeans for Each Candidate k ---
+    for k_candidate in candidate_k_values:
+        try:
+            labels, centers = cop_kmeans(dataset=X, k=k_candidate, ml=[], cl=cannot_link)
+        except Exception as e:
+            print(f"Error with k={k_candidate} for {query_table_name}: {e}")
+            continue
+        if len(set(labels)) < 2:
+            continue
+        try:
+            score = metrics.silhouette_score(X, labels, metric='euclidean')
+        except Exception as e:
+            print(f"Silhouette score error for k={k_candidate}: {e}")
+            continue
+        if score > best_score:
+            best_score = score
+            best_labels = labels
+            best_k_candidate = k_candidate
+
+    if best_labels is None:
+        print(f"No valid clustering found for {query_table_name}.")
+        return None
+
+    # --- Extract Alignment Edges ---
+    clusters = {}
+    for i, lab in enumerate(best_labels):
+        clusters.setdefault(lab, set()).add(i)
+
+    alignment_edges = [
+        pair
+        for group in clusters.values() if len(group) > 1
+        for pair in itertools.combinations(sorted(group), 2)
+        if pair[0] in query_indices or pair[1] in query_indices
+    ]
+
+    alignment_list = []
+    for edge in alignment_edges:
+        col1 = track_columns_reverse[edge[0]]
+        col2 = track_columns_reverse[edge[1]]
+        alignment_list.append([col1[0], col1[1], col1[2], col2[0], col2[1], col2[2]])
+
+    print(f"{query_table_name}: best k = {best_k_candidate}, silhouette = {best_score:.3f}, alignments = {len(alignment_list)}")
+    return alignment_list
+
+
+def gmc_alignmnet_by_query_efficient(query_table, query_columns, dl_tables, embedding_type='roberta_serialized'):
+    """
+    Compute column alignments between a query table and its unionable datalake tables
+    using COP-KMeans clustering (cop_kmeans2). Only the specified query_columns (list of column indices)
+    from the query table are used.
+    
+    Parameters:
+      query_table (str): Filename (or table identifier) for the query table.
+      query_columns (list): List of column indices (integers) from the query table to use.
+      dl_tables (list): List of datalake table names (or filenames) that are unionable with the query.
+      embedding_type (str): Embedding type to use (default 'roberta_serialized').
+      
+    Returns:
+      alignment_list (list): A list of aligned column pairs. Each element is a list:
+          [query_table, query_column, query_column_index, dl_table, dl_column, dl_column_index]
+      or None if no valid clustering is found.
+    """
+    # --- Setup and Data Loading ---
+    use_numeric_columns = True
+    benchmark_name = "santos"
+    dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
+    # Build a groundtruth dict mapping query table to its unionable DL tables
+    groundtruth = { query_table: dl_tables }
+    
+    # Get the short query table name (assumes filename is the last part of the path)
+    query_table_name = query_table.rsplit(os.sep, 1)[-1]
+    # (Optionally, you may wish to skip certain query tables)
+    if query_table_name in ["workforce_management_information_a.csv", "workforce_management_information_b.csv"]:
+        return None
+
+    # --- Compute Embeddings for Query and DL Tables ---
+    # Compute embeddings for the query table columns
+    query_path = dl_table_folder + os.sep + query_table
+    query_embeddings = compute_embeddings_single_table(query_path, embedding_type, use_numeric_columns=use_numeric_columns)
+    if len(query_embeddings) == 0:
+        print("Not enough rows in query. Ignoring this query table.")
+        return None
+
+    # Get the list of unionable table paths (exclude the query itself)
+    unionable_table_paths = [
+        dl_table_folder + os.sep + tab
+        for tab in groundtruth.get(query_table_name, [])
+        if tab != query_table_name and os.path.exists(dl_table_folder + os.sep + tab)
+    ]
+    # Compute embeddings for the unionable datalake tables
+    dl_embeddings = compute_embeddings(unionable_table_paths, embedding_type, use_numeric_columns=use_numeric_columns)
+    
+    # --- Filter and Combine Query Embeddings ---
+    # Filter query embeddings to only include the desired query_columns.
+    filtered_query_embeddings = { key: emb for key, emb in query_embeddings.items() if key[2] in query_columns }
+    query_embeddings = filtered_query_embeddings
+    if len(query_embeddings) == 0:
+        print("No valid query columns after filtering.")
+        return None
+
+    # Combine embeddings and record their sources.
+    column_embeddings = []           # List of embeddings (in order)
+    track_tables = {}                # Mapping: table_name -> set of universal column indices
+    track_columns_reverse = {}       # Mapping: universal index -> (table_name, column_name, col_index)
+    query_column_ids = set()         # Set of indices that come from the query table
+    idx = 0
+
+    # Process query table embeddings
+    for key, emb in query_embeddings.items():
+        column_embeddings.append(emb)
+        track_columns_reverse[idx] = key  # key is a tuple: (table_name, column_name, col_index)
+        table = key[0]
+        track_tables.setdefault(table, set()).add(idx)
+        query_column_ids.add(idx)
+        idx += 1
+
+    # Process datalake embeddings
+    for key, emb in dl_embeddings.items():
+        column_embeddings.append(emb)
+        track_columns_reverse[idx] = key
+        table = key[0]
+        track_tables.setdefault(table, set()).add(idx)
+        idx += 1
+
+    if len(column_embeddings) == 0:
+        return None
+
+    X = np.array(column_embeddings)
+
+    # --- Build Cannot-Link Constraints ---
+    # Ensure that columns from the same table cannot be clustered together.
+    cannot_link = []
+    for indices in track_tables.values():
+        for pair in itertools.combinations(indices, 2):
+            cannot_link.append(pair)
+
+    # --- Run COP-KMeans over Candidate k Values ---
+    min_k = len(query_embeddings)  # at least one cluster per query column
+    max_k = len(track_columns_reverse)
+    best_score = -1
+    best_labels = None
+    best_k_candidate = None
+
+    for k_candidate in range(min_k, max_k + 1):
+        try:
+            # Run COP-KMeans with no must-link constraints (ml = []) and the cannot-link constraints
+            labels, centers = cop_kmeans(dataset=X, k=k_candidate, ml=[], cl=cannot_link)
+        except Exception as e:
+            print(f"Error with k={k_candidate} for {query_table_name}: {e}")
+            continue
+        # Skip clustering with fewer than 2 clusters
+        if labels is None:
+            continue
+        if len(set(labels)) < 2:
+            continue
+        try:
+            score = metrics.silhouette_score(X, labels, metric='euclidean')
+        except Exception as e:
+            print(f"Silhouette score error for k={k_candidate}: {e}")
+            continue
+        if score > best_score:
+            best_score = score
+            best_labels = labels
+            best_k_candidate = k_candidate
+
+    if best_labels is None:
+        print(f"No valid clustering found for {query_table_name}.")
+        return None
+
+    # --- Extract Alignment Edges ---
+    clusters = {}
+    for idx_val, lab in enumerate(best_labels):
+        clusters.setdefault(lab, set()).add(idx_val)
+
+    alignment_edges = set()
+    for group in clusters.values():
+        if len(group) < 2:
+            continue
+        for pair in itertools.combinations(sorted(group), 2):
+            # Only include pairs where at least one column comes from the query
+            if pair[0] in query_column_ids or pair[1] in query_column_ids:
+                alignment_edges.add(pair)
+
+    alignment_list = []
+    for edge in alignment_edges:
+        col1 = track_columns_reverse[edge[0]]
+        col2 = track_columns_reverse[edge[1]]
+        alignment_list.append([col1[0], col1[1], col1[2], col2[0], col2[1], col2[2]])
+
+    print(f"Finished {query_table_name}: best k = {best_k_candidate}, silhouette = {best_score:.3f}, alignments = {len(alignment_list)}")
+    return alignment_list
 
 
 def remove_problematic_alignments(final_alignment_4_query, queries_with_problematic_alignments, track_columns_reverse):
@@ -1305,6 +1598,7 @@ def main():
 def initialize_globally():
     global random_seed, embedding_type, model, tokenizer, vec_length, tfidf_vectorizer
 
+ 
     random_seed = 42
     random.seed(random_seed)
     np.random.seed(random_seed)
