@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Replace 'input.csv' with the path to your CSV file.
-input_csv = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_CL_KMEANS_euclidean_alignment.csv'
+input_csv = '/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv'
 
 # Read the CSV file into a DataFrame.
 df = pd.read_csv(input_csv)

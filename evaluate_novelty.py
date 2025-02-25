@@ -5,10 +5,11 @@ from naive_search_Novelty import NaiveSearcherNovelty
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
 import numpy as np
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lit
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType
-import pyspark.sql.functions as F
+import utilities as utl
+# from pyspark.sql import SparkSession
+# from pyspark.sql.functions import col, lit
+# from pyspark.sql.types import StructType, StructField, StringType, ArrayType
+# import pyspark.sql.functions as F
 
 #This file containes all the metrics used in our paper to evalute the novelty/diversity 
 #of the reranking 
@@ -207,6 +208,7 @@ def Cal_P_R_Map(resultFile, gtPath, output_file_):
                             result_set = [item.replace("]", '') for item in result_set]
 
 
+
                             # find_intersection = true positives
                             find_intersection = set(result_set).intersection(groundtruth_set)
                             tp = len(find_intersection)
@@ -271,7 +273,10 @@ def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result
                             2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
                             groundtruth: is the gound truth havinf unionable tables for each query
         """                    
-        groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
+        if('csv' in groundtruth_file ): 
+            groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)
+        else: 
+            groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
 
         input_file = search_result
         columns_to_load = ['query_name', 'tables', 'k']
@@ -364,16 +369,19 @@ def get_ssnm_query(df_q, groundtruth_tables, remove_duplicates):
      
        
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+       tables_result_list = [ item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_list ]
 
-                     
        
        tables_result_set=set(tables_result_list)
        #these two holds the expected pair name of the visited file names which are not yet paired   
        visited_diluted_waiting_for_set=set()
        # the not deluted seen so far
        visited_no_diluted_waiting_for_set=set()
-       
        groundtruth_tables_set=set(groundtruth_tables)
+
+       groundtruth_tables_set = { item.replace("[", "").replace("'", "").replace("]","") for item in groundtruth_tables_set }
+       tables_result_set = { item.replace("[", "").replace("'", "").replace("]","") for item in tables_result_set }
+       
        G=len(tables_result_set.intersection(groundtruth_tables_set))
        L=0.0  #number of unionable diluted comes alone in result
        if (G==0):
@@ -428,7 +436,10 @@ def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_r
                             2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
                             groundtruth: is the gound truth havinf unionable tables for each query
         """                    
-        groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
+        if('csv' in groundtruth_file ): 
+            groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)
+        else: 
+            groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
 
         input_file = search_result
         columns_to_load = ['query_name', 'tables', 'k']
@@ -502,6 +513,8 @@ def get_snm_query(df_q, groundtruth_tables, remove_duplicates):
      
        
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+       tables_result_list = [ item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_list ]
+
        tables_result_set=set(tables_result_list)
        
 
@@ -512,6 +525,10 @@ def get_snm_query(df_q, groundtruth_tables, remove_duplicates):
        visited_no_diluted_waiting_for_set=set()
        
        groundtruth_tables_set=set(groundtruth_tables)
+       
+       groundtruth_tables_set = { item.replace("[", "").replace("'", "").replace("]", "") for item in groundtruth_tables_set }
+       tables_result_set = { item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_set }
+
        G=len(tables_result_set.intersection(groundtruth_tables_set))
        L=0.0  #number of unionable diluted comes alone in result
        B=00.0 # diluted item comes before its original peer
@@ -891,6 +908,8 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
                       # Filter rows that satisfy both conditions
                       filtered_align = alignments_[condition1 & condition2]
                       # get datalake table and make if dataframe
+                      dl_t=dl_t.replace("[", "").replace("'", "").replace("]","")
+                      dl_t=dl_t.replace("]", "").replace("'", "").replace("]", "")
                       dl_list=tbles_[dl_t]
                       columns_dl= [i for i in range(len(dl_list))]
                       df_dl = pd.DataFrame(data=list(zip(*dl_list)), columns=columns_dl)

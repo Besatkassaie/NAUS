@@ -184,7 +184,7 @@ def dilute_datalake_by_column_lable(dilation_degree,query_directory,datalake_dir
  
 def refine_ground_truth(missing_queries, ground_truth_path, refined_ground_truth_path):
        if('csv' in ground_truth_path):
-          groundtruth_dict=utl.loadDictionaryFromCsvFile_withheader(ground_truth_path)
+          groundtruth_dict=utl.loadDictionaryFromCsvFile(ground_truth_path)
        else: 
           groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
         
@@ -203,15 +203,18 @@ def refine_ground_truth(missing_queries, ground_truth_path, refined_ground_truth
                 elif isinstance(value, str) and value in missing_queries:
                     del groundtruth_dict[key]
      # Write the updated dictionary to a pickle file
-       with open(refined_ground_truth_path, 'wb') as f:
+       if('csv' in ground_truth_path):
+           utl.write_dict_to_csv(groundtruth_dict, refined_ground_truth_path)
+       else: 
+         with open(refined_ground_truth_path, 'wb') as f:
             pickle.dump(groundtruth_dict, f)
-          
+           
     
 
 def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path,alignment_file,notdiluted_file, dataset, missingfiles):
    
        if('csv' in ground_truth_path):
-          groundtruth_dict=utl.loadDictionaryFromCsvFile_withheader(ground_truth_path)
+          groundtruth_dict=utl.loadDictionaryFromCsvFile(ground_truth_path)
        else: 
           groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
        alignment_=utl.load_alignment(alignment_file)
@@ -438,7 +441,7 @@ def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_t
     notdiluted_tnames = {}
     notdiluted_tnames= utl.loadDictionaryFromCsvFile(notdiluted_tnames_file)
     if('csv' in ground_truth_path):
-          groundtruth_dict=utl.loadDictionaryFromCsvFile_withheader(ground_truth_path)
+          groundtruth_dict=utl.loadDictionaryFromCsvFile(ground_truth_path)
     else: 
           groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
     new_groundtruth_dict={}
@@ -451,6 +454,8 @@ def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_t
         values = list(set(values) - set(missings))
         if(key_ in notdiluted_tnames ):
             dlstring=notdiluted_tnames[key_]
+            if isinstance(dlstring, list):
+               dlstring=dlstring[0]
             dlstring=dlstring.replace('[\'','')
             dlstring=dlstring.replace('\']','')
             dlstring=dlstring.replace('\'','')
@@ -507,7 +512,7 @@ def add_dlt_to_csv_filenames(folder_path):
            
 if __name__ == "__main__":
   # we need to call these function once 
-    dataset="santos"
+    dataset="TUS_small"
     dilation_degree=0.4
     # santos: 
     if dataset=='santos':
@@ -537,7 +542,7 @@ if __name__ == "__main__":
          # modify the file names 
         #add_dlt_to_csv_filenames(diluted_datalake_directory)
         
-        dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
+        #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
 
     elif dataset=='ugen-v2':
         query_directory_withindex="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/ugen_v2/query_original"
@@ -558,20 +563,35 @@ if __name__ == "__main__":
         
     elif dataset=='TUS_small':
         missing_tables=[]
-        query_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/query"
-        datalake_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/datalake"  
+        query_directory="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query"
+        datalake_directory="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake"  
   
-        diluted_datalake_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/datalake_diluted0.4_only"
-        ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth.csv"  
-        alignmnet_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/DUST_Alignment_4gtruth_tus_benchmark.csv"
-        notdiluted04_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/notdiluted04_file.csv"
-        ground_truth_path_diluted=f"/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_{dilation_degree}.csv"  
-        alignmnet_file_diluted="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/DUST_Alignment_4gtruth_tus_benchmark_all.csv"
+        diluted_datalake_directory="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake_diluted0.4_only"
+        ground_truth_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_notdilute.csv"  
+        alignmnet_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv"
+        notdiluted04_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/notdiluted04_file.csv"
+        ground_truth_path_diluted=f"/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_{dilation_degree}.csv"  
+        alignmnet_file_diluted="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/DUST_Alignment_4gtruth_tus_benchmark_all.csv"
 
-    #     dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
-    #                                   diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset)
-      #  dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file,missing_tables)
-       #dilute_alignment4Groundtruth(alignmnet_file, alignmnet_file_diluted)
+        missingfiles=f"/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
+        refined_ground_truth_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_refined_groundtruth.csv"  
+
+       
+        #1-make sure that all queries are in the 
+        # dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
+        #                                diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
+        
+        # remove from ground truth the queries that do not have their files in datalake  listed in missingfiles:
+        # I manullay open the file and copied not existed files 
+        # missin_files_names={"stockport_contracts_4.csv"}
+        # refine_ground_truth(missin_files_names,ground_truth_path, refined_ground_truth_path)
+         
+         # modify the file names 
+        #add_dlt_to_csv_filenames(diluted_datalake_directory)
+        dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
+
+
+
 
 
         

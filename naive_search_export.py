@@ -6,6 +6,8 @@ from munkres import Munkres, make_cost_matrix, DISALLOWED
 from numpy.linalg import norm
 from bounds import verify, upper_bound_bm, lower_bound_bm, get_edges
 import pickle5 as p
+import utilities as utl
+
 
 class NaiveSearcher(object):
     def __init__(self,
@@ -53,7 +55,11 @@ class NaiveSearcher(object):
             else:
                 #open the bench mark  
                 print("verifying restricted data")
-                groundtruth =self.loadDictionaryFromPickleFile(gth)
+                if('csv' in gth):
+                   groundtruth =utl.loadDictionaryFromCsvFile(gth)
+                else:
+                   groundtruth =self.loadDictionaryFromPickleFile(gth)
+
                 Unionables=groundtruth[query[0]]
                 # for this query find the unionable tables names and stor them in U and if table[0] is in unionables then call verify     
                 scores = [(self._verify(query[1], table[1], threshold), table[0]) for table in self.tables if table[0] in Unionables]

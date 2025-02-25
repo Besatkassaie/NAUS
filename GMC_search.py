@@ -1614,8 +1614,8 @@ class GMC_Search:
     
     def load_starmie_vectors(self):
         '''load starmie vectors for query and data lake and retrun as dictionaries'''
-        dl_table_vectors = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        query_table_vectors = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+        dl_table_vectors = "data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        query_table_vectors = "data/santos/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
         qfile = open(query_table_vectors,"rb")
          # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
         queries = pickle.load(qfile)
@@ -1644,7 +1644,8 @@ class GMC_Search:
         sim_data = pd.DataFrame(columns=["q_table", "dl_table", "similarity_score"])
 
     
-        # self.data is a datafram with columns ['query_table_name', 'query_column', 'query_column#','dl_table_name', 'dl_column#', 'dl_column']
+        # self.data is in fact the alignemnt between query and datalake tables which 
+        # is a datafram with columns ['query_table_name', 'query_column', 'query_column#','dl_table_name', 'dl_column#', 'dl_column']
         
         # get all existing query tables from self.data 
         
@@ -2145,11 +2146,16 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
 if __name__ == "__main__":
     # Example usage:
     global alignment_for_diversity_gmc_file2
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
     
-    alignment_for_diversity_gmc_file='/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/alignment_for_diversity_gmc_Santos_diluted04_restricted.csv'
+    benchmark_path="data/table-union-search-benchmark/small/"
+    
+    alignment_Dust="data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
 
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
+    #alignment_Dust="data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
+    
+    alignment_for_diversity_gmc_file=benchmark_path+'diveristy_data/GMC/alignment_for_diversity_gmc_Santos_diluted04_restricted.csv'
+
+    first_50_starmie=benchmark_path+"diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
     
     limit_queries='1' # if we want to only limit the runs to the queries with more than k unionale results this is 1 otherwise zero. 
     search_params = {"keyword": "example", "max_results": 10}
@@ -2175,7 +2181,7 @@ if __name__ == "__main__":
     gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file(alignment_for_diversity_gmc_file)   
     # Calculate unionability
 
-    uionability_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/gmc_unionability_scores_diluted04_restricted.csv"
+    uionability_file_path=benchmark_path+"diveristy_data/GMC/gmc_unionability_scores_diluted04_restricted.csv"
     file_exists = os.path.exists(uionability_file_path)
     if not file_exists:
         unionability_scores = gmc_search.calculate_unionability()
@@ -2197,7 +2203,7 @@ if __name__ == "__main__":
     gmc_search.unionability_scores=unionability_scores
     
     
-    diveristy_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/GMC/gmc_diversity_scores_diluted04_restricted.csv"
+    diveristy_file_path=benchmark_path+"diveristy_data/GMC/gmc_diversity_scores_diluted04_restricted.csv"
     file_exists = os.path.exists(diveristy_file_path)
     if not file_exists:
 # Save DataFrame to CSV
@@ -2223,7 +2229,7 @@ if __name__ == "__main__":
     # create the represenation for tables 
     #gmc_search.vectorize_tables()
 
-    output_csv_file = '/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv'
+    output_csv_file = benchmark_path+'diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv'
     for i in range(2, 11): 
             gmc_search.k=i
 

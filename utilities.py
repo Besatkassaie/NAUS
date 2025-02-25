@@ -41,6 +41,22 @@ def loadDictionaryFromPickleFile(dictionaryPath):
 
 
 
+def write_dict_to_csv(data_dict, file_path):
+    """
+    Write a dictionary to a CSV file, where each row is a key and one element from the corresponding list.
+
+    Parameters:
+        data_dict (dict): Dictionary where keys are strings and values are lists.
+        file_path (str): Path to the CSV file.
+    """
+    with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        # Write each key-value pair as a separate row
+        for key, values in data_dict.items():
+            for value in values:
+                writer.writerow([key, value])
+
+
 
 
 def load_alignment(alignmnet_file):
@@ -100,28 +116,32 @@ def create_query_to_datalake_dict(csv_path):
     return dict(query_to_datalake) 
 
 # load csv file as a dictionary. Further preprocessing may be required after loading
-def loadDictionaryFromCsvFile(filePath):
-    if(os.path.isfile(filePath)):
-        with open(filePath) as csv_file:
-            reader = csv.reader(csv_file)
-            dictionary = dict(reader)
-        return dictionary
-    else:
-        print("Sorry! the file is not found. Please try again later. Location checked:", filePath)
-        sys.exit()
-        return 0
+def loadDictionaryFromCsvFile(file_path):
+    """
+    Reads a CSV file and creates a dictionary where:
+    - The first column serves as the key.
+    - The second column values are stored as a list.
+
+    If the file does not exist, it prints an error message.
+    """
+    if not os.path.exists(file_path):
+        print(f"Error: File '{file_path}' not found.")
+        return None  # Return None if the file doesn't exist
+
+    data_dict = defaultdict(list)  # Dictionary with lists as default values
+
+    with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if len(row) >= 2:  # Ensure the row has at least two columns
+                key, value = row[0].strip(), row[1].strip()
+                data_dict[key].append(value)  # Append value to the list for the key
+            else:
+                print(f"Warning: Skipping malformed row {row}")
+
+    return dict(data_dict)
     
-# load csv file as a dictionary. Further preprocessing may be required after loading
-def loadDictionaryFromCsvFile(filePath):
-    if(os.path.isfile(filePath)):
-        with open(filePath) as csv_file:
-            reader = csv.reader(csv_file)
-            dictionary = dict(reader)
-        return dictionary
-    else:
-        print("Sorry! the file is not found. Please try again later. Location checked:", filePath)
-        sys.exit()
-        return 0    
+
  
 
 # load csv file as a dictionary. Further preprocessing may be required after loading

@@ -42,8 +42,8 @@ class Penalized_Search:
         
     def load_starmie_vectors(self):
         '''load starmie vectors for query and data lake and retrun as dictionaries'''
-        dl_table_vectors = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        query_table_vectors = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+        dl_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        query_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
         qfile = open(query_table_vectors,"rb")
             # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
         queries = pickle.load(qfile)
@@ -126,12 +126,13 @@ class Penalized_Search:
 
             lexdis_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lex_distance"])
 
-            dataFolder="santos"
-            table_path = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+            #dataFolder="santos"
+            dataFolder="table-union-search-benchmark/small"
+            table_path = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
             query_path_raw = "data/"+dataFolder+"/"+"query"
             table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            processed_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/proccessed/"
-            index_file_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
+            processed_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/proccessed/"
+            index_file_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -468,16 +469,16 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
-    first_50_starmie="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
+    first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 
     
     
     for i in range(2,11):   
         penalize_search = Penalized_Search()
-        penalize_search.column_based_lexical_distance_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/column_based_lexical_distance_restricted_dilut04.csv"
-        penalize_search.column_based_similarity_file_="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/diveristy_data/column_based_similarity_restricted_dilut04.csv"
+        penalize_search.column_based_lexical_distance_file_="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/column_based_lexical_distance_restricted_dilut04.csv"
+        penalize_search.column_based_similarity_file_="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/column_based_similarity_restricted_dilut04.csv"
         penalize_search.load_column_alignment_data(alignment_Dust)
         penalize_search.load_unionable_tables(first_50_starmie)   
         k=i     

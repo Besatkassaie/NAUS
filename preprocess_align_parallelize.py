@@ -45,6 +45,10 @@ import csv
 from copkmeans.cop_kmeans2 import cop_kmeans
 from multiprocessing import Pool, cpu_count
 
+import multiprocessing as mp
+
+# Set the multiprocessing start method to spawn to avoid CUDA reinitialization issues.
+mp.set_start_method('spawn', force=True)
 # ---------------------------- Global Parameters ----------------------------
 
 random_seed = 42
@@ -68,13 +72,17 @@ single_col = 0
 # query_table_folder = os.path.join("data", benchmark_name, "query")
 dl_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake"
 query_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query"
-groundtruth_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_notdilute.csv"
+groundtruth_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
 #groundtruth_file = os.path.join("data", benchmark_name,benchmark_name + "_union_groundtruth_diluted.pickle")
-output_file = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv"
+output_file = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
 align_plot_folder = os.path.join("plots_align")
 
 query_tables = glob.glob(os.path.join(query_table_folder, "*.csv"))
-groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
+_, ext = os.path.splitext(groundtruth_file)  # Extract file extension
+if ext == ".csv":
+       groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)
+elif ext == ".pickle": 
+   groundtruth = utl.loadDictionaryFromPickleFile(groundtruth_file)
 
 tfidf_vectorizer = TfidfVectorizer()
 
@@ -548,7 +556,14 @@ def all_query_in_datalake(query_folder, datalake_folder):
 
 
 def verify_groungtruth(groundtruth_file, query_folder):
-    query_to_datalake_dict = utl.loadDictionaryFromPickleFile(groundtruth_file)
+    _, ext = os.path.splitext(groundtruth_file)  # Extract file extension
+    ext = ext.lower()  # Convert to lowercase for consistency
+    
+    if ext == ".csv":
+           query_to_datalake_dict = utl.loadDictionaryFromCsvFile(groundtruth_file)
+    elif ext==".pickle":
+             query_to_datalake_dict = utl.loadDictionaryFromPickleFile(groundtruth_file)
+ 
         # Get a set of all file names (base names) in the query folder
     query_files = {os.path.basename(f) for f in glob.glob(os.path.join(query_folder, "*")) if os.path.isfile(f)}
     
@@ -564,6 +579,7 @@ def verify_groungtruth(groundtruth_file, query_folder):
     
     # Check 2: Ensure that for each key, the corresponding list contains that key.
     missing_self = [key for key, table_list in query_to_datalake_dict.items() if key not in table_list]
+    # check to make sur ethe missing is not query_table -> data_lake_table
     if missing_self:
         print("\nThe following dictionary keys do not appear in their associated list:")
         for key in missing_self:
