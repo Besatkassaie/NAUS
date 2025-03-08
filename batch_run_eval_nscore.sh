@@ -4,9 +4,9 @@
 # sbatch batch-submit.sh
 
 # Set resource requirements
-#SBATCH --mem=40GB              # Memory allocation
-#SBATCH --cpus-per-task=20       # Number of CPU cores
-#SBATCH --gres=gpu:1            # Request 1 GPU
+#SBATCH --mem=30GB              # Memory allocation
+#SBATCH --cpus-per-task=3       # Number of CPU cores
+##SBATCH --gres=gpu:1            # Request 1 GPU
 
 # Set output file destinations
 #SBATCH -o JOB%j.out            # Standard output file
@@ -16,4 +16,4 @@
 source activate TableUnionNew   # Replace <env> with your actual Conda environment name
 
 # Run the Python script
-python /u6/bkassaie/NAUS/preprocess_align_parallelize.py
+python /u6/bkassaie/NAUS/evaluate_novelty_main.py

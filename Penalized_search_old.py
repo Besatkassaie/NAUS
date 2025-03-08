@@ -25,25 +25,121 @@ class Penalized_Search:
     Pe: Penalized_Search is a class for performing penalized re_ranking of unionable tables for Novelty based  unionable  table search.
     """
 
-    def __init__(self, dsize):
-            self.alignment_data=None
-            self.unionable_tables=None
-       
+    def __init__(self):
+        self.column_based_lexical_distance_file_=None
+        self.column_based_similarity_file_=None
+        self.alignment_data=None
+        self.unionable_tables=None
+        print("search object is created....")
+   
+    def _cosine_sim(self, vec1, vec2):
+        ''' Get the cosine similarity of two input vectors: vec1 and vec2
+        '''
+        assert vec1.ndim == vec2.ndim
+        return np.dot(vec1, vec2) / (norm(vec1)*norm(vec2))
+    
+    
+        
+    def load_starmie_vectors(self):
+        '''load starmie vectors for query and data lake and retrun as dictionaries'''
+        dl_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        query_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+        qfile = open(query_table_vectors,"rb")
+            # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
+        queries = pickle.load(qfile)
+        # make as dictnary from first item to secon item 
+        # Convert to dictionary
+        queries_dict = {item[0]: item[1] for item in queries}
+
+        tfile = open(dl_table_vectors,"rb")
+        tables = pickle.load(tfile)
+        # tables is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(each verstor is a numpy.ndarray) for columns) 
+
+        dl_dict = {item[0]: item[1] for item in tables}
+        
+        return (queries_dict,dl_dict)     
+        
+    def load_column_based_similarity(self,column_based_similarity_file):
+        '''fro every column pairs from query and datalake table calculate the unionability and write in a file'''
+        '''columns to be out: q_table, q_col, dl_table, dl_col, similarity'''
+        # check whethter file exists load it other wise generate and write 
+
+        if os.path.exists(column_based_similarity_file):
+        # Load the file into a DataFrame
+            sim_data = pd.read_csv(column_based_similarity_file, header=0)  # Treat the first row as column names
+        else:
+            all_vectors=self.load_starmie_vectors()
+            queries_dict = all_vectors[0]
+            dl_dict=all_vectors[1]
+
+            sim_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","similarity"])
+            # self.alignment_data is a datafram with columns ['query_table_name', 'query_column', 'query_column#','dl_table_name', 'dl_column#', 'dl_column']
+          
+            q_table_names = self.alignment_data['query_table_name'].unique()
+            # for every query now compute the similarity scores with dt tables 
+            for query_name in q_table_names:
+                    # get q columns vectors 
+                    q_vectors=queries_dict[query_name]
+                    # Get all rows corresponding to the current query_name
+                    query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
+
+                    # Get all unique dl_table_names for the current query_name
+                    dl_table_names = query_rows['dl_table_name'].unique()
+                        # Iterate over each dl_table_name
+                    for dl_table_name in dl_table_names:
+                        similarity_score=0
+                        # Filter rows for the current query_name and dl_table_name
+                        specific_rows = query_rows[query_rows['dl_table_name'] == dl_table_name]
+                        dl_t_vectors=dl_dict[dl_table_name]
+                        # Retrieve the relevant columns
+
+                        for _, row in specific_rows.iterrows():
+                            # get their vectors 
+                            query_column = row['query_column#']
+                            dl_column = row['dl_column']
+                            # Call the similarity function
+                            similarity_col = self._cosine_sim(q_vectors[query_column],dl_t_vectors[dl_column])
+                    
+
+                            # Add a row with the current q_table, dl_table, and similarity_score
+                            sim_data = pd.concat([
+                                sim_data,
+                                pd.DataFrame({"q_table": [query_name], "dl_table": [dl_table_name],"q_col": [query_column] , "dl_col": [dl_column] ,"similarity": [similarity_col]})
+                            ], ignore_index=True) 
+            sim_data.to_csv(column_based_similarity_file, index=False)        
+        
+        return   sim_data       
+        
+        
+        print("added here")
             
+    def load_column_based_lexical_distance(self,column_based_lexical_distance_file ):
+        '''fro every column pairs from query and datalake table calculate the lexical distance and write in a file'''
+        '''columns to be out: q_table, q_col, dl_table, dl_col, lexical_distance'''
+        if os.path.exists(column_based_lexical_distance_file):
+        # Load the file into a DataFrame
+            print("loading column based lexiacal distance file")
+            lexdis_data = pd.read_csv(column_based_lexical_distance_file, header=0)  # Treat the first row as column names
+            return lexdis_data
+        else:
+            print("creating column based lexiacal distance file")
+
+            lexdis_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lex_distance"])
+
             #dataFolder="santos"
-            # dataFolder="table-union-search-benchmark/small"
-            dataFolder="ugen_v2"
-            table_path = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+            dataFolder="table-union-search-benchmark/small"
+            table_path = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
             query_path_raw = "data/"+dataFolder+"/"+"query"
             table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            processed_path="/u6/bkassaie/NAUS/data/ugen_v2/proccessed/"
-            index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+            processed_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/proccessed/"
+            index_file_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
             text_processor = TextProcessor()
 
             # we preprocess the values in tables both query and data lake tables
+            list_of_lists=[]
             
             self.tables_raw=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_raw)
             
@@ -89,91 +185,21 @@ class Penalized_Search:
             self.table_raw_index=table_raw_index
             self.table_path=table_path
             #DSize is a hyper parameter
-            self.dsize=dsize
+            DSize=20
         
-        
-        
-        
-        
-   
-    def _cosine_sim(self, vec1, vec2):
-        ''' Get the cosine similarity of two input vectors: vec1 and vec2
-        '''
-        assert vec1.ndim == vec2.ndim
-        return np.dot(vec1, vec2) / (norm(vec1)*norm(vec2))
-    
-    
-        
-    def load_starmie_vectors(self):
-        '''load starmie vectors for query and data lake and retrun as dictionaries'''
-        dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-        qfile = open(query_table_vectors,"rb")
-            # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
-        queries = pickle.load(qfile)
-        # make as dictnary from first item to secon item 
-        # Convert to dictionary
-        queries_dict = {item[0]: item[1] for item in queries}
+               
+            q_table_names = self.alignment_data['query_table_name'].unique()            # for every query now compute the similarity scores with dt tables 
+            for query_name in q_table_names:
+                    query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
 
-        tfile = open(dl_table_vectors,"rb")
-        tables = pickle.load(tfile)
-        # tables is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(each verstor is a numpy.ndarray) for columns) 
-
-        dl_dict = {item[0]: item[1] for item in tables}
-        
-        return (queries_dict,dl_dict)     
-        
-    def get_column_based_similarity(self, query_name, dl_table_name, all_vectors):
-        '''fro every column pairs from query and datalake table calculate the unionability and write in a file'''
-        '''columns to be out: q_table, q_col, dl_table, dl_col, similarity'''
-        # check whethter file exists load it other wise generate and write 
-
-        queries_dict = all_vectors[0]
-        dl_dict=all_vectors[1]
-
-        sim_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","similarity"])
-          
-        
-        q_vectors=queries_dict[query_name]
-        query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
-
-        # Filter rows for the current query_name and dl_table_name
-        specific_rows = query_rows[query_rows['dl_table_name'] == dl_table_name]
-        dl_t_vectors=dl_dict[dl_table_name]
-        # Retrieve the relevant columns
-
-        for _, row in specific_rows.iterrows():
-            # get their vectors 
-            query_column = row['query_column#']
-            dl_column = row['dl_column']
-            # Call the similarity function
-            similarity_col = self._cosine_sim(q_vectors[query_column],dl_t_vectors[dl_column])
-    
-
-            # Add a row with the current q_table, dl_table, and similarity_score
-            sim_data = pd.concat([
-                sim_data,
-                pd.DataFrame({"q_table": [query_name], "dl_table": [dl_table_name],"q_col": [query_column] , "dl_col": [dl_column] ,"similarity": [similarity_col]})
-            ], ignore_index=True) 
-  
-        return   sim_data       
-        
-        
-            
-    def get_column_based_lexical_distance(self,query_name, dl):
-            '''fro every column pairs from query and datalake table calculate the lexical distance and write in a file'''
-            '''columns to be out: q_table, q_col, dl_table, dl_col, lexical_distance'''
-
-
-            lexdis_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lex_distance"])
-
-            DSize=self.dsize
-        
-            query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
+                    # Get all unique s_i_names for the current query_name
+                    dl_names = query_rows['dl_table_name'].unique()
                         # Iterate over each dl_table_name
-            dl_rows= query_rows[(query_rows['query_table_name'] == query_name) & (query_rows['dl_table_name'] == dl)]
-            distance=0
-            for _, row in dl_rows.iterrows():
+                    for dl in dl_names:
+                            dl_rows= query_rows[(query_rows['query_table_name'] == query_name) & (query_rows['dl_table_name'] == dl)]
+
+                            distance=0
+                            for _, row in dl_rows.iterrows():
                                 dl_column_number = int(row['dl_column'])
                                 q_column_number = int(row['query_column#'])
                                 
@@ -202,6 +228,7 @@ class Penalized_Search:
                               
                                             
                                                                 
+                            # now compute the average  lexdis_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lex_distance"])
   
                                 new_row = {
                                     "q_table":query_name ,
@@ -219,6 +246,8 @@ class Penalized_Search:
                                 lexdis_data = pd.concat([lexdis_data, new_row_df], ignore_index=True)
                                                     # Append the new row to the DataFrame
                         
+            lexdis_data.to_csv(column_based_lexical_distance_file, index=False)        
+
             return lexdis_data
       
       
@@ -262,67 +291,116 @@ class Penalized_Search:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")     
             
-   
-    
-    
-    def perform_search_optimized(self, p_degree, k, all_vectors):
-        # Load the required data
-
+    def perform_search(self, p_degree, k):
+        lexdis=self.load_column_based_lexical_distance(self.column_based_lexical_distance_file_)
+        sim_data=self.load_column_based_similarity(self.column_based_similarity_file_)
+        all_ranked_result = {}
         
+
+        # compute  penalized unionability score for query, table pairs  based on column data
+        #lexdis_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lex_distance"])
+        # Select the 'q_table' and 'dl_table' columns and drop duplicate pairs
+       
+
+        unique_queries = lexdis['q_table'].unique()
+
+        # Reset the index for a cleaner output
+        for q in unique_queries:
+            _result={}
+            
+            by_query=lexdis[(lexdis['q_table'] == q)]
+            dl_tables = by_query['dl_table'].unique()
+            start_time = time.time_ns()
+            for dl_table in dl_tables:
+                penalized_unionability_score=0
+                # Retrieve rows corresponding to the unique pair from lexdis
+                lexdis_rows = by_query[(by_query['q_table'] == q) & (by_query['dl_table'] == dl_table)]
+                
+                # Iterate through these rows to get 'q_col' and 'dl_col'
+                for _, lexdis_row in lexdis_rows.iterrows():
+                    q_col = lexdis_row['q_col']
+                    dl_col = lexdis_row['dl_col']
+                    lex_dis=float(lexdis_row['lex_distance'])
+                    # Retrieve the corresponding row from sim_data
+                    sim_row = sim_data[
+                        (sim_data['q_table'] == q) &
+                        (sim_data['dl_table'] == dl_table) &
+                        (sim_data['q_col'] == q_col) &
+                        (sim_data['dl_col'] == dl_col)
+                    ]
+
+                    # Ensure there is a match in sim_data
+                    if not sim_row.empty:
+                        sim_value = float(sim_row.iloc[0]['similarity'])  # Get the first matching row
+                        # Call the function 'g' with the relevant values                   
+                    else:
+                        print(f"No matching row in sim_data for q_table={q}, dl_table={dl_table}, q_col={q_col}, dl_col={dl_col}")
+                    
+                    penval_col=((lex_dis)**p_degree)*sim_value
+                    penalized_unionability_score=penalized_unionability_score+penval_col
+                _result[dl_table]= penalized_unionability_score   
+                
+        # get first k
+        
+        # Sort the dictionary by value in descending order
+            sorted_result = sorted(_result.items(), key=lambda item: item[1], reverse=True)
+
+            # Get the first k items as a dictionary
+            # Replace this with your desired value of k
+            top_k_result = (sorted_result[:k])
+                
+            end_time = time.time_ns()    
+            total_time = round(int(end_time - start_time) / 10 ** 9, 2)
+            print("Total time taken: ", total_time, " seconds.")
+            
+            
+            all_ranked_result[(q,k, p_degree)]=(top_k_result, total_time)
+                
+        return all_ranked_result
+    
+    
+    def perform_search_optimized(self, p_degree, k):
+        # Load the required data
+        lexdis = self.load_column_based_lexical_distance(self.column_based_lexical_distance_file_)
+        sim_data = self.load_column_based_similarity(self.column_based_similarity_file_)
+
         all_ranked_result = {}
 
-                  
-        q_table_names = self.alignment_data['query_table_name'].unique()
-            # for every query now compute the similarity scores with dt tables 
-        for query_name in q_table_names:
-                   
-                    start_time = time.time_ns()
-                    grouped_scores_q_total = pd.DataFrame(columns=["q_table", "dl_table",'penalized_unionability_score'])
+        # Merge lexdis and sim_data for efficient computation
+        merged_data = pd.merge(
+            lexdis,
+            sim_data,
+            on=["q_table", "dl_table", "q_col", "dl_col"],
+            how="inner",
+            suffixes=("_lex", "_sim")
+        )
 
-                    # get q columns vectors 
-                    # Get all rows corresponding to the current query_name
-                    query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
-                    # Get all unique dl_table_names for the current query_name
-                    dl_table_names = query_rows['dl_table_name'].unique()
-                        # Iterate over each dl_table_name
-                    for dl_table_name in dl_table_names:
-                                    lexdis = self.get_column_based_lexical_distance(query_name,dl_table_name )
-                                    sim_data = self.get_column_based_similarity(query_name,dl_table_name , all_vectors)
+        # Calculate penalized unionability scores for each row
+        merged_data['penalized_unionability_score'] = (
+            (merged_data['lex_distance'] ** p_degree) * merged_data['similarity']
+        )
 
+        # Group by query table and data lake table to aggregate scores
+        grouped_scores = merged_data.groupby(["q_table", "dl_table"])['penalized_unionability_score'].sum().reset_index()
 
-                                    # Merge lexdis and sim_data for efficient computation
-                                    merged_data = pd.merge(
-                                        lexdis,
-                                        sim_data,
-                                        on=["q_table", "dl_table", "q_col", "dl_col"],
-                                        how="inner",
-                                        suffixes=("_lex", "_sim")
-                                    )
+        # Get unique queries
+        unique_queries = grouped_scores['q_table'].unique()
 
-                                    # Calculate penalized unionability scores for each row
-                                    merged_data['penalized_unionability_score'] = (
-                                        (merged_data['lex_distance'] ** p_degree) * merged_data['similarity']
-                                    )
+        for q in unique_queries:
+            start_time = time.time_ns()
 
-                                    # Group by query table and data lake table to aggregate scores
-                                    grouped_scores = merged_data.groupby(["q_table", "dl_table"])['penalized_unionability_score'].sum().reset_index()
-
-                                    grouped_scores_q_total=pd.concat([grouped_scores,grouped_scores_q_total])
-
-                             
-                                       
-                    # Filter scores for the current query and sort by score
-                    top_k_result = (
-                        grouped_scores_q_total[grouped_scores_q_total['q_table'] == query_name]
-                        .sort_values(by="penalized_unionability_score", ascending=False)
-                        .head(k)
-                    )
+            # Filter scores for the current query and sort by score
+            top_k_result = (
+                grouped_scores[grouped_scores['q_table'] == q]
+                .sort_values(by="penalized_unionability_score", ascending=False)
+                .head(k)
+            )
 
             # Store the results
-                    all_ranked_result[(query_name, k, p_degree)] = (
-                        list(top_k_result[["dl_table",'penalized_unionability_score']].to_records(index=False)),
-                        round((time.time_ns() - start_time) / 10 ** 9, 2)
-                    )
+            all_ranked_result[(q, k, p_degree)] = (
+                list(top_k_result[["dl_table",'penalized_unionability_score']].to_records(index=False)),
+                round((time.time_ns() - start_time) / 10 ** 9, 2)
+            )
 
         return all_ranked_result
 
@@ -393,23 +471,19 @@ if __name__ == "__main__":
     # Example usage:
     alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
     first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-    # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
-    # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
+    search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 
     
-    dsize=20
-    penalize_search = Penalized_Search(dsize)
-    penalize_search.load_column_alignment_data(alignment_Dust)
-    penalize_search.load_unionable_tables(first_50_starmie)   
-    all_vectors=penalize_search.load_starmie_vectors()
     
     for i in range(2,11):   
-
+        penalize_search = Penalized_Search()
+        penalize_search.column_based_lexical_distance_file_="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/column_based_lexical_distance_restricted_dilut04.csv"
+        penalize_search.column_based_similarity_file_="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/column_based_similarity_restricted_dilut04.csv"
+        penalize_search.load_column_alignment_data(alignment_Dust)
+        penalize_search.load_unionable_tables(first_50_starmie)   
         k=i     
         p_degree=1          
-        relsutls=penalize_search.perform_search_optimized(p_degree,k, all_vectors)
+        relsutls=penalize_search.perform_search_optimized(p_degree,k)
         result_dic={}
 
         if os.path.exists(search_results_file):

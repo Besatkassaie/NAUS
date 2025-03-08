@@ -64,17 +64,23 @@ available_embeddings = ["bert", "bert_serialized", "roberta", "roberta_serialize
 
 embedding_type = available_embeddings[3]  # e.g., "roberta_serialized"
 use_numeric_columns = True
-benchmark_name = "table-union-search-benchmark" 
+#benchmark_name = "table-union-search-benchmark" 
+benchmark_name = "ugen_v2" 
+
 clustering_metric = "cosine"  # for silhouette scoring
 single_col = 0
 
 # dl_table_folder = os.path.join("data", benchmark_name, "datalake")
 # query_table_folder = os.path.join("data", benchmark_name, "query")
-dl_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake"
-query_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query"
-groundtruth_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+# dl_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake"
+# query_table_folder = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query"
+# groundtruth_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+
+dl_table_folder = "/u6/bkassaie/NAUS/data/ugen_v2/datalake"
+query_table_folder = "/u6/bkassaie/NAUS/data/ugen_v2/query"
+groundtruth_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_unionable_groundtruth_diluted.pickle"
 #groundtruth_file = os.path.join("data", benchmark_name,benchmark_name + "_union_groundtruth_diluted.pickle")
-output_file = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
+output_file = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
 align_plot_folder = os.path.join("plots_align")
 
 query_tables = glob.glob(os.path.join(query_table_folder, "*.csv"))

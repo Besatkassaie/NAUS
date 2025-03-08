@@ -34,11 +34,7 @@ class GMC_Search:
     GMC_Search: A class for performing Greedy  Marginal  Contribution (GMC) for Novelty based  unionable  table search.
     """
 
-    def __init__(self, q_dl_alignemnt_file, 
-                 domain_size, dl_table_vectors_path,query_table_vectors_path,
-                 benchmark_folder, 
-                 
-                 search_parameters=None):
+    def __init__(self, data_source, alignment_for_diversity_gmc_file,search_parameters=None):
         """
         Initializes the GMC_Search instance.
 
@@ -46,83 +42,30 @@ class GMC_Search:
         :param search_parameters: Dictionary containing parameters for the search (optional).
         """
         self.k=0
-        self.q_dl_alignemnt_file = q_dl_alignemnt_file
+        self.data_source = data_source
         self.search_parameters = search_parameters or {}
         self.results = []
-        self.q_dl_alignemnt=utl.load_alignment(self.q_dl_alignemnt_file)
+        self.data = None
         self.unionability = None
         self.diversity = None
         self.diversity_scores=None
         self.unionability_scores=None
         self.unionable_data=None
+        self.alignment_for_diversity_gmc_file=alignment_for_diversity_gmc_file
         self.query_dl_table_vector_df=None # vector represenation of tables given (query) 
         self.query_s_i_s_j_vector_df=None # vector representation of tables given (query and si)
-        self.Dsize=domain_size
 
-        self.starmie_vectors=self.load_starmie_vectors(dl_table_vectors_path,query_table_vectors_path)
-        ################################
-        # dataFolder="santos"
-        # table_path = "data/"+dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        # table_path_raw = "data/"+dataFolder+"/datalake"
-        # processed_path="data/"+dataFolder+"/proccessed/"
-        # index_file_path="data/"+dataFolder+"/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
-        
-        table_path = benchmark_folder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        table_path_raw = benchmark_folder+"/datalake"
-        processed_path=benchmark_folder+"/proccessed/"
-        index_file_path=benchmark_folder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
-        self.load_all_data_elements(table_path,table_path_raw, processed_path, index_file_path)
- 
-    def load_all_data_elements(self, table_path, table_path_raw, processed_path,index_file_path):
+    def load_data(self):
+        """
+        Load data from the specified source.
 
-        
-        text_processor = TextProcessor()
+        The schema for the data is expected as:
+        ['query_table_name', 'query_column', 'query_column#', 
+        'dl_table_name', 'dl_column#', 'dl_column']
 
-        self.tables_raw=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_raw)
-        
-        #the normalized/tokenized/original with no duplicates  dl(data lake) tables are stored in table_raw_proccessed_los
-        table_raw_proccessed_los={}
-            # write the proccessed result having columns as set to a pickle file 
-        dl_tbls_processed_set_file_name="dl_tbls_processed_set.pkl"
-        
-        table_raw_proccessed_los=test_naive_search_Novelty.getProcessedTables(text_processor, dl_tbls_processed_set_file_name, processed_path, self.tables_raw,"los", 1, 1)
-        # process dl tables and save as list of lists 
-        self.table_raw_proccessed_los=table_raw_proccessed_los
-        table_raw_lol_proccessed={}
-            # write the proccessed result having columns as set to a pickle file 
-        dl_tbls_processed_lol_file_name="dl_tbls_processed_lol.pkl"
-        self.dl_tbls_processed_lol_file_name=dl_tbls_processed_lol_file_name
-        table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path,self. tables_raw,"lol", 1, 1)
-        self.table_raw_lol_proccessed=table_raw_lol_proccessed
-
-        table_raw_index={}
-
-       
-        index_exists = os.path.isfile(index_file_path)
-        if index_exists:
-        #load it  
-            print("loading Joise Index......")
-            with open(index_file_path, 'rb') as file:
-                table_raw_index = pickle.load(file)
-        else:    
-            
-            for key, value in table_raw_proccessed_los.items():
-                
-                index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
-                table_raw_index[key]= index   
-                
-            # write in a pickle file  
-            with open(index_file_path, 'wb') as file:
-                    pickle.dump(table_raw_index, file)   
-        
-        
-        self.table_raw_index=table_raw_index
-        self.table_path=table_path
-        #DSize is a hyper parameter
-        
-        
-        
-        
+        :return: None
+        """
+        self.data=utl.load_alignment(self.data_source)
   
     
     def load_unionable_tables(self, path):
@@ -147,7 +90,7 @@ class GMC_Search:
         '''we need to represent each table as a point in space so for  I represent each query table and unionable table produced from  their aligned columns 
         '''
         combining_methods={"sum", "average"}
-        (q_emb_dict, dl_emb_dict)=self.starmie_vectors
+        (q_emb_dict, dl_emb_dict)=self.load_starmie_vectors()
         
         # every query table and its corresponind unionable tables is loaded to  self.data 
         # Columns in data:  required_columns = ['query_table_name', 'query_column', 'query_column#',
@@ -170,11 +113,11 @@ class GMC_Search:
             with open('query_dl_table_vector.pkl', "rb") as file:
                  self.query_dl_table_vector_df = pickle.load(file)
         else:   
-                query_table_name_set = set(self.q_dl_alignemnt['query_table_name'])
+                query_table_name_set = set(self.data['query_table_name'])
                 for query in query_table_name_set:
                     
                     # Filter rows where 'query_table_name' column has the value 4
-                    filtered_df = self.q_dl_alignemnt[self.q_dl_alignemnt['query_table_name'] == query]
+                    filtered_df = self.data[self.data['query_table_name'] == query]
 
                     # Get the set of all values in column 'W' for the filtered rows
                     dl_table_names= set(filtered_df['dl_table_name'])
@@ -283,7 +226,7 @@ class GMC_Search:
         """
         # retrun k result
         k = self.k
-        lmda = 0.7 # best practice from original paper
+        lmda = 0.7
         all_results={}
         queries=self.unionable_data.keys()
       
@@ -324,37 +267,85 @@ class GMC_Search:
         """
         # TODO: Implement logic to summarize the results
         pass
-    def mmc_compute_div_sum(self, s_i: str, q_name, R_p: set) -> float:
+    def mmc_compute_div_sum(self, s_i: str, div_dict: dict, R_p: set) -> float:
         total_score = 0
         for s_j in R_p:
-            total_score +=self.calculate_diversity(q_name, s_i, s_j)
+            if (s_i , s_j) in div_dict:
+                total_score += div_dict[(s_i, s_j)]
+            elif (s_j , s_i) in div_dict:
+                total_score += div_dict[(s_j, s_i)]
+            else: # mean there were no alignment found for this pair    
+                  total_score=total_score
         return total_score
 
-    def mmc_compute_div_large(self, s_i: str, q_name, remaining_s_set : set, max_l : int) -> float:  # max_l should be used as: < max_l ; not <= max_l
+    def mmc_compute_div_large(self, s_i: str, div_dict: dict, remaining_s_set : set, max_l : int) -> float:  # max_l should be used as: < max_l ; not <= max_l
         div_l_list = [] # we will use the first l values after sorting this.
         for s_j in remaining_s_set: # the items that are not inserted in R_p yet
-            div_l_list.append(self.calculate_diversity(q_name,s_i,s_j))
+            if (s_i, s_j) in div_dict:
+                div_l_list.append(div_dict[(s_i, s_j)])
+            elif (s_j, s_i) in div_dict:
+                div_l_list.append(div_dict[(s_j, s_i)])
+            else: # Besat means that there were no alignmnet found for this pair and this pair does not contribute to sum from caller    
+                div_l_list.append(0.0)
+
+        # print("Div l: ", div_l_list)
+        # print("MAX L", max_l - 1)
         div_l_list = sorted(div_l_list, reverse=True)[:max_l - 1]
         return div_l_list
     
-    def mmc(self, q_name,s_set: set, lmda : float, k: int, R_p: set) -> dict: 
+    def mmc(self, s_set: set, lmda : float, k: int, sim_dict: dict, div_dict : dict, R_p: set) -> dict: # s_dict contains query id as key and its embeddings as values.
         all_mmc = dict()
+        # print("R_P:", R_p)
         p = len(R_p) - 1
         div_coefficient = lmda / (k - 1)
         for s_i in s_set:
-            sim_term= (1 - lmda)*self.calculate_unionability(q_name,s_i)
-            div_term1 = div_coefficient * self.mmc_compute_div_sum(s_i, q_name, R_p)
+            if s_i in sim_dict.keys():
+               sim_term = (1 - lmda) * sim_dict[s_i] # was unionable and found alignment
+            else:
+                sim_term = (1 - lmda) * 0.0     # was unionable and did not found alignment 
+            div_term1 = div_coefficient * self.mmc_compute_div_sum(s_i, div_dict, R_p)
             temp_s=set(s_set) - R_p - {s_i}
-            temp=self.mmc_compute_div_large(s_i, q_name,temp_s , k - p)
+            temp=self.mmc_compute_div_large(s_i, div_dict,temp_s , k - p)
             temp_sum=sum(temp)
             div_term2 = div_coefficient * temp_sum
             current_mmc = sim_term + div_term1 + div_term2
             all_mmc[s_i] = current_mmc
+        # print("current mmc:", current_mmc)
+        # print("all_mmc:", all_mmc)
         return all_mmc
     
     
-    
+    # def d_sim(self,s_dict : dict, q_embedding: np.ndarray, metric = "cosine", normalize = False) -> dict:
+    def extract_d_sim(self, query_name: str) -> dict:
+        """
+        Extract the similarity dictionary (sim_dict) based on the unionability DataFrame for a given query name.
 
+        :param query_name: Name of the query (Q_table) to filter the unionability DataFrame.
+        :return: A dictionary with DL_table as the key and unionability score as the value.
+        """
+        if self.unionability_scores is not None:
+            # Filter the unionability DataFrame for the given query name
+            filtered_df = self.unionability_scores[self.unionability_scores['q_table'] == query_name]
+            
+            # Convert the filtered DataFrame to a dictionary with DL_table as the key and similarity_score as the value
+            sim_dict = dict(zip(filtered_df['dl_table'], filtered_df['similarity_score']))
+            
+            print(f"Similarity dictionary created for query: {query_name}")
+            return sim_dict
+        else:
+            print("Unionability data is not available. Please calculate unionability first.")
+            return {}
+
+    def extract_d_div(self,  query_name: str) -> dict:
+        div_dict = dict() 
+        if self.diversity_scores is not None:
+            filtered_df = self.diversity_scores[self.diversity_scores['q_main_table'] == query_name]
+            # since we have generate both (t1, t2) and (t2,t1) in diversity_scores we can use tuple as key 
+        div_dict = {
+    (key[0].replace("'", ""), key[1].replace("'", "")): value
+    for key, value in zip(zip(filtered_df['s_i'], filtered_df['s_j']), filtered_df['diversity_score'])
+}
+        return div_dict
 
     def min_div_score(self, s_dict: dict, metric = "cosine", normalize = False) -> float:
         if len(s_dict) == 0:
@@ -1583,25 +1574,34 @@ class GMC_Search:
         return computed_metrics, embedding_plot
     
 
-    def gmc(self, S_names: set, query_name:str, k: int, 
-            lmda: float = 0.7, metric = "cosine", print_results = False,
-            normalize = False, max_metric = True, compute_metric = True) -> set: #S_dict is a dictionary with tuple id as key and its embeddings as value. 
+    # def gmc(self, S_dict: dict, q_dict:dict, k: int, lmda: float = 0.7, metric = "cosine", print_results = False, normalize = False, max_metric = True, compute_metric = True) -> set: #S_dict is a dictionary with tuple id as key and its embeddings as value. 
+    def gmc(self, S_names: set, query_name:str, k: int, lmda: float = 0.7, metric = "cosine", print_results = False, normalize = False, max_metric = True, compute_metric = True) -> set: #S_dict is a dictionary with tuple id as key and its embeddings as value. 
 
         '''adopted from https://anonymous.4open.science/r/dust-B79B/diversity_algorithms/div_utilities.py'''
-
+    #the metric is for sim dict and div dict, and is independent of evaluation. we evaluate using all 
+    # three metrics and in compute_metric() function, we again compute sim_dict and div_dict.
+        #Besat:load starmie embeddings for computin metrics as we have used thoes embeding in diversity score
+        (q_emb_dict, dl_emb_dict)=self.load_starmie_vectors()
+        #Besat since in diversity and similarity score computations I added the values for each column 
+        # that are aligned for evaluting the diversity metrics I decided to represent each table as sum of their aligned vectors
+        
         start_time = time.time_ns()
         R = set()
         ranked_div_result = []
-
+        sim_dict = self.extract_d_sim(query_name) # index the similarity between each item in S and q for once so that we can re-use them.
+        div_dict = self.extract_d_div(query_name) # index the diversity between each pair of items in S so that we can re-use them.
+        # debug_dict(sim_dict, 5, "sim dict")
+        # debug_dict(div_dict, 5, "div dict")
         S_set = S_names
         for p in range(0, k):
             if len(S_set) == 0:
                 break
-            mmc_dict = self.mmc(query_name,S_set, lmda, k, R) # send S to mmc and compute MMC for each si
+            mmc_dict = self.mmc(S_set, lmda, k, sim_dict, div_dict, R) # send S to mmc and compute MMC for each si
             s_i  = max(mmc_dict, key=lambda k: mmc_dict[k])
             R.add(s_i)
             ranked_div_result.append(s_i)
             S_set = set(S_set) - {s_i}
+        # print("GMC f score:", f_prime(R, lmda, k, sim_dict, div_dict))
         end_time = time.time_ns()
         total_time = round(int(end_time - start_time) / 10 ** 9, 2)
         print("Total time taken: ", total_time, " seconds.")
@@ -1616,11 +1616,10 @@ class GMC_Search:
     
     
     
-    def load_starmie_vectors(self, dl_table_vectors_path,query_table_vectors ):
+    def load_starmie_vectors(self):
         '''load starmie vectors for query and data lake and retrun as dictionaries'''
-  
-        dl_table_vectors =dl_table_vectors_path
-        query_table_vectors = query_table_vectors
+        dl_table_vectors = "data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        query_table_vectors = "data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
         qfile = open(query_table_vectors,"rb")
          # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
         queries = pickle.load(qfile)
@@ -1636,31 +1635,44 @@ class GMC_Search:
         
         return (queries_dict,dl_dict)
     
-   
-   
-    def calculate_unionability(self, query_name, dl_table_name):
-        ''' aligned columns are loaded in self.q_dl_alignemnt
+    def calculate_unionability(self):
+        ''' aligned columns are loaded in self.data
             get the vector represenation from starmie 
             calulate the cosine similarity 
-            avg col sims to get table similarity and this is unionability  or similaryty score and then retun the unionbility for the pair
+            avg col sims to get table similarity and this is unionability  or similaryty score and then write result in the file 
         '''
-        all_vectors=self.starmie_vectors
-        #all_vectors=self.load_starmie_vectors()
+        all_vectors=self.load_starmie_vectors()
         queries_dict = all_vectors[0]
         dl_dict=all_vectors[1]
-        q_vectors=queries_dict[query_name]
-        query_rows = self.q_dl_alignemnt[self.q_dl_alignemnt['query_table_name'] == query_name]
-        similarity_score=0
 
-        dl_t_vectors=dl_dict[dl_table_name]
-        # Retrieve the relevant columns
-        specific_rows = query_rows[query_rows['dl_table_name'] == dl_table_name]
+        sim_data = pd.DataFrame(columns=["q_table", "dl_table", "similarity_score"])
 
-        num_rows = float(specific_rows.shape[0])
-        if num_rows==0:
-            return 0.0 # no alignemnt exists so we return  0.0
+    
+        # self.data is in fact the alignemnt between query and datalake tables which 
+        # is a datafram with columns ['query_table_name', 'query_column', 'query_column#','dl_table_name', 'dl_column#', 'dl_column']
+        
+        # get all existing query tables from self.data 
+        
+        q_table_names = self.data['query_table_name'].unique()
+        # for every query now compute the similarity scores with dt tables 
+        for query_name in q_table_names:
+                 # get q columns vectors 
+                q_vectors=queries_dict[query_name]
+                # Get all rows corresponding to the current query_name
+                query_rows = self.data[self.data['query_table_name'] == query_name]
 
-        for _, row in specific_rows.iterrows():
+                # Get all unique dl_table_names for the current query_name
+                dl_table_names = query_rows['dl_table_name'].unique()
+                    # Iterate over each dl_table_name
+                for dl_table_name in dl_table_names:
+                    similarity_score=0
+                    # Filter rows for the current query_name and dl_table_name
+                    specific_rows = query_rows[query_rows['dl_table_name'] == dl_table_name]
+                    dl_t_vectors=dl_dict[dl_table_name]
+                    # Retrieve the relevant columns
+                    num_rows = float(specific_rows.shape[0])
+
+                    for _, row in specific_rows.iterrows():
                          # get their vectors 
                         query_column = row['query_column#']
                         dl_column = row['dl_column']
@@ -1668,9 +1680,14 @@ class GMC_Search:
                         similarity_col = self._cosine_sim(q_vectors[query_column],dl_t_vectors[dl_column])
                         similarity_score=similarity_col+similarity_score
 
-        similarity_score=similarity_score/num_rows
-       
-        return   similarity_score         
+                    similarity_score=similarity_score/num_rows
+                    # Add a row with the current q_table, dl_table, and similarity_score
+                    sim_data = pd.concat([
+                        sim_data,
+                        pd.DataFrame({"q_table": [query_name], "dl_table": [dl_table_name], "similarity_score": [similarity_score]})
+                    ], ignore_index=True) 
+                    
+        return   sim_data         
    
    
     def item_frequency(self, lst):
@@ -1735,79 +1752,350 @@ class GMC_Search:
         else:
             return l_pairs[0][2]
     
-    def calculate_diversity(self, query_name,s_i, s_j):
-        print("computing diversity scores for given s_i and s_j wrt query..")
-        """
-           diversity between two tables are the average of diversity between their columns for now 
-         """
-        DSize=self.Dsize
-
-        div_score=0
-        # alignment between query  and s_i
-        query_rows_si = self.q_dl_alignemnt[(self.q_dl_alignemnt['query_table_name'] == query_name) & (self.q_dl_alignemnt['dl_table_name'] == s_i)] 
-        
-        aligned_col_q_si = set(query_rows_si['query_column#'])
-
-        # alignment between query  and s_j
-        query_rows_sj = self.q_dl_alignemnt[(self.q_dl_alignemnt['query_table_name'] == query_name) & (self.q_dl_alignemnt['dl_table_name'] == s_j)] 
-        aligned_col_q_sj = set(query_rows_sj['query_column#'])
-
-  # for columns from i , j that are alignemed to identical query colmn we calculate the dicersity 
-  # for those they are aligned with different columns of q  based on the null assumption we assign 1 for the score 
-
-        alignemd_same_qcolumns=aligned_col_q_si.intersection(aligned_col_q_sj)
-        aligned_col_q_si_solo=aligned_col_q_si.difference(alignemd_same_qcolumns)
-        aligned_col_q_sj_solo=aligned_col_q_sj.difference(alignemd_same_qcolumns)
-        
-           
-        # if there is no common aligned columns I am retrun zero for div 
-        if(len(alignemd_same_qcolumns)==0):
-            return 0.0
-        # compute diversity on aligned to same column of q 
-        else:  
-                for query_column_number in alignemd_same_qcolumns:
-                    
-                    s_i_column_number = self.q_dl_alignemnt[(self.q_dl_alignemnt['query_table_name'] == query_name) & (self.q_dl_alignemnt['dl_table_name'] == s_i) & (self.q_dl_alignemnt['query_column#'] == query_column_number)] ['dl_column'].item()
-                    s_j_column_number = self.q_dl_alignemnt[(self.q_dl_alignemnt['query_table_name'] == query_name) & (self.q_dl_alignemnt['dl_table_name'] == s_j) & (self.q_dl_alignemnt['query_column#'] == query_column_number)] ['dl_column'].item()
-
-                    
-                    #get the comlumn from data lake table
-                    dl_column_s_i=self.table_raw_lol_proccessed.get(s_i)[s_i_column_number]
-                    dl_column_set_s_i=self.table_raw_proccessed_los.get(s_i)[s_i_column_number]
-                    
-                    #get the comlumn from data lake table
-                    dl_column_s_j=self.table_raw_lol_proccessed.get(s_j)[s_j_column_number]
-                    dl_column_set_s_j=self.table_raw_proccessed_los.get(s_j)[s_j_column_number]
-
-                
-                    #see what is the number of unique values in the query+ dl columns that are list of list 
-                    # we have a threshold to determine the smallness of domain called DS(domain size)
-                    # Besat to change: here we do not merge tokens from all cell to 
-                    # gether for each column maybe this will change later ?
-                    domain_estimate=set.union(set(dl_column_s_j),set(dl_column_s_i) )
-                    if(len(domain_estimate)<DSize):
-                        distance=self.Jensen_Shannon_distances(dl_column_s_i,dl_column_s_j,domain_estimate)
-                        # log the domian infomrmation
-                    else: 
-                        # jaccard distance
-                        distance=1-self._lexicalsim_Pair(dl_column_set_s_i,dl_column_set_s_j)
-                    div_score=div_score+distance
-                            
-                    # add one for each null columns 
-                    div_score =div_score+len(aligned_col_q_si_solo) 
-                                # add one for each null columns 
-                    div_score =div_score+len(aligned_col_q_sj_solo) 
-                    num_rows=len(aligned_col_q_sj_solo) +len(aligned_col_q_si_solo) +len(alignemd_same_qcolumns)
-        
-                    div_score=div_score/num_rows        
-            
-        return div_score
- 
     
+    def calculate_diversity(self, precalculated_file):
+        print("computing diversity scores...")
+        """
+           diversity between two tables are the average of diversity between theri columns for now 
+         """
+        #load required data here 
+        benchmark_folder="data/table-union-search-benchmark/small"
+        # dataFolder="santos"
+        # table_path = "data/"+dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        # table_path_raw = "data/"+dataFolder+"/datalake"
+        # processed_path="data/"+dataFolder+"/proccessed/"
+        # index_file_path="data/"+dataFolder+"/indices/Joise_Index_DL_santos_tokenized_bot.pkl"
+        
+        table_path = benchmark_folder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        table_path_raw = benchmark_folder+"/datalake"
+        processed_path=benchmark_folder+"/proccessed/"
+        index_file_path=benchmark_folder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+        
+        
+        text_processor = TextProcessor()
+
+        # we preprocess the values in tables both query and data lake tables
+        list_of_lists=[]
+        
+        self.tables_raw=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_raw)
+        
+        #the normalized/tokenized/original with no duplicates  dl(data lake) tables are stored in table_raw_proccessed_los
+        table_raw_proccessed_los={}
+        
+            # write the proccessed result having columns as set to a pickle file 
+        dl_tbls_processed_set_file_name="dl_tbls_processed_set.pkl"
+        
+        
+        table_raw_proccessed_los=test_naive_search_Novelty.getProcessedTables(text_processor, dl_tbls_processed_set_file_name, processed_path, self.tables_raw,"los", 1, 1)
+        # process dl tables and save as list of lists 
+        self.table_raw_proccessed_los=table_raw_proccessed_los
+        table_raw_lol_proccessed={}
+            # write the proccessed result having columns as set to a pickle file 
+        dl_tbls_processed_lol_file_name="dl_tbls_processed_lol.pkl"
+        self.dl_tbls_processed_lol_file_name=dl_tbls_processed_lol_file_name
+        table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path,self. tables_raw,"lol", 1, 1)
+        self.table_raw_lol_proccessed=table_raw_lol_proccessed
+     
+        table_raw_index={}
+
+       
+        index_exists = os.path.isfile(index_file_path)
+        if index_exists:
+        #load it  
+            print("loading Joise Index......")
+            with open(index_file_path, 'rb') as file:
+                table_raw_index = pickle.load(file)
+        else:    
+            
+            for key, value in table_raw_proccessed_los.items():
+                
+                index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
+                table_raw_index[key]= index   
+                
+            # write in a pickle file  
+            with open(index_file_path, 'wb') as file:
+                    pickle.dump(table_raw_index, file)   
+        
+        
+        self.table_raw_index=table_raw_index
+        self.table_path=table_path
+        #DSize is a hyper parameter
+        DSize=20
+    
+        # load the diversity data from disk having aligned columns
+        # columns: (["q_main_table","s_i", "s_i_column", "s_i_column#", "s_j_table_name", "s_j_column#","s_j_column"])
+        diversity_path=precalculated_file
+        # THERE ARE \r character in some rows 
+        
+        
+        # Define the required columns
+        required_columns = ["q_main_table", "s_i", "s_i_column", "s_i_column#", "s_j_table_name", "s_j_column#", "s_j_column"]
+        #required_columns = ["q_main_table", "s_i", "s_i_column#", "s_j_table_name", "s_j_column"]
+        diversity_df = pd.DataFrame(columns=required_columns)
+        try:
+            # Load the CSV file into a pandas DataFrame
+            diversity_df = pd.read_csv(diversity_path, usecols=required_columns)
+            
+            # Display a success message and the DataFrame's head
+            print("CSV file loaded successfully.")
+           # print(diversity_df.head())
+
+        except FileNotFoundError:
+            print(f"Error: File not found at {diversity_path}")
+        except ValueError as e:
+            print(f"Error: {e}")
+
+        df_diversity_score= pd.DataFrame(columns=["q_main_table", "s_i", "s_j", "diversity_score"])
+
+        q_main_table_names = diversity_df['q_main_table'].unique()
+        # for every query now compute the similarity scores with dt tables 
+        for query_name in q_main_table_names:
+                query_rows = diversity_df[diversity_df['q_main_table'] == query_name]
+
+                # Get all unique s_i_names for the current query_name
+                s_i_names = query_rows['s_i'].unique()
+                    # Iterate over each dl_table_name
+                for s_i in s_i_names:
+                    s_j_rows= query_rows[(query_rows['q_main_table'] == query_name) & (query_rows['s_i'] == s_i)]
+                    s_j_names = s_j_rows['s_j_table_name'].unique()
+                    div_score=0
+                    for s_j in s_j_names:
+                        s_i_s_j_rows= s_j_rows[(s_j_rows['q_main_table'] == query_name) & (s_j_rows['s_i'] == s_i) & (s_j_rows['s_j_table_name'] == s_j)]
+                        distance=0
+                        div_score=0
+                        num_rows = float(s_i_s_j_rows.shape[0])
+                        for _, row in s_i_s_j_rows.iterrows():
+                            s_i_column_number = int(row['s_i_column#'])
+                            s_j_column_number = int(row['s_j_column'])
+                            
+                            # compute the diversity  for columns
+                            
+                            #get the comlumn from data lake table
+                            dl_column_s_i=self.table_raw_lol_proccessed.get(s_i)[s_i_column_number]
+                            dl_column_set_s_i=self.table_raw_proccessed_los.get(s_i)[s_i_column_number]
+                            
+                            #get the comlumn from data lake table
+                            dl_column_s_j=self.table_raw_lol_proccessed.get(s_j)[s_j_column_number]
+                            dl_column_set_s_j=self.table_raw_proccessed_los.get(s_j)[s_j_column_number]
+
+                        
+                            #see what is the number of unique values in the query+ dl columns that are list of list 
+                            # we have a threshold to determine the smallness of domain called DS(domain size)
+                            # Besat to change: here we do not merge tokens from all cell to 
+                            # gether for each column maybe this will change later ?
+                            domain_estimate=set.union(set(dl_column_s_j),set(dl_column_s_i) )
+                            if(len(domain_estimate)<DSize):
+                                distance=self.Jensen_Shannon_distances(dl_column_s_i,dl_column_s_j,domain_estimate)
+                                # log the domian infomrmation
+                            else: 
+                                # jaccard distance
+                                distance=1-self._lexicalsim_Pair(dl_column_set_s_i,dl_column_set_s_j)
+                            div_score=div_score+distance
+                                        
+                                                            
+                        # now compute the average         
+                        div_score=div_score/num_rows        
+                        new_row = {
+                            "q_main_table":query_name ,
+                            "s_i": s_i,
+                            "s_j": s_j,
+                            "diversity_score": div_score
+                        }
+
+
+                        # Convert the new row to a DataFrame
+                        new_row_df = pd.DataFrame([new_row])
+
+                        # Concatenate the new row with the existing DataFrame
+                        df_diversity_score = pd.concat([df_diversity_score, new_row_df], ignore_index=True)
+                                                # Append the new row to the DataFrame
+                    
+
+        return df_diversity_score
       
                    
+    def generate_alignment_for_diversity(self, file_path):
+        print("genrating  alignment for gmc...")
+        res=[]
+        if self.data is not None:
+                try:
+                    # Initialize an empty list to store the results
+                    diversity_pairs = []
+
+                    # Group the data by Q_table
+                    grouped = self.data.groupby('query_table_name')
+
+                    # Iterate over each group
+                    for q_table, group in grouped:
+                        # Further group by DL_table within each Q_table group
+                        dl_grouped = group.groupby('dl_table_name')
+                        
+                        for dl_table, dl_group in dl_grouped:
+                            # Get the set of DL_columns for this Q_table and DL_table
+                            dl_columns_set = set(dl_group['dl_column'])
+
+                            # Append the triple to the results
+                            diversity_pairs.append((q_table, dl_table, dl_columns_set))
+                    
+                    print("Diversity pairing complete.")
+
+                except KeyError as e:
+                    print(f"Error: Missing required column in data - {e}")
+                    return None
+                except Exception as e:
+                    print(f"An unexpected error occurred: {e}")
+                    return None
+            
+
+                if os.path.exists(file_path):
+                        print(f"Loaded existing diversity scores from {file_path}")
+                else:    # Assuming `diversity_pairs` is a list of triples (Q_table, DL_table, set of DL_columns)
+                        if diversity_pairs:
+                            for q_main_table, s_i, dl_columns in diversity_pairs:
+                                print(f"Processing Q_table: {q_main_table}, s_i: {s_i}, Columns: {dl_columns}")
+
+                                # Call get_diversity_by_alignment for each row and get  a  data frames  with multiple rows 
+                                # corresponding to alignments 
+                                S_j= self.data[self.data["query_table_name"] == q_main_table]["dl_table_name"].unique()
+                                res= self.export_alignment_for_diversity(q_main_table, s_i,S_j, dl_columns,file_path)
+                return res  
                                   
-       
+    # Define a helper function that only computes the alignment result.
+    def compute_alignment(self,task):
+        q_main_table, s_i, dl_columns = task
+        # Retrieve the unionable DL tables for the current query.
+        S_j = self.data[self.data["query_table_name"] == q_main_table]["dl_table_name"].unique()
+        print(f"Processing Q_table: {q_main_table}, s_i: {s_i}, Columns: {dl_columns}")
+        # Compute the alignment result (using your existing function)
+        alignment_result = gmc_alignmnet_by_query_efficient(s_i, dl_columns, S_j)
+        if alignment_result is not None:
+            # Prepend q_main_table to each row
+            for row in alignment_result:
+                row.insert(0, q_main_table)
+            return alignment_result
+        else:
+            return []
+                       
+    def generate_alignment_for_diversity_parallel(self):
+        print("Generating alignment for diversity...")
+        diversity_pairs = []
+        try:
+            grouped = self.data.groupby('query_table_name')
+            for q_table, group in grouped:
+                dl_grouped = group.groupby('dl_table_name')
+                for dl_table, dl_group in dl_grouped:
+                    dl_columns_set = set(dl_group['dl_column'])
+                    diversity_pairs.append((q_table, dl_table, dl_columns_set))
+            print("Diversity pairing complete.")
+        except KeyError as e:
+            print(f"Error: Missing required column in data - {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
+
+        total_tasks = len(diversity_pairs)
+        results = []
+        with Pool(processes=cpu_count(), initializer=initialize_globally) as pool:
+            for idx, alignment_result in enumerate(pool.imap_unordered(self.compute_alignment, diversity_pairs)):
+                results.append(alignment_result)
+                percent_complete = ((idx + 1) / total_tasks) * 100
+                print(f"Progress: {percent_complete:.2f}% complete")
+        
+        # Write results to CSV as before
+        output_csv_path = alignment_for_diversity_gmc_file2
+        file_exists = os.path.exists(output_csv_path)
+        try:
+            with open(output_csv_path, mode="a", newline="") as csvfile:
+                csv_writer = csv.writer(csvfile)
+                if not file_exists:
+                    csv_writer.writerow(["q_main_table", "s_i", "s_i_column", "s_i_column#", "s_j_table_name", "s_j_column#", "s_j_column"])
+                for alignment_result in results:
+                    if alignment_result:
+                        csv_writer.writerows(alignment_result)
+                        print(f"Alignment results written for query {alignment_result[0][0]}")
+        except Exception as e:
+            print(f"Error writing alignment results to CSV: {e}")
+
+        return results                       
+    def export_alignment_for_diversity(self, q_main_table,s_i,S_j, columns_,output_csv_path):
+        """
+        get  diversity data for each DL_table and s_i pair 
+        however  limit s_i to its columns_ then find alignment with each of 50 unionable dl_tables
+                
+
+        :return: A pandas DataFrame with the diversity data for s_i and columns_ 
+        """
+
+
+        alignment_result=gmc_alignmnet_by_query_efficient(s_i,columns_,S_j)
+        
+        
+        output_rows = []
+        if not alignment_result is None:
+            for row in alignment_result:
+            # Prepend q_main_table to each row
+                row.insert(0, q_main_table)
+                output_rows.append(row)
+
+            # Write results to a CSV file
+            try:
+                file_exists = os.path.exists(output_csv_path)
+                with open(output_csv_path, mode="a", newline="") as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    # Write header if file does not exist
+                    if not file_exists:
+                        csv_writer.writerow(["q_main_table","s_i", "s_i_column", "s_i_column#", "s_j_table_name", "s_j_column#","s_j_column"])
+                    # Write rows
+                    csv_writer.writerows(output_rows)
+
+                print(f"Alignment results written successfully to {output_csv_path} for query {q_main_table}" )
+                return True
+            except Exception as e:
+                print(f"Error writing alignment results to CSV: {e}")
+                return False
+        else:
+            return True
+        
+    def clean_file(self,alignment_for_diversity_gmc_file):
+        import re
+        print("cleaning alignemnt file ....")
+        # Define the input and output file paths
+        input_file = alignment_for_diversity_gmc_file
+        output_file=alignment_for_diversity_gmc_file.replace(".csv", "_cleand.csv")
+        # input_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_small.csv"
+        # output_file = "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/alignment_for_diversity_gmc_Santos_small_cleaned.csv"
+    
+      
+        file_exists = os.path.exists(output_file)
+        if not file_exists:
+                try:
+                    # Open the CSV file as text
+                    with open(input_file, "r", encoding="utf-8") as file:
+                        text = file.read()
+                # Regex pattern to match substrings starting with a newline, then double-quote and comma
+                    pattern1 = r'\n,'
+                    replacement1 = ','
+                    pattern2 = r',"'
+                    # Replacement string
+                    replacement2 = ','
+                    # Perform the replacement
+                    output_text = re.sub(pattern1, replacement1, text)
+                    # output_text = re.sub(pattern2, replacement2, output_text)
+                    # Write the modified text into a new file
+                    with open(output_file, "w", encoding="utf-8") as file:
+                        file.write(output_text)
+
+                    print(f"Successfully replaced '\\n' and wrote to {output_file}.")
+                    return output_file
+                except FileNotFoundError:
+                    print(f"Error: The file {input_file} was not found.")
+                except Exception as e:
+                    print(f"An error occurred: {e}")    
+        else:        
+            print("file is cleaned")
+            return output_file
+ 
 
     
 def d_sim(self,s_dict : dict, q_embedding: np.ndarray, metric = "cosine", normalize = False) -> dict:
@@ -1860,31 +2148,92 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
 
       
 if __name__ == "__main__":
+    # Example usage:
+    global alignment_for_diversity_gmc_file2
+    
     benchmark_path="data/table-union-search-benchmark/small/"
     
     alignment_Dust="data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
 
     #alignment_Dust="data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
     
+    alignment_for_diversity_gmc_file=benchmark_path+'diveristy_data/GMC/alignment_for_diversity_gmc_tus_diluted04_restricted.csv'
 
-    top_k_starmie=benchmark_path+"diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
+    first_50_starmie=benchmark_path+"diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
     
+    limit_queries='1' # if we want to only limit the runs to the queries with more than k unionale results this is 1 otherwise zero. 
     search_params = {"keyword": "example", "max_results": 10}
-    dl_table_vectors_path = "data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    query_table_vectors_path = "data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    domainsize=20
 
-    gmc_search = GMC_Search(alignment_Dust, domainsize, dl_table_vectors_path,query_table_vectors_path,benchmark_path,search_params)
+    gmc_search = GMC_Search(alignment_Dust, search_params,alignment_for_diversity_gmc_file)
 
     # we leaod the data corresponindt to acolumn alignment generated by DUST for the output of
     # Starmie on Santos returning maximum 50 unionable dl tables  for each query
-    gmc_search.load_unionable_tables(top_k_starmie) 
+    gmc_search.load_data()
+    gmc_search.load_unionable_tables(first_50_starmie) 
         
     #generate and persist alignments for diversity function 
+    # first check if the file exist if not creat it by calling function 
+    file_exists = os.path.exists(alignment_for_diversity_gmc_file)
+    if file_exists:
+        print("alignments for diversity file exists")
+    else:
+        initialize_globally() # for DUST 
+        alignment_for_diversity_gmc_file2=alignment_for_diversity_gmc_file
+        gmc_search.generate_alignment_for_diversity_parallel()
+            
 
-    output_csv_file = benchmark_path+'diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv'
+    gmc_search.alignment_for_diversity_gmc_file=gmc_search.clean_file(alignment_for_diversity_gmc_file)   
+    # Calculate unionability
+
+    uionability_file_path=benchmark_path+"diveristy_data/GMC/gmc_unionability_scores_diluted04_restricted.csv"
+    file_exists = os.path.exists(uionability_file_path)
+    if not file_exists:
+        unionability_scores = gmc_search.calculate_unionability()
+
+        unionability_scores.to_csv(
+            uionability_file_path,
+            index=False,  # Do not include the index in the CSV
+            columns=unionability_scores.columns,  # Use DataFrame columns for the CSV
+            sep=",",  # Use a comma as the separator
+            quotechar='"',  # Handle quoted strings
+            encoding="utf-8",  # Set encoding
+        )
+    else: 
+            unionability_scores= pd.read_csv(
+            uionability_file_path,
+            sep=",",          # Use a comma as the delimiter
+            header=0)        # Treat the first row as the header (column names        )
+        
+    gmc_search.unionability_scores=unionability_scores
     
     
+    diveristy_file_path=benchmark_path+"diveristy_data/GMC/gmc_diversity_scores_diluted04_restricted.csv"
+    file_exists = os.path.exists(diveristy_file_path)
+    if not file_exists:
+# Save DataFrame to CSV
+        print("diversity score does not exist so creating it now .....")
+        diversity_scores = gmc_search.calculate_diversity(gmc_search.alignment_for_diversity_gmc_file)
+
+        diversity_scores.to_csv(
+            diveristy_file_path,
+            index=False,  # Do not include the index in the CSV
+            columns=diversity_scores.columns,  # Use DataFrame columns for the CSV
+            sep=",",  # Use a comma as the separator
+            quotechar='"',  # Handle quoted strings
+            encoding="utf-8",  # Set encoding
+        )
+    else: 
+        diversity_scores= pd.read_csv(
+            diveristy_file_path,
+            sep=",",          # Use a comma as the delimiter
+            header=0) 
+        
+    gmc_search.diversity_scores=diversity_scores  
+
+    # create the represenation for tables 
+    #gmc_search.vectorize_tables()
+
+    output_csv_file = benchmark_path+'diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv'
     for i in range(2, 11): 
             gmc_search.k=i
 

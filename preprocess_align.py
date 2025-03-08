@@ -560,7 +560,7 @@ def gmc_alignmnet_by_query(query_table, query_columns, dl_tables, embedding_type
     return alignment_list
 
 
-def gmc_alignmnet_by_query_efficient(query_table, query_columns, dl_tables, embedding_type='roberta_serialized'):
+def gmc_alignmnet_by_query_efficient(query_table, query_columns, dl_tables, embedding_type='roberta_serialized',  benchmark_name = "tus"):
     """
     Compute column alignments between a query table and its unionable datalake tables
     using COP-KMeans clustering (cop_kmeans2). Only the specified query_columns (list of column indices)
@@ -579,8 +579,11 @@ def gmc_alignmnet_by_query_efficient(query_table, query_columns, dl_tables, embe
     """
     # --- Setup and Data Loading ---
     use_numeric_columns = True
-    benchmark_name = "santos"
-    dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
+    if benchmark_name =="santos":
+        dl_table_folder = r"data" + os.sep + benchmark_name + os.sep + "datalake"
+    elif benchmark_name =="tus":
+            dl_table_folder = "data/table-union-search-benchmark/small/datalake"
+
     # Build a groundtruth dict mapping query table to its unionable DL tables
     groundtruth = { query_table: dl_tables }
     
@@ -592,7 +595,9 @@ def gmc_alignmnet_by_query_efficient(query_table, query_columns, dl_tables, embe
 
     # --- Compute Embeddings for Query and DL Tables ---
     # Compute embeddings for the query table columns
+   
     query_path = dl_table_folder + os.sep + query_table
+   
     query_embeddings = compute_embeddings_single_table(query_path, embedding_type, use_numeric_columns=use_numeric_columns)
     if len(query_embeddings) == 0:
         print("Not enough rows in query. Ignoring this query table.")

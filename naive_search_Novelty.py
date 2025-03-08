@@ -596,12 +596,17 @@ class NaiveSearcherNovelty(object):
         Returns:
             dict: A dictionary where keys are file names and values are lists of columns.
         """
+        delim=',' 
         data_dict = {}
         for filename in os.listdir(folder_path):
             if filename.endswith('.csv'):
                 filepath = os.path.join(folder_path, filename)
+                if 'ugen_v2' in filename:
+                    delim=';'
+                    
+                     
                 with open(filepath, mode='r', newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
+                    reader = csv.reader(csvfile, delimiter=delim)
                     rows = list(reader)
                     if not rows:
                         continue  # Skip empty files

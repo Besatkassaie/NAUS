@@ -6,6 +6,8 @@ from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
 import numpy as np
 import utilities as utl
+import itertools
+
 # from pyspark.sql import SparkSession
 # from pyspark.sql.functions import col, lit
 # from pyspark.sql.types import StructType, StructField, StringType, ArrayType
@@ -14,7 +16,7 @@ import utilities as utl
 #This file containes all the metrics used in our paper to evalute the novelty/diversity 
 #of the reranking 
 
-def Avg_executiontime_by_k(resultfile, caller_alg):
+def Avg_executiontime_by_k(resultfile, outputfile):
         file_path = resultfile
         df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
 
@@ -25,10 +27,18 @@ def Avg_executiontime_by_k(resultfile, caller_alg):
         k_column = column_names[3]  # Replace with the actual column name for k
         time_column=column_names[2]
         grouped = df.groupby(k_column)[time_column].mean()
+        result_df = grouped.reset_index()
+
+        # Rename the columns to 'k' and 'exec_time'
+        result_df.columns = ['k', 'exec_time']
+
+        # Write the DataFrame to a CSV file named 'outputfile.csv' without the index
+        result_df.to_csv(outputfile, index=False)
+
 
 # Print the results
         for k, avg_time in grouped.items():
-             print(f"k: {k}, Average execution time for {caller_alg} is: {avg_time*1000}")        
+             print(f"k: {k}, Average execution time is: {avg_time}")        
 
 
 def compute_counts(dataframe, k_column,query_name_column, tables_column):
@@ -824,14 +834,216 @@ def perform_concat(q_name,dl_t_name,filtered_align,df_query,df_dl, normalized):
     result_df.reset_index(drop=True, inplace=True)
     return result_df
     
+##
+# These functions must be defined elsewhere in your code.
+# They are used by the per‑query processing function.
+# from your_module import perform_concat, nscore_table
+
+def process_single_query(args):
+    """
+    Process a single query to compute its nscore.
+    
+    Parameters:
+      args: a tuple containing:
+        - q: the query name
+        - k_df_search_results: DataFrame filtered for the current k value
+        - alignments_: the alignments DataFrame
+        - qs: dictionary of query tables (from NaiveSearcherNovelty)
+        - tbles_: dictionary of datalake tables (from NaiveSearcherNovelty)
+        - normalized: flag indicating if normalization is applied
+        - alph: parameter alpha for nscore_table
+        - beta: parameter beta for nscore_table
+
+    Returns:
+      The computed nscore (float) for the given query.
+    """
+    q, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta = args
+
+    # Filter the search results for the current query.
+    q_k_df_search_results = k_df_search_results[k_df_search_results['query_name'] == q]
+    q_unionable_tables = q_k_df_search_results["tables"]
+    print("Processing query table: " + q)
+    
+    # Get the unionable tables for the query (assumes a comma-separated string)
+    q_unionable_tables_list = [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
+    
+    # Build the query DataFrame
+    lst_query = qs[q]
+    columns_ = list(range(len(lst_query)))
+    df_query = pd.DataFrame(data=list(zip(*lst_query)), columns=columns_)
+    df_constructed_table = df_query
+    print("Number of rows in query dataframe: " + str(len(df_query)))
+    
+    # Process each datalake table for the query.
+    for dl_t in q_unionable_tables_list:
+        # Get alignment rows for this query and datalake table.
+        condition1 = alignments_['query_table_name'] == q
+        condition2 = alignments_['dl_table_name'] == dl_t
+        filtered_align = alignments_[condition1 & condition2]
+        
+        # Clean up table name
+        dl_t_clean = dl_t.replace("[", "").replace("'", "").replace("]", "")
+        dl_t_clean = dl_t_clean.replace("]", "").replace("'", "").replace("]", "")
+        
+        # Build the datalake table DataFrame.
+        dl_list = tbles_[dl_t_clean]
+        columns_dl = list(range(len(dl_list)))
+        df_dl = pd.DataFrame(data=list(zip(*dl_list)), columns=columns_dl)
+        
+        print("Number of rows in constructed dataframe before concat: " + str(len(df_constructed_table)))
+        # Concatenate using your function (assumed to be defined elsewhere)
+        df_constructed_table = perform_concat(q, dl_t_clean, filtered_align, df_constructed_table, df_dl, normalized)
+    
+    # Compute the nscore for the constructed table.
+    nscore_query = nscore_table(df_constructed_table, alph, beta)
+    return nscore_query
     
     
+def nscore_result(result_file, output_file, alignments_file, query_path_ , table_path_, alph, beta,normalized=0):
+    #this function computse the nscore for a given query and its unionable tables 
+        try:
+                # Load the CSV file into a pandas DataFrame
+                alignments_ = pd.read_csv(alignments_file)
+
+                # Verify that the required columns are present
+                required_columns = ['query_table_name', 'query_column', 'query_column#',
+                                    'dl_table_name', 'dl_column#', 'dl_column']
+                if not all(column in alignments_.columns for column in required_columns):
+                    missing_columns = [col for col in required_columns if col not in alignments_.columns]
+                    raise ValueError(f"Missing required columns in data: {missing_columns}")
+
+                print("alignments_file loaded successfully")
+            
+        except FileNotFoundError:
+                print(f"Error: File not found at {alignments_file}")
+            
+        except ValueError as e:
+                print(f"Error: {e}")
+            
+        except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+            
+            
+        # find out how many groups of unionable there are in the alignment file for each query: 
+        # to do so find the unique combinations of  query_table_name, query_column#  for each query 
+
+        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
+        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
+            
+        # Initialize an empty DataFrame with the desired columns
+        columns = ["query", "k", "null_union_size", "normalized"]
+        df_output = pd.DataFrame(columns=columns)  
+        columns_to_load = ['query_name', 'tables', 'k']
+        df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
+
+        # Get the unique values of 'k' in the dataframe
+        unique_k_values = df_search_results['k'].unique()    
+        result={}
+        unique_k_values={2, 3}
+        for k_ in unique_k_values:
+              print("k: "+str(k_))
+            # Filter the dataframe for the current value of 'k'
+              k_df_search_results= df_search_results[df_search_results['k'] == k_]
+              #DUST does not create alignemnt for these two queries
+              exclude={"workforce_management_information_a.csv",
+                 "workforce_management_information_b.csv"}
+              queries_k = k_df_search_results['query_name'].unique()
+              if(len(queries_k==0)):
+                  print("no query ")
+              # remove excluded 
+              queries_k = np.setdiff1d(queries_k, np.array(list(exclude)))
+
+              number_of_queries=len(queries_k)
+              sum_nscore=0
+              for q in queries_k:
+                # get the unionabe tables 
+                    q_k_df_search_results= k_df_search_results[k_df_search_results['query_name'] == q]
+                    q_unionable_tables=q_k_df_search_results["tables"]
+                    print("query table: "+q)
+                    q_unionable_tables_list= [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
+                    lst_query=qs[q]
+                    # Create column names as the indices of the inner lists
+                    columns_ = [i for i in range(len(lst_query))]
+
+                     # Transpose the column-major data to row-major for DataFrame creation
+                    df_query = pd.DataFrame(data=list(zip(*lst_query)), columns=columns_)
+                    #intially has tha same column as the query but grow horizontally
+                    df_constructed_table=df_query
+                    print("number of rows in the query dataframe+ "+str(len(df_query)))
+
+                    for dl_t in q_unionable_tables_list:
+                    # get from alignmnet which columns are aligned for each table 
+                      condition1 = alignments_['query_table_name'] == q
+                      condition2 = alignments_['dl_table_name'] == dl_t
+
+                      # Filter rows that satisfy both conditions
+                      filtered_align = alignments_[condition1 & condition2]
+                      # get datalake table and make if dataframe
+                      dl_t=dl_t.replace("[", "").replace("'", "").replace("]","")
+                      dl_t=dl_t.replace("]", "").replace("'", "").replace("]", "")
+                      dl_list=tbles_[dl_t]
+                      columns_dl= [i for i in range(len(dl_list))]
+                      df_dl = pd.DataFrame(data=list(zip(*dl_list)), columns=columns_dl)
+
+
+                      print("number of rows in the concatinated dataframe+ "+str(len(df_constructed_table)))
+                      df_constructed_table=perform_concat(q,dl_t,filtered_align,df_constructed_table,df_dl, normalized )
+                    nscore_query=nscore_table(df_constructed_table,alph, beta)  
+                    sum_nscore= nscore_query+sum_nscore
+              avg_sncore=  sum_nscore/number_of_queries
+              result[k_]=avg_sncore  
+              print(f"k {k_}  avg_sncore {avg_sncore}")  
+                
+        with open(output_file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for key, value in result.items():
+                writer.writerow([key, value])
+        return result
+
+def nscore_table(table_datafram, alph, beta):
+    #compute number of pairs
+    pairs = list(itertools.combinations(table_datafram.index, 2))
+
+    # Store the number of unique pairs
+    number_of_unique_pairs = len(pairs)
+    print("Number of unique pairs:", number_of_unique_pairs)
+
+    summation=0
+    # go thouth all the pairs and for each compute nscore  nscore_pair((r1, r2))
+    # do summation all over the pairs 
+    for i, j in pairs:
+        row1 = table_datafram.loc[i]
+        row2 = table_datafram.loc[j]
+        result = nscore_pair(row1, row2, alph, beta)
+        summation=summation+result
+
+    #multiply the sum  by number of unique pairs and retrun it
+    
+    return float(summation)/float(number_of_unique_pairs) 
+
+
+def nscore_pair(row1, row2, alph, beta):
+
+    # Create boolean masks for NaN values in each row.
+    na1 = row1.isna()
+    na2 = row2.isna()
+    
+    # Identify columns where one is NaN and the other is not.
+    one_nan = na1 ^ na2
+    
+    # Identify columns where both are non-NaN and different.
+    both_non_nan_diff = (~na1 & ~na2) & (row1 != row2)
+    
+    # Compute the total score.
+    total = alph * both_non_nan_diff.sum() + beta * one_nan.sum()
+    
+    # Return the average score per column.
+    return total / len(row1)
+
 def compute_union_size_with_null(result_file, output_file, alignments_file, query_path_ , table_path_, normalized=0):
         """computes  union size between query table and data lake tables
            result_file has at least columns: query_name, tables, and k  
            alignments is alignemnts betweeen  columns of  query and tables  has query_table_name, query_column, query_column#, dl_table_name, dl_column#, dl_column
-           simple version means that we do not use outer union here so q, t1 and q,t2 might have different alignments which makes them distinct in counting
-           query_path_ and table_path_ are the content of the tables if it is for raw version we deal differently than  for normlized version 
            normalized  0 means we are deeling with raw content of the tables 1 means that the content of each cell is normalized  
            multiset if 0 eans that we get rid of duplicate rows before reporting the uniona size
         """

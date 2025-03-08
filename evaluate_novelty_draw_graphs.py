@@ -9,39 +9,43 @@ def draw_plots():
 
     # File paths (update as needed)
 
-    #base_output_path="data/table-union-search-benchmark/small/diveristy_data/graphs"
-    base_output_path="data/santos/diveristy_data/graphs"
+    base_output_path="data/table-union-search-benchmark/small/diveristy_data/graphs2"
+   # base_output_path="data/santos/diveristy_data/graphs"
 
-   # benchmark="data/table-union-search-benchmark/small/"
-    benchmark= "data/santos/"
+    benchmark="data/table-union-search-benchmark/small/"
+    #benchmark= "data/santos/"
     
     #--------------------- search result paths -------------------#
-    pen_search_result_csv=benchmark+"diveristy_data/search_results/Penalized/search_result_penalize_diluted_restricted_duplicate.csv"
+    pen_search_result_csv=benchmark+"diveristy_data/search_results/Penalized/search_result_new_penalize_diluted_restricted_duplicate.csv"
     star_search_result_csv=benchmark+"diveristy_data/search_results/Starmie/search_result_starmie_diluted_restricted_duplicate.csv"
-    gmc_search_result_csv=benchmark+"diveristy_data/search_results/GMC/search_result_gmc_diluted_restricted_duplicate.csv"
+    gmc_search_result_csv=benchmark+"diveristy_data/search_results/GMC/search_result_gmc_new_diluted_restricted_duplicate.csv"
     search_result_output_text=os.path.join(base_output_path,"search_result.tex")
     search_result_output_png=os.path.join(base_output_path,"search_result.png")
     
     
     #--------------------- Union Size ----------------------------#
-    gmc_res_union_size = benchmark+"diveristy_data/search_results/GMC/null_union_size_gmc_04diluted_restricted_notnormal.csv"
-    pnl_res_union_size = benchmark+"diveristy_data/search_results/Penalized/null_union_size_penalized_04diluted_restricted_notnormal.csv"
+    gmc_res_union_size = benchmark+"diveristy_data/search_results/GMC/null_union_size_gmc_new_04diluted_restricted_notnormal.csv"
+    pnl_res_union_size = benchmark+"diveristy_data/search_results/Penalized/null_union_size_new_penalized_04diluted_restricted_notnormal.csv"
     starme_res_union_size = benchmark+"diveristy_data/search_results/Starmie/null_union_size_starmie_04diluted_restricted_notnormal.csv"
     
     #--------------------   File paths for SNM results -------------#
-    pnl_res_snm = benchmark+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv"
+    pnl_res_snm = benchmark+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv"
     starme_res_snm = benchmark+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv"
 
     #--------------------- File paths for ssnm results ---------------#
-    gmc_res_ssnm = benchmark+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv"
-    pnl_res_ssnm = benchmark+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv"
+    gmc_res_ssnm = benchmark+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv"
+    pnl_res_ssnm = benchmark+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv"
     starme_res_ssnm =benchmark+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv"
     
+    #--------------------File paths for exection time results---------------------#
+    pnl_res_time = benchmark+"diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv"
+    gmc_res_time = benchmark+"diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv"
     
     generate_k_table(pen_search_result_csv,star_search_result_csv,gmc_search_result_csv,search_result_output_text,search_result_output_png)
     draw_ssnm(base_output_path,gmc_res_ssnm,pnl_res_ssnm,starme_res_ssnm)
     draw_snm(base_output_path,pnl_res_snm,starme_res_snm)
     draw_union_size (base_output_path,gmc_res_union_size,pnl_res_union_size,starme_res_union_size)
+    draw_execution_time(base_output_path,gmc_res_time, pnl_res_time )
 
 def generate_k_table(pen_csv, star_csv, gmc_csv, output_tex, output_png):
     """
@@ -191,6 +195,72 @@ def draw_union_size(base_path,gmc_res,pnl_res,starme_res):
 
     # Show the plot
     #plt.show()
+def draw_execution_time(base_path,gmc_res,pnl_res):
+    # Read CSV files into DataFrames
+    df_gmc = pd.read_csv(gmc_res)
+    df_pnl = pd.read_csv(pnl_res)
+
+    # Add a column to indicate the method/source for each row
+    df_gmc['method'] = 'GMC'
+    df_pnl['method'] = 'Pnl'
+
+    
+    # Combine the DataFrames into one
+    df_combined = pd.concat([df_gmc.reset_index(), df_pnl.reset_index()], ignore_index=True)
+
+    # For a plot like your Figure 8, we’ll assume the columns are named 'k' and 'ssnm'.
+    # If they differ (e.g., 'novelty'), replace 'ssnm' below with the correct column name.
+    
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # We can define custom markers, colors, etc. for each method
+    style_map = {
+        'GMC':      {'marker': '^', 'color': 'blue'},
+        'Pnl':      {'marker': 'o', 'color': 'red'}
+    }
+
+    # Plot each method separately for full control of style
+    for method, style_info in style_map.items():
+        df_subset = df_combined[df_combined['method'] == method]
+        ax.plot(
+            df_subset['k'], 
+            df_subset['exec_time'], 
+            marker=style_info['marker'],
+            color=style_info['color'],
+            label=method
+        )
+
+    # Labeling and aesthetics
+    ax.set_xlabel('K', fontsize=12)
+    ax.set_ylabel('Execution Time (sec)', fontsize=12)
+    #ax.set_title('Figure 8: SSNM (Mean)', fontsize=14)
+
+    # If you know your k ranges from 1 to 10, you can set:
+    ax.set_xticks(range(1, 11))
+    
+    # If you want y-axis from 0 to 1:
+    #ax.set_ylim([0, 1])
+
+    # Enable grid
+    ax.grid(True)
+
+    # Add legend
+    ax.legend()
+    plt.savefig(os.path.join(base_path,"executionTime.pdf"), format='pdf', bbox_inches='tight')
+    # Optionally also save as PNG:
+    plt.savefig(os.path.join(base_path,"executionTime.png"), dpi=300, bbox_inches='tight')
+
+    # Show the plot
+    #plt.show()
+
+
+
+
+
+
+
+
     
 def draw_snm(base_path,pnl_res,starme_res):
     # # File paths for SNM results

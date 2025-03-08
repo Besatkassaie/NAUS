@@ -76,8 +76,8 @@ def main(args2=None):
     if hp.mlflow_tag:
         mlflow.set_tag("tag", hp.mlflow_tag)
 
-    dataFolder = hp.benchmark+"/small"
-
+    #dataFolder = hp.benchmark+"/small"
+    dataFolder = hp.benchmark
     # If the filepath to the pkl files are different, change here:
     if hp.encoder == 'cl':
         query_path = "data/"+dataFolder+"/vectors/"+hp.encoder+"_query_"+hp.augment_op+"_"+hp.sample_meth+"_"+hp.table_order+"_"+str(hp.run_id)
@@ -124,7 +124,7 @@ def main(args2=None):
                 else:
                   print("working on restricted data")
                   qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold, restrict=1 , 
-                                       gth="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv")
+                                       gth="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_unionable_groundtruth_diluted.pickle")
   
             else: # Bounds matching
                 qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)
@@ -137,32 +137,14 @@ def main(args2=None):
                 returnedResults_noscore[query[0]] = [r[1] for r in res]
             query_times.append(time.time() - query_start_time)
     #print(returnedResults)        
-    with open("/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
+    with open("/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults, file)   
-    with open("/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
+    with open("/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults_noscore, file)                
     # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
     print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))
     print("--- Total Query Time: %s seconds ---" % (time.time() - start_time))
 
-    # # santosLarge and WDC benchmarks are used for efficiency
-    # if hp.benchmark == 'santosLarge' or hp.benchmark == 'wdc':
-    #     print("No groundtruth for %s benchmark" % (hp.benchmark))
-    # else:
-    #     # Calculating effectiveness scores (Change the paths to where the ground truths are stored)
-    #     if 'santos' in hp.benchmark:
-    #         k_range = 1
-    #         groundTruth = "data/santos/santosUnionBenchmark.pickle"
-    #     else:
-    #         k_range = 10
-    #         if hp.benchmark == 'tus':
-    #             groundTruth = 'data/table-union-search-benchmark/small/tus-groundtruth/tusLabeledtusUnionBenchmark'
-    #         elif hp.benchmark == 'tusLarge':
-    #             groundTruth = 'data/table-union-search-benchmark/large/tus-groundtruth/tusLabeledtusLargeUnionBenchmark'
-
-
-        
-    #     calcMetrics(hp.K, k_range, returnedResults, gtPath=groundTruth)
  
 if __name__ == '__main__':
     main()     
