@@ -391,14 +391,18 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
-    alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
-    first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
     # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
     # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
     # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-
+    # # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
+    # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
     
+    
+    alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
+    first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+
     dsize=20
     penalize_search = Penalized_Search(dsize)
     penalize_search.load_column_alignment_data(alignment_Dust)

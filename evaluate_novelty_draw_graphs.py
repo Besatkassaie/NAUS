@@ -9,10 +9,10 @@ def draw_plots():
 
     # File paths (update as needed)
 
-    base_output_path="data/table-union-search-benchmark/small/diveristy_data/graphs2"
+    base_output_path="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/graphs"
    # base_output_path="data/santos/diveristy_data/graphs"
 
-    benchmark="data/table-union-search-benchmark/small/"
+    benchmark="/u6/bkassaie/NAUS/data/ugen_v2/"
     #benchmark= "data/santos/"
     
     #--------------------- search result paths -------------------#

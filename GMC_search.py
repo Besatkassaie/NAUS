@@ -1860,9 +1860,9 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
 
       
 if __name__ == "__main__":
-    benchmark_path="data/table-union-search-benchmark/small/"
+    benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
     
-    alignment_Dust="data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
+    alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
 
     #alignment_Dust="data/santos/Santos_dlt_CL_KMEANS_cosine_alignment.csv"
     
@@ -1870,8 +1870,8 @@ if __name__ == "__main__":
     top_k_starmie=benchmark_path+"diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"     
     
     search_params = {"keyword": "example", "max_results": 10}
-    dl_table_vectors_path = "data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    query_table_vectors_path = "data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+    dl_table_vectors_path = "data/ugen_v2/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    query_table_vectors_path = "data/ugen_v2/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
     domainsize=20
 
     gmc_search = GMC_Search(alignment_Dust, domainsize, dl_table_vectors_path,query_table_vectors_path,benchmark_path,search_params)
@@ -1882,7 +1882,7 @@ if __name__ == "__main__":
         
     #generate and persist alignments for diversity function 
 
-    output_csv_file = benchmark_path+'diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv'
+    output_csv_file = benchmark_path+'diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv'
     
     
     for i in range(2, 11): 

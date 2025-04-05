@@ -4,9 +4,9 @@
 # sbatch batch-submit.sh
 
 # Set resource requirements
-#SBATCH --mem=50GB              # Memory allocation
-#SBATCH --cpus-per-task=3       # Number of CPU cores
-#SBATCH --gres=gpu:1            # Request 1 GPU
+#SBATCH --mem=20GB              # Memory allocation
+#SBATCH --cpus-per-task=5     # Number of CPU cores
+##SBATCH --gres=gpu:1            # Request 1 GPU
 
 # Set output file destinations
 #SBATCH -o JOB%j.out            # Standard output file

@@ -25,14 +25,14 @@ import matplotlib.pyplot as plt
     # query_duplicate_returned("/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted_restricted.csv",
     #                                     "/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/diversity_data/search_result/penalized/search_result_penalize_diluted_restricted_duplicate.csv")
 
-gmc_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv"
-penalize_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-starmie_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-groundtruth="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+gmc_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
+penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+starmie_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+groundtruth="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_unionable_groundtruth_diluted.pickle"
 
-gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
-penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
-starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
+gmc_diversity_data_path="data/ugen_v2/diveristy_data/search_results/GMC/"
+penalized_diversity_data_path="data/ugen_v2/diveristy_data/search_results/Penalized/"
+starmie_diversity_data_path="data/ugen_v2/diveristy_data/search_results/Starmie/"
 
 import os
 
@@ -114,54 +114,54 @@ if not (os.path.exists(starmie_ssnm_avg_file) or os.path.exists(starmie_ssnm_who
 else:
       print("This file exists: "+starmie_ssnm_avg_file+" or "+starmie_ssnm_whole_file)       
    
-# print("union size computation for Penalization")
-# alignemnt_path="data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
-# compute_union_size_with_null(penalize_result_file,   
-#                              penalized_diversity_data_path+"null_union_size_new_penalized_04diluted_restricted_notnormal.csv", 
-#                                 alignemnt_path,
-#                                           "data/table-union-search-benchmark/small/query", 
-#                                          "data/table-union-search-benchmark/small/datalake",0) 
+print("union size computation for Penalization")
+alignemnt_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
+compute_union_size_with_null(penalize_result_file,   
+                             penalized_diversity_data_path+"null_union_size_new_penalized_04diluted_restricted_notnormal.csv", 
+                                alignemnt_path,
+                                          "data/ugen_v2//query", 
+                                         "data/ugen_v2/datalake",0) 
 
-# print("union size computation for Starmie")
+print("union size computation for Starmie")
 
-# compute_union_size_with_null(starmie_result_file,
-#                             starmie_diversity_data_path+"/null_union_size_starmie_04diluted_restricted_notnormal.csv", 
-#                                           alignemnt_path,
-#                                           "data/table-union-search-benchmark/small/query", 
-#                                          "data/table-union-search-benchmark/small/datalake",0) 
+compute_union_size_with_null(starmie_result_file,
+                            starmie_diversity_data_path+"/null_union_size_starmie_04diluted_restricted_notnormal.csv", 
+                                          alignemnt_path,
+                                          "data/ugen_v2/query", 
+                                         "data/ugen_v2/datalake",0) 
 
-# print("union size computation for GMC")
+print("union size computation for GMC")
 
-# compute_union_size_with_null(gmc_result_file,
-#                              gmc_diversity_data_path+"/null_union_size_gmc_new_04diluted_restricted_notnormal.csv", 
-#                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv",
+compute_union_size_with_null(gmc_result_file,
+                             gmc_diversity_data_path+"/null_union_size_gmc_new_04diluted_restricted_notnormal.csv", 
+                                           alignemnt_path,
+                                          "data/ugen_v2/query", 
+                                         "data/ugen_v2/datalake",0) 
+
+
+# nscore_result(gmc_result_file,
+#               gmc_diversity_data_path+"/nscore_gmc_04diluted_restricted_notnormal_K2K3_parallel.csv", 
+#                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
 #                                           "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
-#                                          "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",0) 
-
-
-nscore_result(gmc_result_file,
-              gmc_diversity_data_path+"/nscore_gmc_04diluted_restricted_notnormal_limited_test_ali.csv", 
-                                           "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
-                                          "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
-                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",1,1,0) 
+#                                          "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",1,1,0) 
 
 
 
 #####execution time graph###############
 
-# time_pen_file=penalized_diversity_data_path+"time_new_penalize_diluted_restricted.csv"
-# if not os.path.exists(time_pen_file):
-#     Avg_executiontime_by_k(penalize_result_file, time_pen_file)
-# else:
-#     print("This file exists: "+time_pen_file)
+time_pen_file=penalized_diversity_data_path+"time_new_penalize_diluted_restricted.csv"
+if not os.path.exists(time_pen_file):
+    Avg_executiontime_by_k(penalize_result_file, time_pen_file)
+else:
+    print("This file exists: "+time_pen_file)
     
     
-# time_gmc_file=   gmc_diversity_data_path+"time_gmc_new_diluted_restricted.csv" 
+time_gmc_file=   gmc_diversity_data_path+"time_gmc_new_diluted_restricted.csv" 
     
-# if not os.path.exists(time_gmc_file):
-#     Avg_executiontime_by_k(gmc_result_file, time_gmc_file)
-# else:
-#     print("This file exists: "+time_gmc_file)    
+if not os.path.exists(time_gmc_file):
+    Avg_executiontime_by_k(gmc_result_file, time_gmc_file)
+else:
+    print("This file exists: "+time_gmc_file)    
 
 
  

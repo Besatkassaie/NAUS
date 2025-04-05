@@ -5,7 +5,7 @@
 
 # Set resource requirements
 #SBATCH --mem=20GB              # Memory allocation
-#SBATCH --cpus-per-task=5       # Number of CPU cores
+#SBATCH --cpus-per-task=5     # Number of CPU cores
 ##SBATCH --gres=gpu:1            # Request 1 GPU
 
 # Set output file destinations
@@ -17,3 +17,4 @@ source activate TableUnionNew   # Replace <env> with your actual Conda environme
 
 # Run the Python script
 python /u6/bkassaie/NAUS/GMC_search.py
+##python /u6/bkassaie/NAUS/Penalized_search.py

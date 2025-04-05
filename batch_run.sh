@@ -5,7 +5,7 @@
 
 # Set resource requirements
 #SBATCH --mem=40GB              # Memory allocation
-#SBATCH --cpus-per-task=20       # Number of CPU cores
+#SBATCH --cpus-per-task=12       # Number of CPU cores
 #SBATCH --gres=gpu:1            # Request 1 GPU
 
 # Set output file destinations

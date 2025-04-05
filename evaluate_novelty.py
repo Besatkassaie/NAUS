@@ -7,7 +7,11 @@ from nltk.stem import PorterStemmer
 import numpy as np
 import utilities as utl
 import itertools
+import time
+import multiprocessing as mp
 
+# Set the multiprocessing start method to spawn to avoid CUDA reinitialization issues.
+mp.set_start_method('spawn', force=True)
 # from pyspark.sql import SparkSession
 # from pyspark.sql.functions import col, lit
 # from pyspark.sql.types import StructType, StructField, StringType, ArrayType
@@ -839,6 +843,11 @@ def perform_concat(q_name,dl_t_name,filtered_align,df_query,df_dl, normalized):
 # They are used by the per‑query processing function.
 # from your_module import perform_concat, nscore_table
 
+
+# These functions must be defined elsewhere in your code.
+# They are used by the per‑query processing function.
+# from your_module import perform_concat, nscore_table
+
 def process_single_query(args):
     """
     Process a single query to compute its nscore.
@@ -853,12 +862,13 @@ def process_single_query(args):
         - normalized: flag indicating if normalization is applied
         - alph: parameter alpha for nscore_table
         - beta: parameter beta for nscore_table
+        - output_folder_by_query: output_folder_by_query
 
     Returns:
       The computed nscore (float) for the given query.
     """
-    q, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta = args
-
+    q, k, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,output_folder_by_query = args
+    start_time = time.time_ns()
     # Filter the search results for the current query.
     q_k_df_search_results = k_df_search_results[k_df_search_results['query_name'] == q]
     q_unionable_tables = q_k_df_search_results["tables"]
@@ -896,10 +906,156 @@ def process_single_query(args):
     
     # Compute the nscore for the constructed table.
     nscore_query = nscore_table(df_constructed_table, alph, beta)
+
+    # Compute the processing time in seconds
+    time_taken = round((time.time_ns() - start_time) / 10**9, 2)
+    # Number of rows in the constructed DataFrame
+    num_rows = len(df_constructed_table)
+    # Number of unique rows (using drop_duplicates)
+    num_unique = len(list(itertools.combinations(df_constructed_table.index, 2)))
+    output_df = pd.DataFrame({
+        "K": [k],
+        "time_taken": [time_taken],
+        "query_name": [q],
+        "num_rows": [num_rows],
+        "num_unique": [num_unique],
+        "nscore": [nscore_query],
+    })
+
+    # Write output to a CSV file named after the query (e.g., "myquery.csv")
+    output_filename = f"{q}_{k}.csv"
+    output_df.to_csv(os.path.join(output_folder_by_query,output_filename), index=False)
+    print(f"Written output file for query '{q}' to {output_filename}")
+    
     return nscore_query
+
+def choose_queries(N, Queries, excluded_queries):
+    """
+    Returns the top N queries after filtering out the excluded ones and sorting the remaining 
+    queries first by name (alphabetically) then by their size in descending order.
     
+    Parameters:
+    N : int
+        Number of returned queries.
+    Queries : dict
+        A dictionary where keys are query names and values are lists of columns.
+    excluded_queries : list or set
+        The queries that need to be excluded.
     
-def nscore_result(result_file, output_file, alignments_file, query_path_ , table_path_, alph, beta,normalized=0):
+    Returns:
+    list
+        List of top query names after filtering and sorting.
+    """
+    
+    # Filter out the excluded queries.
+    filtered_queries = {query: rows for query, rows in Queries.items() if query not in excluded_queries}
+    
+    # First, sort by query name (alphabetically).
+    sorted_by_name = sorted(filtered_queries.items(), key=lambda item: item[0])
+    
+    # Then, sort by size (length of list) in descending order. 
+    # Because Python's sort is stable, the alphabetical order is preserved among equal sizes.
+    sorted_items = sorted(sorted_by_name, key=lambda item: len(item[1][0])) #item [1][0] would be the number of rows in the first column: e.g ('t_1934eacab8c57857____c10_0____0.csv', [[...], [...], [...], [...], [...], [...], [...], [...], [...], [...]])
+    
+    # Return the list of query names for the top N items.
+    return [(query,len(columns[0])) for query, columns in sorted_items[:N]]
+
+
+def nscore_result(output_folder_by_query,result_file, output_file, alignments_file, query_path_, table_path_, alph, beta, normalized=0):
+    """
+    Compute the nscore for a given query and its unionable tables.
+    This version parallelizes the per‑query computation.
+
+    Parameters:
+      output_folder_by_query: the folder to write partial results by query
+      result_file: CSV file containing search results (with columns 'query_name', 'tables', 'k')
+      output_file: path to the CSV file to write the averaged nscore per k value
+      alignments_file: CSV file containing alignment information
+      query_path_: path to query tables (to be loaded by NaiveSearcherNovelty)
+      table_path_: path to datalake tables (to be loaded by NaiveSearcherNovelty)
+      alph, beta: parameters for the nscore_table function
+      normalized: flag for normalization
+
+    Returns:
+      A dictionary mapping k to the average nscore.
+    """
+    try:
+        alignments_ = pd.read_csv(alignments_file)
+        required_columns = ['query_table_name', 'query_column', 'query_column#',
+                            'dl_table_name', 'dl_column#', 'dl_column']
+        if not all(col in alignments_.columns for col in required_columns):
+            missing = [col for col in required_columns if col not in alignments_.columns]
+            raise ValueError(f"Missing required columns in data: {missing}")
+        print("Alignments file loaded successfully")
+        print(f"working on {result_file}")
+    except FileNotFoundError:
+        print(f"Error: File not found at {alignments_file}")
+        return
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return
+
+    # Load datalake and query tables using NaiveSearcherNovelty.
+    tbles_ = NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
+    qs = NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
+    
+    Q_N=2 #set the returned number to 2
+    excluded_queries = {"workforce_management_information_a.csv",
+                   "workforce_management_information_b.csv"}
+    top_queries=choose_queries(Q_N,qs,excluded_queries)
+    top_query_names=[q[0] for q in top_queries]
+    # Load search results.
+    columns_to_load = ['query_name', 'tables', 'k']
+    df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
+    
+    # Process for each unique k value.
+    result = {}
+    # In your code you force unique_k_values to {2, 3}.
+    unique_k_values = {2}
+    
+    for k_ in unique_k_values:
+        print("Processing k: " + str(k_))
+        k_df_search_results = df_search_results[df_search_results['k'] == k_]
+        # Exclude queries not processed by DUST.
+
+        queries_k = k_df_search_results['query_name'].unique()
+        if len(queries_k) == 0:
+            print("No query found for k = " + str(k_))
+            continue
+    
+        #include only the ones that are in top_query_name
+        queries_k = np.intersect1d(queries_k, np.array(list(top_query_names)))
+        
+        number_of_queries = len(queries_k)
+        print(f"Found {number_of_queries} queries for k = {k_}")
+        
+        # Prepare arguments for each query.
+        args_list = [
+            (q, k_, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,output_folder_by_query)
+            for q in queries_k
+        ]
+        
+        # Use multiprocessing to process queries in parallel.
+        with mp.Pool() as pool:
+            query_nscores = pool.map(process_single_query, args_list)
+        
+        # Average the nscore over all queries.
+        sum_nscore = sum(query_nscores)
+        avg_nscore = sum_nscore / number_of_queries
+        result[k_] = avg_nscore
+        print(f"k {k_}  avg_nscore {avg_nscore}")
+    
+    # Write the results to the output CSV.
+    with open(output_file, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for key, value in result.items():
+            writer.writerow([key, value])
+    
+    return result    
+def nscore_result_old(result_file, output_file, alignments_file, query_path_ , table_path_, alph, beta,normalized=0):
     #this function computse the nscore for a given query and its unionable tables 
         try:
                 # Load the CSV file into a pandas DataFrame
@@ -1001,25 +1157,38 @@ def nscore_result(result_file, output_file, alignments_file, query_path_ , table
         return result
 
 def nscore_table(table_datafram, alph, beta):
-    #compute number of pairs
-    pairs = list(itertools.combinations(table_datafram.index, 2))
+    
+    l = len(table_datafram)
+    expected_pairs = l * (l - 1)
+
+    pairs = list(itertools.permutations(table_datafram.index, 2))
+    # number_of_pairs = len(pairs)
+    # #compute number of pairs
+    # unordered_pairs = list(itertools.combinations(table_datafram.index, 2))
+
+    assert len(pairs) == expected_pairs, f"Expected {expected_pairs} pairs, but got {len(pairs)}"
 
     # Store the number of unique pairs
     number_of_unique_pairs = len(pairs)
     print("Number of unique pairs:", number_of_unique_pairs)
+    print ("Number of table rows:",number_of_unique_pairs)
 
-    summation=0
-    # go thouth all the pairs and for each compute nscore  nscore_pair((r1, r2))
-    # do summation all over the pairs 
+# Create a dictionary to store the max nscore for each i
+    max_scores = {}
+
+# Iterate over all pairs and update the maximum nscore for each i
     for i, j in pairs:
         row1 = table_datafram.loc[i]
         row2 = table_datafram.loc[j]
-        result = nscore_pair(row1, row2, alph, beta)
-        summation=summation+result
-
-    #multiply the sum  by number of unique pairs and retrun it
+        score = nscore_pair(row1, row2, alph, beta)
+        if i not in max_scores or score > max_scores[i]:
+            max_scores[i] = score
     
-    return float(summation)/float(number_of_unique_pairs) 
+    assert len(max_scores) == len(table_datafram), f"Expected {len(table_datafram)} number of max score, but got {len(max_scores)}"
+
+    average_max_score = sum(max_scores.values()) / len(max_scores)    
+    return average_max_score
+
 
 
 def nscore_pair(row1, row2, alph, beta):
@@ -1237,3 +1406,157 @@ def case_fold(tokens):
 def stem( stemmer, tokens):
         """Applies stemming to the tokens."""
         return [stemmer.stem(token) for token in tokens]          
+    
+
+if __name__=='__main__':
+    gmc_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv"
+    penalize_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
+    starmie_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+    groundtruth="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+
+    gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
+    penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
+    starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
+
+
+    # gmc_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv"
+    # penalize_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
+    # starmie_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+    # groundtruth="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+
+    # gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
+    # penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
+    # starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
+
+
+
+    import os
+
+    # make sure that we do not have extra character in result if you have remove them  
+    # dup_pen_file=penalized_diversity_data_path+"search_result_new_penalize_diluted_restricted_duplicate.csv"
+    # if not os.path.exists(dup_pen_file):
+
+    #     query_duplicate_returned(penalize_result_file,dup_pen_file)
+    # else:
+    #     print("This file exists: "+dup_pen_file)
+    # dup_gmc_file=   gmc_diversity_data_path+"search_result_gmc_new_diluted_restricted_duplicate.csv" 
+        
+    # if not os.path.exists(dup_gmc_file):
+    #     query_duplicate_returned(gmc_result_file,dup_gmc_file)
+    # else:
+    #     print("This file exists: "+dup_gmc_file)    
+        
+    # starmie_dup_file=starmie_diversity_data_path+"search_result_starmie_diluted_restricted_duplicate.csv"
+    # if not os.path.exists(starmie_dup_file):
+    #     query_duplicate_returned(starmie_result_file,starmie_dup_file)
+    # else:
+    #     print("This file exists: "+starmie_dup_file) 
+        
+        
+    # ################Compute SNM######################    
+
+    # starmie_snm_avg_file=starmie_diversity_data_path+"starmie_snm_diluted_restricted_avg_nodup.csv"
+    # starmie_snm_whole_file=starmie_diversity_data_path+"starmie_snm_diluted_restricted_whole_nodup.csv"
+    # if not (os.path.exists(starmie_snm_avg_file) or os.path.exists(starmie_snm_whole_file)):
+
+    #     compute_syntactic_novelty_measure(groundtruth,starmie_result_file,starmie_snm_avg_file, starmie_snm_whole_file, remove_duplicate=1)    
+    # else:
+    #     print("This file exists: "+starmie_snm_avg_file+" or "+starmie_snm_whole_file) 
+        
+    # pnl_snm_avg_file=penalized_diversity_data_path+"new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv"
+    # pnl_snm_whole_file=penalized_diversity_data_path+"new_pnl_snm_diluted_restricted_whole_nodup_pdg1.csv"
+    # if not (os.path.exists(pnl_snm_whole_file) or os.path.exists(pnl_snm_avg_file)):
+
+    #     compute_syntactic_novelty_measure(groundtruth,
+    #                                                 penalize_result_file,
+    #                                                 pnl_snm_avg_file
+    #                                                     , pnl_snm_whole_file
+    #                                                     , remove_duplicate=1)    
+    # else:
+    #     print("This file exists: "+pnl_snm_avg_file+" or "+pnl_snm_whole_file) 
+
+
+    # ################Compute SSNM######################    
+    # gmc_ssnm_avg_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_avg_nodup.csv"
+    # gmc_ssnm_whole_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_whole_nodup.csv"
+
+    # if not (os.path.exists(gmc_ssnm_avg_file) or os.path.exists(gmc_ssnm_whole_file)):
+
+    #     compute_syntactic_novelty_measure_simplified(groundtruth,gmc_result_file,gmc_ssnm_avg_file
+    #                                                 , gmc_ssnm_whole_file
+    #                                                 , remove_dup=1)  
+    # else:
+    #     print("This file exists: "+gmc_ssnm_avg_file+" or "+gmc_ssnm_whole_file)      
+
+    # pnl_ssnm_avg_file=penalized_diversity_data_path+"new_pnl_ssnm_diluted_restricted_avg_nodup.csv"
+    # pnl_ssnm_whole_file=penalized_diversity_data_path+"new_pnl_ssnm_diluted_restricted_whole_nodup.csv"
+    # if not (os.path.exists(pnl_ssnm_avg_file) or os.path.exists(pnl_ssnm_whole_file)):
+        
+    #     compute_syntactic_novelty_measure_simplified(groundtruth,penalize_result_file,
+    #                                                     pnl_ssnm_avg_file , 
+    #                                                     pnl_ssnm_whole_file, remove_dup=1)    
+    # else:
+    #     print("This file exists: "+pnl_ssnm_avg_file+" or "+pnl_ssnm_whole_file)       
+        
+
+    # starmie_ssnm_avg_file=starmie_diversity_data_path+"starmie_ssnm_diluted_restricted_avg_nodup.csv"
+    # starmie_ssnm_whole_file=starmie_diversity_data_path+"starmie_ssnm_diluted_restricted_whole_nodup.csv"
+    # if not (os.path.exists(starmie_ssnm_avg_file) or os.path.exists(starmie_ssnm_whole_file)):
+
+    #     compute_syntactic_novelty_measure_simplified(groundtruth,
+    #                                                     starmie_result_file,starmie_ssnm_avg_file
+    #                                                     , starmie_ssnm_whole_file
+    #                                                     , remove_dup=1)    
+    # else:
+    #     print("This file exists: "+starmie_ssnm_avg_file+" or "+starmie_ssnm_whole_file)       
+    
+    # # print("union size computation for Penalization")
+    # # alignemnt_path="data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
+    # # compute_union_size_with_null(penalize_result_file,   
+    # #                              penalized_diversity_data_path+"null_union_size_new_penalized_04diluted_restricted_notnormal.csv", 
+    # #                                 alignemnt_path,
+    # #                                           "data/table-union-search-benchmark/small/query", 
+    # #                                          "data/table-union-search-benchmark/small/datalake",0) 
+
+    # # print("union size computation for Starmie")
+
+    # # compute_union_size_with_null(starmie_result_file,
+    # #                             starmie_diversity_data_path+"/null_union_size_starmie_04diluted_restricted_notnormal.csv", 
+    # #                                           alignemnt_path,
+    # #                                           "data/table-union-search-benchmark/small/query", 
+    # #                                          "data/table-union-search-benchmark/small/datalake",0) 
+
+    # # print("union size computation for GMC")
+
+    # # compute_union_size_with_null(gmc_result_file,
+    # #                              gmc_diversity_data_path+"/null_union_size_gmc_new_04diluted_restricted_notnormal.csv", 
+    # #                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv",
+    # #                                           "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
+    # #                                          "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",0) 
+
+    from multiprocessing import freeze_support
+    freeze_support()  # optional on some platforms
+    alpha=1.0
+    beta=0.9
+    #GMC
+    # output_folder=os.path.join(gmc_diversity_data_path,"nscore")
+    # nscore_result(output_folder,gmc_result_file,
+    #             gmc_diversity_data_path+"/nscore_gmc_04diluted_restricted_notnormal_K2_parallel.csv", 
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
+
+
+    # output_folder=os.path.join(penalized_diversity_data_path,"nscore")
+    # nscore_result(output_folder,penalize_result_file,
+    #             penalized_diversity_data_path+"/nscore_pnlz_04diluted_restricted_notnormal_K2_parallel.csv", 
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
+    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
+    
+    output_folder=os.path.join(starmie_diversity_data_path,"nscore")
+    nscore_result(output_folder,starmie_result_file,
+                starmie_diversity_data_path+"/nscore_strm_04diluted_restricted_notnormal_K2_parallel.csv", 
+                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
+                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
+                                            "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 

@@ -8,8 +8,8 @@
 #SBATCH --cpus-per-task=2       # Number of CPU cores
 ##SBATCH --gres=gpu:1            # Request 1 GPU
 
-
-##SBATCH --partition=RJMILLER
+#SBATCH --nodelist=watgpu408
+#SBATCH --partition=RJMILLER
 
 # Set output file destinations
 #SBATCH -o JOB%j.out            # Standard output file
@@ -17,7 +17,7 @@
 
 ## email notifications: Get email when your job starts, stops, fails, completes...
 ## Set email address
-#SBATCH --mail-user=bkassaie@uwaterloo.ca
+#SBATCH --mail-user=wk5ng@uwaterloo.ca
 
 # Set types of notifications (from the options: BEGIN, END, FAIL, REQUEUE, ALL):
 #SBATCH --mail-type=ALL
