@@ -16,5 +16,4 @@
 source activate TableUnionNew   # Replace <env> with your actual Conda environment name
 
 # Run the Python script
-python /u6/bkassaie/NAUS/GMC_search.py
-##python /u6/bkassaie/NAUS/Penalized_search.py
+python /u6/bkassaie/NAUS/Penalized_search.py

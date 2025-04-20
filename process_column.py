@@ -64,6 +64,7 @@ class TextProcessor:
 # Example usage
 if __name__ == "__main__":
     text = "Tokenization is# - -the , process of breaking, down :text into smaller Units."
+    text="IT- Hardware Purchases"
     processor = TextProcessor()
     processed_text = processor.processString(text)
     print(processed_text)

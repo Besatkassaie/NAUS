@@ -223,7 +223,7 @@ def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_direct
        missing_files_in_datalake=[]
        missing_files_in_query=[]
        delim=','
-       if dataset=='ugen-v2':
+       if dataset=='ugen-v2' or dataset=="ugen-v2_small":
         delim=';'
  
     
@@ -243,7 +243,7 @@ def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_direct
                 missing_files_in_query.append(key_)
           except Exception as e:
                 # Handle other potential errors
-                print(f"An unexpected error occurred: {e}")
+                    print(f"An unexpected error occurred: {e}")
           num_rows_q = df_q.shape[0]
           df_dl_tb=pd.DataFrame()
           for dl_tb in values:
@@ -517,7 +517,7 @@ def add_dlt_to_csv_filenames(folder_path):
            
 if __name__ == "__main__":
   # we need to call these function once 
-    dataset="ugen-v2"
+    dataset="ugen-v2_small"
     dilation_degree=0.4
     # santos: 
     if dataset=='santos':
@@ -601,6 +601,29 @@ if __name__ == "__main__":
          # modify the file names 
         add_dlt_to_csv_filenames(diluted_datalake_directory)
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
+        
+        
+        
+    elif dataset=='ugen-v2_small':
+
+        query_directory="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query"
+        datalake_directory="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake"
+        diluted_datalake_directory="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake_dilutedonly_dg0.4"
+        ground_truth_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_unionable_groundtruth.pickle"  
+        ground_truth_path_diluted="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_unionable_groundtruth_diluted.pickle"
+        # we eliminate all the index column form all the csv file_
+        alignmnet_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment.csv"
+        #alignmnet_file_diluted="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
+        notdiluted04_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/notdiluted04_file.csv"
+        missingfiles=f"/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
+
+      
+        #process_csv_files(query_directory_withindex, query_directory_noindex)
+        #process_csv_files(datalake_directory_withindex, datalake_directory_noindex)
+        #dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
+        #                              diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
+        #add_dlt_to_csv_filenames(diluted_datalake_directory)
+        dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
 
 
 

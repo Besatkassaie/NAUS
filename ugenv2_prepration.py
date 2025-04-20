@@ -2,7 +2,7 @@
 import pandas as pd
 import os
 import pickle
-
+import shutil
 
 def convert_to_dict(csv_file_path):
     """
@@ -80,8 +80,92 @@ def add_suffix_to_keys_and_values(mapping_dict):
 
     return new_dict
 # Example usage:
+
+def add_postfix(filename, postfix="_ugen_v2"):
+    """
+    Given a filename like 'Architecture_EPZHPCF0.csv', return
+    'Architecture_EPZHPCF0_ugen_v2.csv' by inserting the postfix before the extension.
+    """
+    base, ext = os.path.splitext(filename)
+    return f"{base}{postfix}{ext}"
+
+
+def prep_small_ugenv2():
+    """
+    Prepares the small ugen_v2 dataset by reading the groundtruth CSV file and copying
+    the corresponding query and datalake files from the main dataset folders.
+    
+    Source folders:
+        - Query tables: data/ugen_v2/query
+        - Datalake tables: data/ugen_v2/datalake_notdiluted
+        
+    Note: The files in these source directories have a _ugen_v2 postfix (e.g., 
+          'Architecture_EPZHPCF0_ugen_v2.csv').
+    
+    Groundtruth CSV structure (located at data/ugen_v2/ugenv2_small/ugen_v2_small_eval_groundtruth_with_alignments.csv):
+        query_table,data_lake_table,manual_unionable
+        Architecture_EPZHPCF0.csv,Architecture_CAVIQK29.csv,1
+    
+    Destination folders (created if they do not exist):
+        - Query: data/ugen_v2/ugenv2_small/query
+        - Datalake: data/ugen_v2/ugenv2_small/datalake
+        
+    The copied files will retain the _ugen_v2 postfix in their filenames.
+    """
+    # Define file and folder paths
+    csv_path = "data/ugen_v2/ugenv2_small/ugen_v2_small_eval_groundtruth_with_alignments.csv"
+    query_src_dir = "data/ugen_v2/query"
+    datalake_src_dir = "data/ugen_v2/datalake_notdiluted"
+    query_dst_dir = "data/ugen_v2/ugenv2_small/query"
+    datalake_dst_dir = "data/ugen_v2/ugenv2_small/datalake"
+    
+    # Create destination directories if they don't exist
+    os.makedirs(query_dst_dir, exist_ok=True)
+    os.makedirs(datalake_dst_dir, exist_ok=True)
+    
+    # Read the groundtruth CSV file
+    df = pd.read_csv(csv_path)
+    
+    # Iterate over each row in the CSV
+    for _, row in df.iterrows():
+        query_table = row['query_table']
+        datalake_table = row['data_lake_table']
+        
+        # Adjust the filenames in the source directories to include the _ugen_v2 postfix
+        query_src_filename = add_postfix(query_table)
+        datalake_src_filename = add_postfix(datalake_table)
+        
+        # Define source paths for the files
+        query_src_path = os.path.join(query_src_dir, query_src_filename)
+        datalake_src_path = os.path.join(datalake_src_dir, datalake_src_filename)
+        
+        # Define destination paths for the files, retaining the postfix
+        query_dst_path = os.path.join(query_dst_dir, query_src_filename)
+        datalake_dst_path = os.path.join(datalake_dst_dir, datalake_src_filename)
+        
+        # Copy the query file if it doesn't already exist in destination
+        if os.path.exists(query_dst_path):
+            print(f"Query file already exists: {query_dst_path}. Skipping copy.")
+        else:
+            if os.path.exists(query_src_path):
+                shutil.copy(query_src_path, query_dst_path)
+                print(f"Copied query file: {query_src_filename}")
+            else:
+                print(f"Query file not found: {query_src_path}")
+        
+        # Copy the datalake file if it doesn't already exist in destination
+        if os.path.exists(datalake_dst_path):
+            print(f"Datalake file already exists: {datalake_dst_path}. Skipping copy.")
+        else:
+            if os.path.exists(datalake_src_path):
+                shutil.copy(datalake_src_path, datalake_dst_path)
+                print(f"Copied datalake file: {datalake_src_filename}")
+            else:
+                print(f"Datalake file not found: {datalake_src_path}")
+
+# Example usage:
 if __name__ == "__main__":
-    csv_file_path = "/u6/bkassaie/NAUS/data/ugen_v2/manual_benchmark_validation_results/ugen_v2_eval_groundtruth_with_alignments.csv"
+    csv_file_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugen_v2_small_eval_groundtruth_with_alignments.csv"
     
     # Convert CSV to dictionary
     mapping_dict = convert_to_dict(csv_file_path)
@@ -98,7 +182,7 @@ if __name__ == "__main__":
     print(updated_mapping)
     # Write the DataFrame to a pickle file
     
-    filename = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_unionable_groundtruth.pickle"
+    filename = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_unionable_groundtruth.pickle"
 
     if not os.path.exists(filename):
         with open(filename, "wb") as f:
@@ -106,3 +190,4 @@ if __name__ == "__main__":
         print(f"{filename} has been created.")
     else:
         print(f"{filename} already exists.")
+    #prep_small_ugenv2()

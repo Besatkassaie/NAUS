@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
 # evaluate Starmie 50 results at different k 
 # unionable reuslts are loaded here:
-first_20_starmie_with_scores="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
+first_20_starmie_with_scores="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
 s_search.load_unionable_tables(first_20_starmie_with_scores) 
 #ground truth is here  
 #gtruth="data/santos/santosUnionBenchmark.pickle"
@@ -89,7 +89,7 @@ for query_name, tuples_list in s_search.unionable_data.items():
     sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
     # Store the sorted list in a new dictionary
     sorted_unionable_data[query_name] = sorted_list    
-starmie_search="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
+starmie_search="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
 # now for k =2 to 20 create the file 
 # Define the output CSV file path
 output_csv_file = starmie_search
@@ -105,8 +105,11 @@ with open(output_csv_file, mode="a", newline="") as csv_file:
             for query_name, tuples_list in sorted_unionable_data.items():
                 utables=[]
                 for i in range(0, k_):
+                    try:
                     # Extract the first value of the tuple
-                    utables.append(tuples_list[i][0])
-                    
+                         utables.append(tuples_list[i][0])
+                    except Exception as e:
+                        print (str(e)+"for K="+str(k_)+" and query "+ query_name)
+                        break
                     # Write the row with k = 0 and time = 0
                 csv_writer.writerow([query_name, utables, 0, k_])

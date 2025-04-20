@@ -32,12 +32,12 @@ class Penalized_Search:
             
             #dataFolder="santos"
             # dataFolder="table-union-search-benchmark/small"
-            dataFolder="ugen_v2"
-            table_path = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+            dataFolder="ugen_v2/ugenv2_small"
+            table_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
             query_path_raw = "data/"+dataFolder+"/"+"query"
             table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            processed_path="/u6/bkassaie/NAUS/data/ugen_v2/proccessed/"
-            index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+            processed_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/proccessed/"
+            index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -106,8 +106,8 @@ class Penalized_Search:
         
     def load_starmie_vectors(self):
         '''load starmie vectors for query and data lake and retrun as dictionaries'''
-        dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+        dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+        query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
         qfile = open(query_table_vectors,"rb")
             # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
         queries = pickle.load(qfile)
@@ -399,11 +399,13 @@ if __name__ == "__main__":
     # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
     
     
-    alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
-    first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
+    first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 
-    dsize=20
+    #dsize=20
+    #only for ugenv2-small that hae few ros we set domnain size 2
+    dsize=2
     penalize_search = Penalized_Search(dsize)
     penalize_search.load_column_alignment_data(alignment_Dust)
     penalize_search.load_unionable_tables(first_50_starmie)   

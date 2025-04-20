@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 
-args2 = ['--encoder', 'cl', '--benchmark', 'ugen_v2', 
+args2 = ['--encoder', 'cl', '--benchmark', 'ugen_v2/ugenv2_small', 
         '--augment_op', 'drop_col','--sample_meth', 'tfidf_entity',
         '--matching', 'exact',   '--table_order', 'column',
         '--run_id', '0' ,   '--K','20', '--threshold', '0.7', '--restrict', '1']

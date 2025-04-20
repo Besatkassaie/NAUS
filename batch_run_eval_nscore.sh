@@ -9,7 +9,7 @@
 ##SBATCH --gres=gpu:1            # Request 1 GPU
 
 
-##SBATCH --partition=RJMILLER
+#SBATCH --partition=RJMILLER
 
 # Set output file destinations
 #SBATCH -o JOB%j.out            # Standard output file
