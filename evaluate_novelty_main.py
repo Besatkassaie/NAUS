@@ -30,40 +30,46 @@ import matplotlib.pyplot as plt
 # penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 # starmie_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
 # groundtruth="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_unionable_groundtruth_diluted.pickle"
+# semanticNovelty_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
 # gmc_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/"
 # penalized_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/"
 # starmie_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/"
+# semanticNovelty_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/"
 
 # ugen v2
 # gmc_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
 # penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
 # starmie_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
 # groundtruth="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_unionable_groundtruth_diluted.pickle"
+# semanticNovelty_result_file="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
 # gmc_diversity_data_path="data/ugen_v2/diveristy_data/search_results/GMC/"
 # penalized_diversity_data_path="data/ugen_v2/diveristy_data/search_results/Penalized/"
 # starmie_diversity_data_path="data/ugen_v2/diveristy_data/search_results/Starmie/"
+# semanticNovelty_diversity_data_path="data/ugen_v2/diveristy_data/search_results/semanticNovelty/"
 
-#santos small
-# gmc_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
-# penalize_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-# starmie_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-# groundtruth="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth_diluted.pickle"
-
-# gmc_diversity_data_path="data/santos/diveristy_data/search_results/GMC/"
-# penalized_diversity_data_path="data/santos/diveristy_data/search_results/Penalized/"
-# starmie_diversity_data_path="data/santos/diveristy_data/search_results/Starmie/"
+# #santos 
+gmc_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
+penalize_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+starmie_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+groundtruth="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth_diluted.pickle"
+semanticNovelty_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+gmc_diversity_data_path="data/santos/diveristy_data/search_results/GMC/"
+penalized_diversity_data_path="data/santos/diveristy_data/search_results/Penalized/"
+starmie_diversity_data_path="data/santos/diveristy_data/search_results/Starmie/"
+semanticNovelty_diversity_data_path="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/semanticNovelty/"
 
 # tus small
-gmc_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
-penalize_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-starmie_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-groundtruth="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
-
-gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
-penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
-starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
+# gmc_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
+# penalize_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+# starmie_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+# groundtruth="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
+# semanticNovelty_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+# gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
+# penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
+# starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
+# semanticNovelty_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/"
 
 
 import os
@@ -88,7 +94,11 @@ if not os.path.exists(starmie_dup_file):
 else:
     print("This file exists: "+starmie_dup_file) 
     
-    
+semanticNovelty_dup_file=semanticNovelty_diversity_data_path+"search_result_semNovel_diluted_restricted_duplicate.csv"
+if not os.path.exists(semanticNovelty_dup_file):
+    query_duplicate_returned(semanticNovelty_result_file,semanticNovelty_dup_file)
+else:
+    print("This file exists: "+semanticNovelty_dup_file)     
 ################Compute SNM######################    
 
 starmie_snm_avg_file=starmie_diversity_data_path+"starmie_snm_diluted_restricted_avg_nodup.csv"
@@ -111,7 +121,17 @@ if not (os.path.exists(pnl_snm_whole_file) or os.path.exists(pnl_snm_avg_file)):
 else:
     print("This file exists: "+pnl_snm_avg_file+" or "+pnl_snm_whole_file) 
 
+semNovelty_snm_avg_file=semanticNovelty_diversity_data_path+"semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv"
+semNovelty_snm_whole_file=semanticNovelty_diversity_data_path+"semNovel_snm_diluted_restricted_whole_nodup_pdg1.csv"
+if not (os.path.exists(semNovelty_snm_whole_file) or os.path.exists(semNovelty_snm_avg_file)):
 
+    compute_syntactic_novelty_measure(groundtruth,
+                                                semanticNovelty_result_file,
+                                                semNovelty_snm_avg_file
+                                                    , semNovelty_snm_whole_file
+                                                    , remove_duplicate=1)    
+else:
+    print("This file exists: "+semNovelty_snm_whole_file+" or "+semNovelty_snm_avg_file) 
 ################Compute SSNM######################    
 gmc_ssnm_avg_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_avg_nodup.csv"
 gmc_ssnm_whole_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_whole_nodup.csv"
@@ -146,6 +166,18 @@ if not (os.path.exists(starmie_ssnm_avg_file) or os.path.exists(starmie_ssnm_who
 else:
       print("This file exists: "+starmie_ssnm_avg_file+" or "+starmie_ssnm_whole_file)       
    
+
+semNovelty_ssnm_avg_file=semanticNovelty_diversity_data_path+"semNovelty_ssnm_diluted_restricted_avg_nodup.csv"
+semNovelty_ssnm_whole_file=semanticNovelty_diversity_data_path+"semNovelty_ssnm_diluted_restricted_whole_nodup.csv"
+if not (os.path.exists(semNovelty_ssnm_avg_file) or os.path.exists(semNovelty_ssnm_whole_file)):
+
+    compute_syntactic_novelty_measure_simplified(groundtruth,
+                                                    semanticNovelty_result_file,semNovelty_ssnm_avg_file
+                                                    , semNovelty_ssnm_whole_file
+                                                    , remove_dup=1)    
+else:
+      print("This file exists: "+semNovelty_ssnm_avg_file+" or "+starmie_ssnm_whole_file)     
+
 # print("union size computation for Penalization")
 # alignemnt_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
 # compute_union_size_with_null(penalize_result_file,   
@@ -188,6 +220,13 @@ if not os.path.exists(time_gmc_file):
     Avg_executiontime_by_k(gmc_result_file, time_gmc_file)
 else:
     print("This file exists: "+time_gmc_file)    
+    
+time_semNovelty_file= semanticNovelty_diversity_data_path+"time_semNov_diluted_restricted.csv" 
+    
+if not os.path.exists(time_semNovelty_file):
+    Avg_executiontime_by_k(semanticNovelty_result_file, time_semNovelty_file)
+else:
+    print("This file exists: "+time_semNovelty_file)        
 
 
  

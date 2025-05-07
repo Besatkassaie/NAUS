@@ -60,47 +60,72 @@ def draw_plots():
     
     
    #pnl_path1, pnl_path2, pnl_path3, pnl_path4, starme_path1, starme_path2, starme_path3, starme_path4
-    # draw_snm_all("/u6/bkassaie/NAUS/graphs/snm",
-    #               benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_tus+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv"
-    #               )
+    draw_snm_all("/u6/bkassaie/NAUS/graphs/snm",
+                  benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  None,
+                 None
+                  )
     
-    # draw_ssnm_all("/u6/bkassaie/NAUS/graphs/ssnm",
+    draw_snm_all_individual("/u6/bkassaie/NAUS/graphs/snm",
+                  benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv")
+    
+    draw_ssnm_all("/u6/bkassaie/NAUS/graphs/ssnm",
                   
-    #               benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
-    #               benchmark_tus+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               ) 
-    # draw_ssnm_individual("/u6/bkassaie/NAUS/graphs/ssnm",
-                  
-    #               benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
-    #               benchmark_tus+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               ) 
+                  benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                 None
+                  ) 
+    draw_ssnm_individual("/u6/bkassaie/NAUS/graphs/ssnm",
+                  benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_ugenv2_small+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv"
+                  ) 
                  
     
     
@@ -112,17 +137,59 @@ def draw_plots():
     #                     pnl_res1, pnl_res2, pnl_res3, pnl_res4
     # dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"] 
     
+    # draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv"
+    #                         ,"data/santos/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/ugen_v2/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+    #                         "data/santos/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
+    #                         "data/ugen_v2/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
+    #                         "data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+    #                         "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+    #                         "data/ugen_v2/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv", 
+    #                         "data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv"
+    #                         )
+    
     draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv"
                             ,"data/santos/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
-                            "data/ugen_v2/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
-                            "data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+                            None, 
+                           None, 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+                            "data/santos/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
+                           None,
+                          None, 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                            "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                           None, 
+                          None
+                            )
+    
+    draw_execution_time_2("/u6/bkassaie/NAUS/graphs/executionTime", 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
                             "data/santos/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
                             "data/ugen_v2/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
-                            "data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv"
+                            "data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                            "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                            "data/ugen_v2/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv", 
+                            "data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv"
                             )
-    
+    # draw_execution_time_all_log("/u6/bkassaie/NAUS/graphs/executionTime", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv"
+    #                         ,"data/santos/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/ugen_v2/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+    #                         "data/santos/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
+    #                         "data/ugen_v2/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv",
+    #                         "data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv", 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+    #                         "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",None, 
+    #                         None  
+    #                         )
     
  
 
@@ -452,7 +519,7 @@ def draw_ssnm(base_path,gmc_res,pnl_res,starme_res):
     # plt.show()
 
 
-def draw_snm_all(base_path,
+def draw_snm_all_2system(base_path,
                  pnl_path1, pnl_path2, pnl_path3, pnl_path4,
                  starme_path1, starme_path2, starme_path3, starme_path4):
     """
@@ -554,11 +621,302 @@ def draw_snm_all(base_path,
     plt.close()
 
 
+def draw_snm_all_individual(base_path,
+                 pnl_path1=None, pnl_path2=None, pnl_path3=None, pnl_path4=None,
+                 starme_path1=None, starme_path2=None, starme_path3=None, starme_path4=None,
+                 semnov_path1=None, semnov_path2=None, semnov_path3=None, semnov_path4=None):
+    """
+    Draws separate SNM curves for each dataset, plotting all methods (ANTs, Starmie, SemNov) on the same figure.
+    Each dataset gets its own plot.
+    """
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
 
+    method_info = {
+        'ANTs': ('green', 'o'),
+        'Starmie': ('blue', 's'),
+        'SemNov': ('orange', 'D')
+    }
+
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+
+    def read_files(paths, method_label):
+        dfs = {}
+        for i, path in enumerate(paths):
+            if path is not None and os.path.isfile(path):
+                df = pd.read_csv(path)
+                dfs[i] = (method_label, df)
+        return dfs
+
+    pnl_paths = [pnl_path1, pnl_path2, pnl_path3, pnl_path4]
+    starme_paths = [starme_path1, starme_path2, starme_path3, starme_path4]
+    semnov_paths = [semnov_path1, semnov_path2, semnov_path3, semnov_path4]
+
+    pnl_dfs = read_files(pnl_paths, 'ANTs')
+    starme_dfs = read_files(starme_paths, 'Starmie')
+    semnov_dfs = read_files(semnov_paths, 'SemNov')
+
+    all_dfs = {}
+    for d in [pnl_dfs, starme_dfs, semnov_dfs]:
+        for idx, (method, df) in d.items():
+            if idx not in all_dfs:
+                all_dfs[idx] = []
+            all_dfs[idx].append((method, df))
+
+    os.makedirs(base_path, exist_ok=True)
+
+    for idx, dataset_name in enumerate(dataset_names):
+        if idx not in all_dfs:
+            continue
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+
+        for method, df in all_dfs[idx]:
+            color, marker = method_info.get(method, ('black', '^'))
+            ax.plot(df['k'], df['avg_snm'],
+                    marker=marker,
+                    linestyle='-',
+                    color=color,
+                    label=method)
+
+        ax.set_title(f"{dataset_name}", fontsize=14)
+        ax.set_xlabel('l', fontsize=12)
+        ax.set_ylabel('SNM', fontsize=12)
+        ax.set_xticks(range(1, 11))
+        ax.set_ylim([0, 1])
+        ax.set_yticks(np.arange(0, 1.05, 0.05))  # more granular y-ticks
+
+        # Customize grid to be gray and more prominent
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
+
+        ax.legend(fontsize=9, loc='lower left', frameon=False)
+
+        pdf_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.pdf")
+        png_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.png")
+        plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+        plt.savefig(png_path, dpi=300, bbox_inches='tight')
+        plt.close()
+
+    print(f"Plots saved to {base_path}")
+
+
+def draw_snm_all(base_path,
+                 pnl_path1=None, pnl_path2=None, pnl_path3=None, pnl_path4=None,
+                 starme_path1=None, starme_path2=None, starme_path3=None, starme_path4=None,
+                 semnov_path1=None, semnov_path2=None, semnov_path3=None, semnov_path4=None):
+    """
+    Draws the average SNM curves for up to three methods grouped by dataset.
+    Legend is organized dataset-wise (each dataset lists all system runs).
+    """
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Define markers and linestyles for each dataset
+    markers = ["o", "s", "D", "^"]
+    linestyles = ["-", "--", "-.", ":"]
+
+    # Dataset names
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+
+    # Method information: method name -> color
+    method_info = {
+        'ANTs': 'green',
+        'Starmie': 'blue',
+        'SemNov': 'orange'
+    }
+
+    # Helper function to read file and tag with method/dataset
+    def read_files(paths, method_label):
+        dfs = []
+        for i, path in enumerate(paths):
+            if path is not None and os.path.isfile(path):
+                df = pd.read_csv(path)
+                df['method'] = method_label
+                df['dataset'] = dataset_names[i]
+                dfs.append((i, df))  # Save index and dataframe
+        return dfs
+
+    # Read datasets
+    pnl_paths = [pnl_path1, pnl_path2, pnl_path3, pnl_path4]
+    starme_paths = [starme_path1, starme_path2, starme_path3, starme_path4]
+    semnov_paths = [semnov_path1, semnov_path2, semnov_path3, semnov_path4]
+
+    pnl_dfs = read_files(pnl_paths, 'ANTs')
+    starme_dfs = read_files(starme_paths, 'Starmie')
+    semnov_dfs = read_files(semnov_paths, 'SemNov')
+
+    # Combine all method results
+    all_dfs = pnl_dfs + starme_dfs + semnov_dfs
+
+    if not all_dfs:
+        print("No valid files found to plot.")
+        return
+
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Dictionary to store handles and labels per dataset for custom legend
+    legend_items = {name: [] for name in dataset_names}
+
+    # Plot datasets grouped by dataset index and method
+    for dataset_idx, dataset_name in enumerate(dataset_names):
+        for idx, df in all_dfs:
+            if idx == dataset_idx:
+                method = df['method'].iloc[0]
+                color = method_info.get(method, 'black')
+                line, = ax.plot(df['k'], df['avg_snm'],
+                                marker=markers[dataset_idx],
+                                linestyle=linestyles[dataset_idx],
+                                color=color,
+                                label=f"{method} on {dataset_name}")
+                legend_items[dataset_name].append((line, f"{method}"))
+
+    # Set axis labels and ticks
+    ax.set_xlabel('l', fontsize=12)
+    ax.set_ylabel('SNM', fontsize=12)
+    ax.set_xticks(range(1, 11))
+    ax.set_ylim([0, 1])
+    ax.set_yticks(np.arange(0, 1.1, 0.1))
+    ax.grid(True)
+
+    # Create grouped legend
+    from matplotlib.legend import Legend
+
+    handles = []
+    labels = []
+    for dataset_name, items in legend_items.items():
+        if items:
+            # Add a fake invisible handle for dataset title
+            handles.append(plt.Line2D([], [], color='none'))
+            labels.append(f"{dataset_name}")
+            # Add real lines for methods under that dataset
+            for line, method_label in items:
+                handles.append(line)
+                labels.append(f"  {method_label}")
+
+    ax.legend(handles, labels, ncol=1, fontsize=9, loc='best', frameon=True)
+
+    # Save plots
+    os.makedirs(base_path, exist_ok=True)
+    pdf_path = os.path.join(base_path, "snm_all3.pdf")
+    png_path = os.path.join(base_path, "snm_all3.png")
+    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    plt.savefig(png_path, dpi=300, bbox_inches='tight')
+    plt.close()
 
 
 
 def draw_ssnm_all(base_path,
+                  method1_path1=None, method1_path2=None, method1_path3=None, method1_path4=None,
+                  method2_path1=None, method2_path2=None, method2_path3=None, method2_path4=None,
+                  method3_path1=None, method3_path2=None, method3_path3=None, method3_path4=None,
+                  method4_path1=None, method4_path2=None, method4_path3=None, method4_path4=None):
+    """
+    Draws the average SNM curves for up to four methods (ANTs, Starmie, GMC, NovSem) across four datasets.
+    
+    Each dataset is distinguished by a unique marker and line style.
+    Methods are colored differently.
+    
+    Skips any missing files.
+    
+    Parameters:
+      - base_path: Directory where the output plots (PDF & PNG) will be saved.
+      - *_path1...*_path4: File paths for each method (can be None if missing).
+    
+    Assumes each CSV file contains at least two columns: 'k' and 'avg_snm'.
+    """
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Define markers and linestyles (based on dataset)
+    markers = ["o", "s", "D", "^"]
+    linestyles = ["-", "--", "-.", ":"]
+    
+    # Dataset names
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+
+    # Method mapping: method name -> (color)
+    method_info = {
+        'ANTs': 'blue',
+        'Starmie': 'purple',
+        'GMC': 'green',
+        'NovSem': 'orange'
+    }
+    
+    # Collect available DataFrames
+    all_dfs = []
+
+    # Helper function to load and tag DataFrame if file exists
+    def add_df(file, method_name, dataset_name):
+        if file is not None and os.path.isfile(file):
+            df = pd.read_csv(file)
+            df['method'] = method_name
+            df['dataset'] = dataset_name
+            all_dfs.append(df)
+
+    # Load Method 1 (ANTs)
+    for i, file in enumerate([method1_path1, method1_path2, method1_path3, method1_path4]):
+        add_df(file, 'ANTs', dataset_names[i])
+
+    # Load Method 2 (Starmie)
+    for i, file in enumerate([method2_path1, method2_path2, method2_path3, method2_path4]):
+        add_df(file, 'Starmie', dataset_names[i])
+
+    # Load Method 3 (GMC)
+    for i, file in enumerate([method3_path1, method3_path2, method3_path3, method3_path4]):
+        add_df(file, 'GMC', dataset_names[i])
+
+    # Load Method 4 (NovSem)
+    for i, file in enumerate([method4_path1, method4_path2, method4_path3, method4_path4]):
+        add_df(file, 'NovSem', dataset_names[i])
+
+    if not all_dfs:
+        print("No valid data files found to plot.")
+        return
+
+    # Combine into one DataFrame
+    df_all = pd.concat(all_dfs, ignore_index=True)
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Plot each curve grouped by dataset and method
+    for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
+        # Choose marker and linestyle based on dataset
+        dataset_idx = dataset_names.index(dataset)
+        ax.plot(df_group['k'], df_group['avg_snm'],
+                marker=markers[dataset_idx],
+                linestyle=linestyles[dataset_idx],
+                color=method_info.get(method, 'black'),  # fallback color black
+                label=f"{method} - {dataset}")
+
+    # Set labels and grid
+    ax.set_xlabel('l', fontsize=12)
+    ax.set_ylabel('SSNM', fontsize=12)
+    ax.set_xticks(range(1, 11))
+    ax.set_ylim([0, 1])
+    ax.set_yticks(np.arange(0, 1.1, 0.1))
+    ax.grid(True)
+
+    # Legend settings: 4 columns if many methods
+    ax.legend(ncol=4, fontsize=9)
+
+    # Save plots
+    os.makedirs(base_path, exist_ok=True)
+    pdf_path = os.path.join(base_path, "ssnm_all_4sys.pdf")
+    png_path = os.path.join(base_path, "ssnm_all_4sys.png")
+    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    plt.savefig(png_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+def draw_ssnm_all_3system(base_path,
              method1_path1, method1_path2, method1_path3, method1_path4,
              method2_path1, method2_path2, method2_path3, method2_path4,
              method3_path1, method3_path2, method3_path3, method3_path4):
@@ -665,7 +1023,7 @@ def draw_ssnm_all(base_path,
     plt.savefig(png_path, dpi=300, bbox_inches='tight')
     plt.close()
 
-def draw_ssnm_individual(base_path,
+def draw_ssnm_individual_3Systems(base_path,
                         method1_path1, method1_path2, method1_path3, method1_path4,
                         method2_path1, method2_path2, method2_path3, method2_path4,
                         method3_path1, method3_path2, method3_path3, method3_path4):
@@ -762,9 +1120,357 @@ def draw_ssnm_individual(base_path,
         plt.close()
 
 
+def draw_ssnm_individual(base_path,
+                         method1_path1=None, method1_path2=None, method1_path3=None, method1_path4=None,
+                         method2_path1=None, method2_path2=None, method2_path3=None, method2_path4=None,
+                         method3_path1=None, method3_path2=None, method3_path3=None, method3_path4=None,
+                         method4_path1=None, method4_path2=None, method4_path3=None, method4_path4=None):
+    """
+    Draws individual plots for each dataset from up to four methods:
+      - ANTs (blue, o)
+      - Starmie (purple, s)
+      - GMC (green, D)
+      - SemNov (orange, ^)
 
+    Skips missing files gracefully.
+    """
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+    import numpy as np
+
+    linestyles = ["-", "--", "-.", ":"]
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+
+    method_info = {
+        'ANTs': {'color': 'blue', 'marker': 'o'},
+        'Starmie': {'color': 'purple', 'marker': 's'},
+        'GMC': {'color': 'green', 'marker': 'D'},
+        'SemNov': {'color': 'orange', 'marker': '^'}
+    }
+
+    def read_files(paths, method_label):
+        dfs = []
+        for i, path in enumerate(paths):
+            if path is not None and os.path.isfile(path):
+                df = pd.read_csv(path)
+                df['method'] = method_label
+                df['dataset'] = dataset_names[i]
+                dfs.append((i, df))
+        return dfs
+
+    method1_paths = [method1_path1, method1_path2, method1_path3, method1_path4]
+    method2_paths = [method2_path1, method2_path2, method2_path3, method2_path4]
+    method3_paths = [method3_path1, method3_path2, method3_path3, method3_path4]
+    method4_paths = [method4_path1, method4_path2, method4_path3, method4_path4]
+
+    method1_dfs = read_files(method1_paths, 'ANTs')
+    method2_dfs = read_files(method2_paths, 'Starmie')
+    method3_dfs = read_files(method3_paths, 'GMC')
+    method4_dfs = read_files(method4_paths, 'SemNov')
+
+    all_methods = method1_dfs + method2_dfs + method3_dfs + method4_dfs
+
+    for i, dataset_name in enumerate(dataset_names):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        legend_handles = []
+        used_methods = set()
+
+        for dataset_idx, df in all_methods:
+            if dataset_idx == i:
+                method = df['method'].iloc[0]
+                style = method_info.get(method, {})
+                color = style.get('color', 'black')
+                marker = style.get('marker', 'o')
+                linestyle = linestyles[i]
+
+                ax.plot(df['k'], df['avg_snm'],
+                        marker=marker,
+                        linestyle=linestyle,
+                        color=color,
+                        label=method)
+
+                if method not in used_methods:
+                    legend_handles.append(Line2D([], [], color=color, linestyle=linestyle,
+                                                 marker=marker, label=method))
+                    used_methods.add(method)
+
+        ax.set_xlabel('l', fontsize=12)
+        ax.set_ylabel('SSNM', fontsize=12)
+        ax.set_title(f"{dataset_name}", fontsize=14)
+        ax.set_xticks(range(1, 11))
+        ax.set_ylim([0, 1])
+        ax.set_yticks(np.arange(0, 1.05, 0.05))
+        ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='lightgray')
+
+        if legend_handles:
+            ax.legend(handles=legend_handles, loc='lower left', fontsize=10, title=None)
+
+        os.makedirs(base_path, exist_ok=True)
+        pdf_file = os.path.join(base_path, f"ssnm_{dataset_name}.pdf")
+        png_file = os.path.join(base_path, f"ssnm_{dataset_name}.png")
+        plt.savefig(pdf_file, format='pdf', bbox_inches='tight')
+        plt.savefig(png_file, dpi=300, bbox_inches='tight')
+        plt.close()
 
 def draw_execution_time_all(base_path,
+                             gmc_res1=None, gmc_res2=None, gmc_res3=None, gmc_res4=None,
+                             pnl_res1=None, pnl_res2=None, pnl_res3=None, pnl_res4=None,
+                             semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None):
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Dataset names and their colors
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+    color_map = {
+        "TUS": "blue",
+        "Santos": "red",
+        "UgenV2": "green",
+        "UgenV2 small": "orange"
+    }
+
+    # Markers and line styles for different systems
+    marker_map = {
+        "GMC": "^",
+        "ANTs": "o",
+        "SemNov": "s"
+    }
+    line_style_map = {
+        "GMC": "--",
+        "ANTs": "-",
+        "SemNov": "-."
+    }
+
+    df_all_list = []
+
+    def add_result(file, method_name, dataset_name):
+        if file is not None and os.path.isfile(file):
+            df = pd.read_csv(file)
+            df['method'] = method_name
+            df['dataset'] = dataset_name
+            df_all_list.append(df)
+
+    for i, res in enumerate([gmc_res1, gmc_res2, gmc_res3, gmc_res4]):
+        add_result(res, 'GMC', dataset_names[i])
+    for i, res in enumerate([pnl_res1, pnl_res2, pnl_res3, pnl_res4]):
+        add_result(res, 'ANTs', dataset_names[i])
+    for i, res in enumerate([semnovel_res1, semnovel_res2, semnovel_res3, semnovel_res4]):
+        add_result(res, 'SemNovel', dataset_names[i])
+
+    if not df_all_list:
+        print("No valid data files found to plot.")
+        return
+
+    df_all = pd.concat(df_all_list, ignore_index=True)
+
+    fig, ax = plt.subplots(figsize=(10, 7))  # Adjust figure size as needed
+
+    handles_labels = []
+    for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
+        line, = ax.plot(df_group['k'], df_group['exec_time'],
+                        marker=marker_map.get(method, 'x'),
+                        linestyle=line_style_map.get(method, '-'),
+                        color=color_map.get(dataset, 'black'),
+                        label=f"{dataset} - {method}")
+        handles_labels.append((f"{dataset} - {method}", line))
+
+    # Group by dataset then sort methods within each group
+    handles_labels.sort(key=lambda x: (dataset_names.index(x[0].split(' - ')[0]), x[0].split(' - ')[1]))
+    labels, handles = zip(*[(label, handle) for label, handle in handles_labels])
+
+    ax.set_xlabel('l', fontsize=12)
+    ax.set_ylabel('Execution Time (sec)', fontsize=12)
+
+    # More granular and light gray grid
+    ax.set_xticks(np.arange(1, 11, 1))
+    y_min, y_max = df_all["exec_time"].min(), df_all["exec_time"].max()
+    ax.set_yticks(np.linspace(y_min, y_max, 20))
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='lightgray', alpha=0.7)
+
+   # Add legend inside the plot box (top-left), vertical, small font
+    ax.legend(handles, labels,
+                       loc='upper left',
+                       fontsize=8,
+                       frameon=False)
+
+
+
+    os.makedirs(base_path, exist_ok=True)
+    pdf_path = os.path.join(base_path, "executionTime_singleGraph3System.pdf")
+    png_path = os.path.join(base_path, "executionTime_singleGraph3System.png")
+    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    plt.savefig(png_path, dpi=300, bbox_inches='tight')
+    plt.close()
+ 
+ 
+ 
+def draw_execution_time_2(base_path,
+                             pnl_res1=None, pnl_res2=None, pnl_res3=None, pnl_res4=None,
+                             semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None):
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Dataset names and their colors
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+    color_map = {
+        "TUS": "blue",
+        "Santos": "red",
+        "UgenV2": "green",
+        "UgenV2 small": "orange"
+    }
+
+    # Markers and line styles for different systems
+    marker_map = {
+        "ANTs": "o",
+        "SemNov": "s"
+    }
+    line_style_map = {
+        "ANTs": "-",
+        "SemNov": "-."
+    }
+
+    df_all_list = []
+
+    def add_result(file, method_name, dataset_name):
+        if file is not None and os.path.isfile(file):
+            df = pd.read_csv(file)
+            df['method'] = method_name
+            df['dataset'] = dataset_name
+            df_all_list.append(df)
+
+    for i, res in enumerate([pnl_res1, pnl_res2, pnl_res3, pnl_res4]):
+        add_result(res, 'ANTs', dataset_names[i])
+    for i, res in enumerate([semnovel_res1, semnovel_res2, semnovel_res3, semnovel_res4]):
+        add_result(res, 'SemNov', dataset_names[i])
+
+    if not df_all_list:
+        print("No valid data files found to plot.")
+        return
+
+    df_all = pd.concat(df_all_list, ignore_index=True)
+
+    fig, ax = plt.subplots(figsize=(10, 7))  # Adjust figure size as needed
+
+    handles_labels = []
+    for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
+        line, = ax.plot(df_group['k'], df_group['exec_time'],
+                        marker=marker_map.get(method, 'x'),
+                        linestyle=line_style_map.get(method, '-'),
+                        color=color_map.get(dataset, 'black'),
+                        label=f"{dataset} - {method}")
+        handles_labels.append((f"{dataset} - {method}", line))
+
+    # Group by dataset then sort methods within each group
+    handles_labels.sort(key=lambda x: (dataset_names.index(x[0].split(' - ')[0]), x[0].split(' - ')[1]))
+    labels, handles = zip(*[(label, handle) for label, handle in handles_labels])
+
+    ax.set_xlabel('l', fontsize=12)
+    ax.set_ylabel('Execution Time (sec)', fontsize=12)
+
+    # More granular and light gray grid
+    ax.set_xticks(np.arange(1, 11, 1))
+    y_min, y_max = df_all["exec_time"].min(), df_all["exec_time"].max()
+    ax.set_yticks(np.linspace(y_min, y_max, 20))
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='lightgray', alpha=0.7)
+
+    # Add legend inside the plot box (top-left), vertical, small font
+    ax.legend(handles, labels,
+              loc='upper left',
+              fontsize=8,
+              frameon=False)
+
+    os.makedirs(base_path, exist_ok=True)
+    pdf_path = os.path.join(base_path, "executionTime_singleGraph2System.pdf")
+    png_path = os.path.join(base_path, "executionTime_singleGraph2System.png")
+    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    plt.savefig(png_path, dpi=300, bbox_inches='tight')
+    plt.close()    
+def draw_execution_time_all_log(base_path,
+                             gmc_res1=None, gmc_res2=None, gmc_res3=None, gmc_res4=None,
+                             pnl_res1=None, pnl_res2=None, pnl_res3=None, pnl_res4=None,
+                             semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None):
+    """
+    Draws execution time curves for up to three systems (GMC, ANTs, SemNovel) over four datasets on a single graph,
+    with a logarithmic scale on the y-axis.
+    """
+    # Dataset names and their colors
+    dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+    color_map = {
+        "TUS": "blue",
+        "Santos": "red",
+        "UgenV2": "green",
+        "UgenV2 small": "orange"
+    }
+
+    # Markers and line styles for different systems
+    marker_map = {
+        "GMC": "^",
+        "ANTs": "o",
+        "SemNovel": "s"
+    }
+    line_style_map = {
+        "GMC": "--",
+        "ANTs": "-",
+        "SemNovel": "-."
+    }
+
+    df_all_list = []
+
+    # Helper function to load and label data
+    def add_result(file, method_name, dataset_name):
+        if file is not None and os.path.isfile(file):
+            df = pd.read_csv(file)
+            df['method'] = method_name
+            df['dataset'] = dataset_name
+            df_all_list.append(df)
+
+    # Load all results
+    for i, res in enumerate([gmc_res1, gmc_res2, gmc_res3, gmc_res4]):
+        add_result(res, 'GMC', dataset_names[i])
+    for i, res in enumerate([pnl_res1, pnl_res2, pnl_res3, pnl_res4]):
+        add_result(res, 'ANTs', dataset_names[i])
+    for i, res in enumerate([semnovel_res1, semnovel_res2, semnovel_res3, semnovel_res4]):
+        add_result(res, 'SemNovel', dataset_names[i])
+
+    if not df_all_list:
+        print("No valid data files found to plot.")
+        return
+
+    df_all = pd.concat(df_all_list, ignore_index=True)
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot each group
+    for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
+        ax.plot(df_group['k'], df_group['exec_time'],
+                marker=marker_map.get(method, 'x'),
+                linestyle=line_style_map.get(method, '-'),
+                color=color_map.get(dataset, 'black'),
+                label=f"{dataset} - {method}")
+
+    # Set labels and grid
+    ax.set_xlabel('l', fontsize=12)
+    ax.set_ylabel('Execution Time (sec, log scale)', fontsize=12)
+    ax.set_xticks(range(1, 11))
+    ax.set_yscale('log')  # <--- HERE: Set y-axis to log scale
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.legend(fontsize=10)
+
+    # Save plot
+    os.makedirs(base_path, exist_ok=True)
+    pdf_path = os.path.join(base_path, "executionTime_singleGraph3System_log.pdf")
+    png_path = os.path.join(base_path, "executionTime_singleGraph3System_log.png")
+    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    plt.savefig(png_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+def draw_execution_time_all_2system(base_path,
                         gmc_res1, gmc_res2, gmc_res3, gmc_res4,
                         pnl_res1, pnl_res2, pnl_res3, pnl_res4):
     """

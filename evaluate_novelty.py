@@ -45,6 +45,14 @@ def Avg_executiontime_by_k(resultfile, outputfile):
         for k, avg_time in grouped.items():
              print(f"k: {k}, Average execution time is: {avg_time}")        
 
+def contains_query(row):
+    tables = row['tables']
+    if pd.isna(tables):
+        return False
+    # split on commas, strip whitespace
+    parts = [x.strip() for x in tables.split(',')]
+    return row['query_name'] in parts
+
 
 def compute_counts(dataframe, k_column,query_name_column, tables_column):
         exclude={"workforce_management_information_a.csv",
@@ -57,10 +65,12 @@ def compute_counts(dataframe, k_column,query_name_column, tables_column):
         unique_k_values = dataframe[k_column].unique()
         for k in unique_k_values:
             filtered_df = dataframe[dataframe[k_column] == k]
-            count = filtered_df.apply(
-            lambda row: row[query_name_column] in [x.strip() for x in row[tables_column].split(',')],
-            axis=1
-              ).sum()
+            # count = filtered_df.apply(
+            # lambda row: row[query_name_column] in [x.strip() for x in row[tables_column].split(',')],
+            # axis=1
+            #   ).sum()
+            
+            count = filtered_df.apply(contains_query, axis=1).sum()
             result.append({'k': k, 'count': count})
         return pd.DataFrame(result)
 
@@ -383,7 +393,9 @@ def get_ssnm_whole(df_k, groundtruth_dic, k, remove_duplicates):
 def get_ssnm_query(df_q, groundtruth_tables, remove_duplicates):
        # list of unionable tables in groundtruth
      
-       
+       df_q.dropna(subset=['tables'], inplace=True)
+       if len(df_q)==0:
+           return 0, 0, 0
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
        tables_result_list = [ item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_list ]
 
@@ -527,8 +539,11 @@ def get_snm_average(df_k, groundtruth_dic, remove_duplicate):
 def get_snm_query(df_q, groundtruth_tables, remove_duplicates):
        # list of unionable tables in groundtruth
      
-       
+       df_q.dropna(subset=['tables'], inplace=True)
+       if len(df_q)==0: return 0,0,0,0
        tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+       
+       
        tables_result_list = [ item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_list ]
 
        tables_result_set=set(tables_result_list)
@@ -1424,11 +1439,12 @@ if __name__=='__main__':
     gmc_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
     penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
     starmie_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+    semNovelty_result_file="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
     gmc_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/"
     penalized_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/"
     starmie_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/"
-
+    semNovelty_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/"
 
 
  
@@ -1449,8 +1465,7 @@ if __name__=='__main__':
     freeze_support()  # optional on some platforms
     alpha=1.0
     beta=0.9
-    #GMC
-    output_folder=os.path.join(gmc_diversity_data_path,"nscore")
+
     # nscore_result(output_folder,gmc_result_file,
     #             gmc_diversity_data_path+"/nscore_gmc_04diluted_restricted_notnormal_K2_parallel.csv", 
     #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
@@ -1473,14 +1488,27 @@ if __name__=='__main__':
     #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
 
 #ugenv2 small
-#GMC
-    Q_N= 19#number of queries
+
+    #GMC
+    # output_folder=os.path.join(gmc_diversity_data_path,"nscore")
+    # Q_N= 10 #number of queries
+    # Ks={2} # top k
+    # nscore_result(output_folder,gmc_result_file,
+    #             gmc_diversity_data_path+f"/nscore_gmc_04diluted_restricted_notnormal_K2_{Q_N}_parallel.csv", 
+    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
+    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
+    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 
+    
+    #semNovelty
+    output_folder=os.path.join(semNovelty_diversity_data_path,"nscore")
+    Q_N= 19 #number of queries
     Ks={2} # top k
-    nscore_result(output_folder,gmc_result_file,
-                gmc_diversity_data_path+f"/nscore_gmc_04diluted_restricted_notnormal_Ktest3_{Q_N}_parallel.csv", 
+    nscore_result(output_folder,semNovelty_result_file,
+                semNovelty_diversity_data_path+f"/nscore_gmc_04diluted_restricted_notnormal_K2_{Q_N}_parallel.csv", 
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 
+    
 # #Penalized
     # Q_N=19 #number of queries
     # Ks={3} # top k

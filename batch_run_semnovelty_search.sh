@@ -8,26 +8,12 @@
 #SBATCH --cpus-per-task=5     # Number of CPU cores
 ##SBATCH --gres=gpu:1            # Request 1 GPU
 
-#SBATCH --partition=RJMILLER
-
 # Set output file destinations
 #SBATCH -o JOB%j.out            # Standard output file
 #SBATCH -e JOB%j-err.out        # Standard error file
 
-## email notifications: Get email when your job starts, stops, fails, completes...
-## Set email address
-#SBATCH --mail-user=bkassaie@uwaterloo.ca
-
-# Set types of notifications (from the options: BEGIN, END, FAIL, REQUEUE, ALL):
-#SBATCH --mail-type=ALL
-
 # Load up your Conda environment
 source activate TableUnionNew   # Replace <env> with your actual Conda environment name
 
-
-echo "Running on host: $(hostname)"
-lscpu
-free -h              
-
 # Run the Python script
-python /u6/bkassaie/NAUS/GMC_search.py
+python /u6/bkassaie/NAUS/Semantic_Novelty_search.py
