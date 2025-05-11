@@ -585,8 +585,8 @@ if __name__ == "__main__":
         query_directory="/u6/bkassaie/NAUS/data/santos/query"
         datalake_directory="/u6/bkassaie/NAUS/data/santos/datalake"
         diluted_datalake_directory="/u6/bkassaie/NAUS/data/santos/datalake_diluteonly_dltdeg04"
-        ground_truth_path="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth.pickle"  
         alignmnet_file="/u6/bkassaie/NAUS/data/santos/Manual_Alignment_4gtruth_santos.csv"
+        alignmnet_file_diluted="/u6/bkassaie/NAUS/data/santos/Manual_Alignment_4gtruth_santos_all.csv"
         notdiluted04_file="/u6/bkassaie/NAUS/data/santos/notdiluted04_file.csv"
         missingfiles=f"/u6/bkassaie/NAUS/data/santos/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
         #refined_ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_refined_groundtruth.pickle"  
@@ -620,9 +620,11 @@ if __name__ == "__main__":
         # refine_ground_truth(missin_files_names,ground_truth_path, refined_ground_truth_path)
          
          # modify the file names 
-        add_dlt_to_csv_filenames(diluted_datalake_directory)
+        #add_dlt_to_csv_filenames(diluted_datalake_directory)
         
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
+        dilute_alignmentfile(alignmnet_file, alignmnet_file_diluted)
+
 
     elif dataset=='ugen-v2':
 
@@ -645,7 +647,7 @@ if __name__ == "__main__":
         #                               diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
         #add_dlt_to_csv_filenames(diluted_datalake_directory)
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
-
+        #dilute_alignmentfile(alignmnet_file, alignmnet_file_diluted)
         
         
     elif dataset=='TUS_small':
@@ -693,7 +695,7 @@ if __name__ == "__main__":
         #add_dlt_to_csv_filenames(diluted_datalake_directory)
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
         # the next call only make sense when we have manula alignemnt otherwise we should call the alignemnt algorithm again 
-        dilute_alignmentfile(alignmnet_file, alignmnet_file_diluted)
+        # dilute_alignmentfile(alignmnet_file, alignmnet_file_diluted)
         
         
     elif dataset=='ugen-v2_small':
