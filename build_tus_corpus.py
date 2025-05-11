@@ -64,8 +64,10 @@ def sample_and_copy(
             print(f"Warning: {src} not found. Skipped copying.")
 
     # 5) Write the filtered rows as a new ground truth CSV
+    # Strip trailing '\r' from column names if present
+    df_subset['query_table'] = df_subset['query_table'].str.rstrip('\r')
+    df_subset['data_lake_table'] = df_subset['data_lake_table'].str.rstrip('\r')
     df_subset.to_csv(output_csv, index=False)
-    
     
 def keep_noverlap_copy(   
     input_csv="input.csv",
@@ -77,8 +79,7 @@ def keep_noverlap_copy(
     
     # Read the main CSV
     df = pd.read_csv(input_csv)
-        # Step 1: Keep only the desired columns
-        # Step 1: Keep only the desired columns
+    # Step 1: Keep only the desired columns
     df_filtered_with_duplicates = df[['query_table', 'data_lake_table']].copy()
     
     # Step 2: Remove duplicate rows
@@ -91,48 +92,43 @@ def keep_noverlap_copy(
     # We'll accumulate rows for this query in a list.
     kept_rows = []
     for _, row in df_filtered.iterrows():
-                dt_value = row['data_lake_table']
-                q_value = row['query_table']
-                # Condition (a): Always keep if data_lake_table equals the query.
-                if dt_value == q_value:
-                    kept_rows.append(row)
-                    seen.add(dt_value)
+        dt_value = row['data_lake_table']
+        q_value = row['query_table']
+        # Condition (a): Always keep if data_lake_table equals the query.
+        if dt_value == q_value:
+            kept_rows.append(row)
+            seen.add(dt_value)
                     
-    queries=df_filtered['query_table'].unique()
+    queries = df_filtered['query_table'].unique()
     for query in queries:
-            df_query = df_filtered[df_filtered['query_table'] == query]
-            # Iterate row-by-row over the current query table's rows.
-            kept_rows_q=[]       
-            for _, row in df_query.iterrows():
-                dt_value = row['data_lake_table']
+        df_query = df_filtered[df_filtered['query_table'] == query]
+        # Iterate row-by-row over the current query table's rows.
+        kept_rows_q = []       
+        for _, row in df_query.iterrows():
+            dt_value = row['data_lake_table']
             # Condition (b): Keep if the value is not in seen AND
             # the count of already kept rows is less than 11.
-                if (dt_value not in seen) and (len(kept_rows_q) < 11):
-                    kept_rows_q.append(row)
-                    seen.add(dt_value) 
-            kept_rows.extend(kept_rows_q)
-            
-            # Create a DataFrame from the kept rows for this query.
-            # df_query_filtered = pd.DataFrame(kept_rows)
-            # filtered_results.append(df_query_filtered)
-
+            if (dt_value not in seen) and (len(kept_rows_q) < 11):
+                kept_rows_q.append(row)
+                seen.add(dt_value) 
+        kept_rows.extend(kept_rows_q)
     
-    # Combine all filtered results.
-    #df_combined = pd.concat(filtered_results, ignore_index=True)
-    df_combined= pd.DataFrame(kept_rows)
+    # Combine all filtered results
+    df_combined = pd.DataFrame(kept_rows)
+    
     # Step 5: Group by query_table and sort by group count in descending order.
     group_counts = df_combined.groupby('query_table').size()
-    # Retain only groups with more than 5 rows.
+    # Retain only groups with more than 10 rows.
     valid_groups = group_counts[group_counts > 10].sort_values(ascending=False)
     # Select the top 50 query_table values.
     top_queries = valid_groups.head(50).index
     df_top = df_combined[df_combined['query_table'].isin(top_queries)].copy()
-       # Ensure output folders exist
+    
+    # Ensure output folders exist
     os.makedirs(query_out_dir, exist_ok=True)
     os.makedirs(datalake_out_dir, exist_ok=True)
 
-    # 4) Copy relevant query_table files into 'query_out_dir'
-    #    We assume the file is named "<table_name>.csv" in 'benchmark_dir'.
+    # Copy relevant query_table files into 'query_out_dir'
     for qtbl in df_top["query_table"].unique():
         src = os.path.join(benchmark_dir, f"{qtbl}")
         dst = os.path.join(query_out_dir, f"{qtbl}")
@@ -150,17 +146,28 @@ def keep_noverlap_copy(
         else:
             print(f"Warning: {src} not found. Skipped copying.")
 
-    # 5) Write the filtered rows as a new ground truth CSV
+    # Write the filtered rows as a new ground truth CSV
+    # Strip trailing '\r' from column names if present
+    df_top['query_table'] = df_top['query_table'].str.rstrip('\r')
+    df_top['data_lake_table'] = df_top['data_lake_table'].str.rstrip('\r')
     df_top.to_csv(output_csv, index=False)
 
-if __name__ == "__main__":
+    # Add statistics logging
+    print("\n=== Ground Truth Statistics ===")
+    print(f"Total number of queries: {len(df_top['query_table'].unique())}")
+    print("\nNumber of data lake tables per query:")
+    query_counts = df_top.groupby('query_table')['data_lake_table'].nunique()
+    for query, count in query_counts.items():
+        print(f"- {query}: {count} data lake tables")
+    print("\nTotal number of unique data lake tables:", len(df_top['data_lake_table'].unique()))
+    print("=============================")
 
-    
+if __name__ == "__main__":
     keep_noverlap_copy(
-        input_csv="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/TUS_benchmark_relabeled_groundtruth.csv",        # CSV with the required columns
-        benchmark_dir="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/benchmark",           # Folder where all CSVs originally live
-        query_out_dir="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/query",               # Where to copy query tables
-        datalake_out_dir="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/datalake",         # Where to copy data lake tables
-        output_csv="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth.csv",
+        input_csv="/u6/bkassaie/NAUS/data/table-union-search-benchmark/TUS_benchmark_relabeled_groundtruth.csv",
+        benchmark_dir="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/benchmark",
+        query_out_dir="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query",
+        datalake_out_dir="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",
+        output_csv="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_not_dlt.csv",
         sample_size=50
     )
