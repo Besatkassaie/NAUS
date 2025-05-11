@@ -25,19 +25,19 @@ class Penalized_Search:
     Pe: Penalized_Search is a class for performing penalized re_ranking of unionable tables for Novelty based  unionable  table search.
     """
 
-    def __init__(self, dsize):
+    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path, index_file_path ):
             self.alignment_data=None
             self.unionable_tables=None
        
             
             #dataFolder="santos"
             # dataFolder="table-union-search-benchmark/small"
-            dataFolder="ugen_v2/ugenv2_small"
-            table_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-            query_path_raw = "data/"+dataFolder+"/"+"query"
-            table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            processed_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/proccessed/"
-            index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+            # dataFolder="ugen_v2/ugenv2_small"
+            # table_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+            # query_path_raw = "data/"+dataFolder+"/"+"query"
+            # table_path_raw = "data/"+dataFolder+"/"+"datalake"
+            # processed_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/proccessed/"
+            # index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -104,10 +104,9 @@ class Penalized_Search:
     
     
         
-    def load_starmie_vectors(self):
+    def load_starmie_vectors(self,  dl_table_vectors ,query_table_vectors):
         '''load starmie vectors for query and data lake and retrun as dictionaries'''
-        dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-        query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+
         qfile = open(query_table_vectors,"rb")
             # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
         queries = pickle.load(qfile)
@@ -274,9 +273,10 @@ class Penalized_Search:
                   
         q_table_names = self.alignment_data['query_table_name'].unique()
             # for every query now compute the similarity scores with dt tables 
+          
         for query_name in q_table_names:
-                   
-                    start_time = time.time_ns()
+                    start_time = time.time_ns()  
+                    
                     grouped_scores_q_total = pd.DataFrame(columns=["q_table", "dl_table",'penalized_unionability_score'])
 
                     # get q columns vectors 
@@ -321,7 +321,7 @@ class Penalized_Search:
             # Store the results
                     all_ranked_result[(query_name, k, p_degree)] = (
                         list(top_k_result[["dl_table",'penalized_unionability_score']].to_records(index=False)),
-                        round((time.time_ns() - start_time) / 10 ** 9, 2)
+                        (time.time_ns() - start_time) / 10 ** 9
                     )
 
         return all_ranked_result
@@ -391,25 +391,61 @@ class Penalized_Search:
           
 if __name__ == "__main__":
     # Example usage:
+   
+   
+    #dataFolder= "data/table-union-search-benchmark/small"
+    dataFolder="data/ugen_v2/ugenv2_small"
+    #dataFolder= "data/santos"
+    #dataFolder="data/ugen_v2"
+    #alignment_Dust_file_name="tus_CL_KMEANS_cosine_alignment_all.csv"
+    #alignment_Dust_file_name="Santos_dlt_CL_KMEANS_cosine_alignment.csv"
+    #alignment_Dust_file_name="ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
+    alignment_file_name="ugenv2_small_manual_alignment_all.csv"
+
+    alignment_Dust=dataFolder+"/"+alignment_file_name
+    first_50_starmie=dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    #search_results_file=dataFolder+"/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    search_results_file=dataFolder+"/diveristy_data/search_results/Baseline/search_result_baseline_04diluted_restricted_pdeg1.csv"
+
+    dl_table_vectors = dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    query_table_vectors =dataFolder+"/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+    
+ 
+    
     # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
     # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
+    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Baseline/search_result_Baseline_04diluted_restricted_pdeg1.csv"
+    # dl_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    # query_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+    
+ 
+
+    table_path = dl_table_vectors
+
+    query_path_raw = dataFolder+"/"+"query"
+    table_path_raw = dataFolder+"/"+"datalake"
+    processed_path=dataFolder+"/proccessed/"
+    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+    
+    
+    
     # # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
     # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
     # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
     
     
-    alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-    first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-
+   
+     #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
+    # first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
+    # search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Baseline/search_result_baseline_04diluted_restricted_pdeg1.csv"
+    # dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    # query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
     #dsize=20
-    #only for ugenv2-small that hae few ros we set domnain size 2
-    dsize=2
-    penalize_search = Penalized_Search(dsize)
+    dsize=20
+    penalize_search = Penalized_Search(dsize, dataFolder, table_path, query_path_raw, table_path_raw, processed_path, index_file_path)
     penalize_search.load_column_alignment_data(alignment_Dust)
     penalize_search.load_unionable_tables(first_50_starmie)   
-    all_vectors=penalize_search.load_starmie_vectors()
+    all_vectors=penalize_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
     
     for i in range(2,11):   
 

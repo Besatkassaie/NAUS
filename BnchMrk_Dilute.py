@@ -7,9 +7,9 @@ import glob
 
 
 
-from GMC_search   import GMC_Search
 
-def dilute_alignment4Groundtruth(input_file, output_file):
+
+def dilute_alignmentfile(input_file, output_file):
 
         
         """
@@ -216,7 +216,7 @@ def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_direct
        if('csv' in ground_truth_path):
           groundtruth_dict=utl.loadDictionaryFromCsvFile(ground_truth_path)
        else: 
-          groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
+          groundtruth_dict = utl.loadDictionaryFromPickleFile(ground_truth_path)
        alignment_=utl.load_alignment(alignment_file)
 
        no_common_column={}
@@ -226,7 +226,7 @@ def dilute_datalake_by_alignment(dilation_degree,query_directory,datalake_direct
        if dataset=='ugen-v2' or dataset=="ugen-v2_small":
         delim=';'
  
-    
+       
        for key_, values in groundtruth_dict.items():
          # open file  
            # Load the CSV file
@@ -448,7 +448,7 @@ def dilute_groundtruth(ground_truth_path,ground_truth_path_diluted, notdiluted_t
     if('csv' in ground_truth_path):
           groundtruth_dict=utl.loadDictionaryFromCsvFile(ground_truth_path)
     else: 
-          groundtruth_dict = GMC_Search.loadDictionaryFromPickleFile(ground_truth_path)
+          groundtruth_dict = utl.loadDictionaryFromPickleFile(ground_truth_path)
     new_groundtruth_dict={}
     # 1- remove the missing files from the groundtruth santos: stockport_contracts_4.csv
     # 2- also for all the files add another file with _dlt added to their names  
@@ -515,29 +515,104 @@ def add_dlt_to_csv_filenames(folder_path):
             os.rename(old_path, new_path)
             print(f"Renamed: {filename} --> {new_filename}")      
            
+
+
+def all_query_in_datalake(query_folder, datalake_folder):
+        # Get a set of file names (base names) from the query folder
+    query_files = {os.path.basename(f) for f in glob.glob(os.path.join(query_folder, "*")) if os.path.isfile(f)}
+    
+    # Get a set of file names (base names) from the data lake folder
+    datalake_files = {os.path.basename(f) for f in glob.glob(os.path.join(datalake_folder, "*")) if os.path.isfile(f)}
+    
+    # Find files that are in the query folder but not in the data lake folder
+    missing_files = query_files - datalake_files
+
+    if missing_files:
+        print("The following files in the query folder are missing in the data lake folder:")
+        for file in sorted(missing_files):
+            print(file)
+        return False    
+    else:
+        print("All files in the query folder are present in the data lake folder.")
+        return True
+
+def verify_groungtruth(groundtruth_file, query_folder):
+    _, ext = os.path.splitext(groundtruth_file)  # Extract file extension
+    ext = ext.lower()  # Convert to lowercase for consistency
+    
+    if ext == ".csv":
+           query_to_datalake_dict = utl.loadDictionaryFromCsvFile(groundtruth_file)
+    elif ext==".pickle":
+             query_to_datalake_dict = utl.loadDictionaryFromPickleFile(groundtruth_file)
+ 
+        # Get a set of all file names (base names) in the query folder
+    query_files = {os.path.basename(f) for f in glob.glob(os.path.join(query_folder, "*")) if os.path.isfile(f)}
+    
+    # Check 1: Ensure every file in the query folder is a key in the dictionary.
+    missing_keys = [fname for fname in query_files if fname not in query_to_datalake_dict]
+    if missing_keys:
+        print("The following query files are missing as keys in the dictionary:")
+        for key in missing_keys:
+            print(f"  - {key}")
+        return False    
+    else:
+        print("All query files are present as keys in the dictionary.")
+    
+    # Check 2: Ensure that for each key, the corresponding list contains that key.
+    missing_self = [key for key, table_list in query_to_datalake_dict.items() if key not in table_list]
+    # check to make sur ethe missing is not query_table -> data_lake_table
+    if 'query_table' in missing_keys:
+        missing_self.remove('query_table')
+    if len(missing_self)>0:
+      
+        print("\nThe following dictionary keys do not appear in their associated list:")
+        for key in missing_self:
+            print(f"  - {key} -> {query_to_datalake_dict[key]}")
+            return False 
+    else:
+        print("All dictionary keys are mapped to lists that contain themselves.")
+    return True
+
 if __name__ == "__main__":
   # we need to call these function once 
-    dataset="ugen-v2_small"
+    dataset="santos"
     dilation_degree=0.4
     # santos: 
     if dataset=='santos':
-        missing_tables=['stockport_contracts_4.csv']
-        ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_groundtruth.pickle"  
-        ground_truth_path_diluted="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_groundtruth.pickle_diluted.pickle"  
-        query_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/query"
-        datalake_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/datalake"
-        diluted_datalake_directory="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/datalake_diluteonly_dltdeg04"
-        ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_groundtruth.pickle"  
-        alignmnet_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/Santos_CL_KMEANS_alignment_cosine.csv"
-        notdiluted04_file="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/notdiluted04_file.csv"
-        missingfiles=f"/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
-        refined_ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_refined_groundtruth.pickle"  
+        missing_tables=[]
+        ground_truth_path="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth.pickle"  
+        ground_truth_path_diluted="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth.pickle_diluted.pickle"  
+        query_directory="/u6/bkassaie/NAUS/data/santos/query"
+        datalake_directory="/u6/bkassaie/NAUS/data/santos/datalake"
+        diluted_datalake_directory="/u6/bkassaie/NAUS/data/santos/datalake_diluteonly_dltdeg04"
+        ground_truth_path="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth.pickle"  
+        alignmnet_file="/u6/bkassaie/NAUS/data/santos/Manual_Alignment_4gtruth_santos.csv"
+        notdiluted04_file="/u6/bkassaie/NAUS/data/santos/notdiluted04_file.csv"
+        missingfiles=f"/u6/bkassaie/NAUS/data/santos/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
+        #refined_ground_truth_path="/Users/besatkassaie/Work/Research/DataLakes/TableUnionSearch/NAUS/data/santos/santos_union_refined_groundtruth.pickle"  
 
         #depricated: dilute_datalake_by_column_lable(dilation_degree,query_directory,datalake_directory,diluted_datalake_directory, ground_truth_path, dataset) 
        
+       ####################################start verification#################################################### 
+        queries_are_duplicated=all_query_in_datalake(query_directory,datalake_folder=datalake_directory)
+        if queries_are_duplicated:
+            # make sure for every query you have mapping beween queries in the ground truth 
+            grthrut_has_query=verify_groungtruth(ground_truth_path, query_directory)   
+            if grthrut_has_query:
+               print("there is mapping in the groundtruth for blatant duplicates") 
+            else:
+                raise RuntimeError("there is missing mapping in the groundtruth for blatant duplicates")
+   
+        else: 
+            raise RuntimeError("blatant duplicate not in the folders")
+        print("dataset and grnd truth file Passed the test ")  
+        
+        ####################################end verification#################################################### 
+        
+       
         #1-make sure that all queries are in the 
-        # dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
-        #                                diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
+        #dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
+                                       #diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
         
         # remove from ground truth the queries that do not have their files in datalake  listed in missingfiles:
         # I manullay open the file and copied not existed files 
@@ -545,7 +620,7 @@ if __name__ == "__main__":
         # refine_ground_truth(missin_files_names,ground_truth_path, refined_ground_truth_path)
          
          # modify the file names 
-        #add_dlt_to_csv_filenames(diluted_datalake_directory)
+        add_dlt_to_csv_filenames(diluted_datalake_directory)
         
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
 
@@ -569,7 +644,7 @@ if __name__ == "__main__":
         # dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
         #                               diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
         #add_dlt_to_csv_filenames(diluted_datalake_directory)
-        dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
+        #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
 
         
         
@@ -579,19 +654,35 @@ if __name__ == "__main__":
         datalake_directory="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake"  
   
         diluted_datalake_directory="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake_diluted0.4_only"
-        ground_truth_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_notdilute.csv"  
-        alignmnet_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment.csv"
+        ground_truth_path="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_not_dlt.csv"  
+        alignmnet_file="data/table-union-search-benchmark/small/Manual_Alignment_4gtruth_tus_benchmark.csv"
         notdiluted04_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/notdiluted04_file.csv"
         ground_truth_path_diluted=f"/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_{dilation_degree}.csv"  
-        alignmnet_file_diluted="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/DUST_Alignment_4gtruth_tus_benchmark_all.csv"
+        alignmnet_file_diluted="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
 
         missingfiles=f"/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/missing_files_dltdegree{dilation_degree}_{dataset}.csv"
         refined_ground_truth_path="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_small_noverlap_refined_groundtruth.csv"  
 
        
-        #1-make sure that all queries are in the 
+        ####################################start verification#################################################### 
+        queries_are_duplicated=all_query_in_datalake(query_directory,datalake_folder=datalake_directory)
+        if queries_are_duplicated:
+            # make sure for every query you have mapping beween queries in the ground truth 
+            grthrut_has_query=verify_groungtruth(ground_truth_path, query_directory)   
+            if grthrut_has_query:
+               print("there is mapping in the groundtruth for blatant duplicates") 
+            else:
+                raise RuntimeError("there is missing mapping in the groundtruth for blatant duplicates")
+   
+        else: 
+            raise RuntimeError("blatant duplicate not in the folders")
+        print("dataset and grnd truth file Passed the test ")  
+        
+        ####################################end verification#################################################### 
+        
+        
         # dilute_datalake_by_alignment(dilation_degree,query_directory, datalake_directory, 
-        #                                diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
+        #                                 diluted_datalake_directory,ground_truth_path, alignmnet_file,notdiluted04_file,dataset, missingfiles)
         
         # remove from ground truth the queries that do not have their files in datalake  listed in missingfiles:
         # I manullay open the file and copied not existed files 
@@ -599,9 +690,10 @@ if __name__ == "__main__":
         #refine_ground_truth(missin_files_names,ground_truth_path, refined_ground_truth_path)
          
          # modify the file names 
-        add_dlt_to_csv_filenames(diluted_datalake_directory)
+        #add_dlt_to_csv_filenames(diluted_datalake_directory)
         #dilute_groundtruth(ground_truth_path,ground_truth_path_diluted,notdiluted04_file )
-        
+        # the next call only make sense when we have manula alignemnt otherwise we should call the alignemnt algorithm again 
+        dilute_alignmentfile(alignmnet_file, alignmnet_file_diluted)
         
         
     elif dataset=='ugen-v2_small':

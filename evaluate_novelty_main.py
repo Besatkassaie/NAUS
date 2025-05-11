@@ -50,15 +50,32 @@ import matplotlib.pyplot as plt
 # semanticNovelty_diversity_data_path="data/ugen_v2/diveristy_data/search_results/semanticNovelty/"
 
 # #santos 
-gmc_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
-penalize_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-starmie_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-groundtruth="/u6/bkassaie/NAUS/data/santos/santos_union_groundtruth_diluted.pickle"
-semanticNovelty_result_file="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
-gmc_diversity_data_path="data/santos/diveristy_data/search_results/GMC/"
-penalized_diversity_data_path="data/santos/diveristy_data/search_results/Penalized/"
-starmie_diversity_data_path="data/santos/diveristy_data/search_results/Starmie/"
-semanticNovelty_diversity_data_path="/u6/bkassaie/NAUS/data/santos/diveristy_data/search_results/semanticNovelty/"
+# datafolder="/u6/bkassaie/NAUS/data/santos/"
+# gtruthfilename="santos_union_groundtruth_diluted.pickle"
+
+#  tus small
+datafolder="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/"
+gtruthfilename="tus_small_noverlap_groundtruth_dlt_0.4.csv"
+
+#ugen v2
+# datafolder="/u6/bkassaie/NAUS/data/ugen_v2/"
+# gtruthfilename="ugenv2_unionable_groundtruth_diluted.pickle"
+
+
+
+gmc_result_file=datafolder+"diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
+penalize_result_file=datafolder+"diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+starmie_result_file=datafolder+"diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
+semanticNovelty_result_file=datafolder+"diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+baseline_result_file=datafolder+"diveristy_data/search_results/Baseline/search_result_Baseline_04diluted_restricted_pdeg1.csv"
+
+gmc_diversity_data_path=datafolder+"diveristy_data/search_results/GMC/"
+penalized_diversity_data_path=datafolder+"diveristy_data/search_results/Penalized/"
+starmie_diversity_data_path=datafolder+"diveristy_data/search_results/Starmie/"
+semanticNovelty_diversity_data_path=datafolder+"diveristy_data/search_results/semanticNovelty/"
+baseline_diversity_data_path=datafolder+"diveristy_data/search_results/Baseline/"
+
+groundtruth=datafolder+gtruthfilename
 
 # tus small
 # gmc_result_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
@@ -99,6 +116,12 @@ if not os.path.exists(semanticNovelty_dup_file):
     query_duplicate_returned(semanticNovelty_result_file,semanticNovelty_dup_file)
 else:
     print("This file exists: "+semanticNovelty_dup_file)     
+    
+baseline_dup_file=baseline_diversity_data_path+"search_result_baseline_diluted_restricted_duplicate.csv"
+if not os.path.exists(baseline_dup_file):
+    query_duplicate_returned(baseline_result_file,baseline_dup_file)
+else:
+    print("This file exists: "+baseline_dup_file)         
 ################Compute SNM######################    
 
 starmie_snm_avg_file=starmie_diversity_data_path+"starmie_snm_diluted_restricted_avg_nodup.csv"
@@ -132,6 +155,19 @@ if not (os.path.exists(semNovelty_snm_whole_file) or os.path.exists(semNovelty_s
                                                     , remove_duplicate=1)    
 else:
     print("This file exists: "+semNovelty_snm_whole_file+" or "+semNovelty_snm_avg_file) 
+    
+    
+baseline_snm_avg_file=baseline_diversity_data_path+"baseline_snm_diluted_restricted_avg_nodup_pdg1.csv"
+baseline_snm_whole_file=baseline_diversity_data_path+"baseline_snm_diluted_restricted_whole_nodup_pdg1.csv"
+if not (os.path.exists(baseline_snm_whole_file) or os.path.exists(baseline_snm_avg_file)):
+
+    compute_syntactic_novelty_measure(groundtruth,
+                                                baseline_result_file,
+                                                baseline_snm_avg_file
+                                                    , baseline_snm_whole_file
+                                                    , remove_duplicate=1)    
+else:
+    print("This file exists: "+baseline_snm_whole_file+" or "+baseline_snm_avg_file)     
 ################Compute SSNM######################    
 gmc_ssnm_avg_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_avg_nodup.csv"
 gmc_ssnm_whole_file=gmc_diversity_data_path+"gmc_new_ssnm_diluted_restricted_whole_nodup.csv"
@@ -177,6 +213,19 @@ if not (os.path.exists(semNovelty_ssnm_avg_file) or os.path.exists(semNovelty_ss
                                                     , remove_dup=1)    
 else:
       print("This file exists: "+semNovelty_ssnm_avg_file+" or "+starmie_ssnm_whole_file)     
+
+
+
+baseline_ssnm_avg_file=baseline_diversity_data_path+"baseline_ssnm_diluted_restricted_avg_nodup.csv"
+baseline_ssnm_whole_file=baseline_diversity_data_path+"baseline_ssnm_diluted_restricted_whole_nodup.csv"
+if not (os.path.exists(baseline_ssnm_avg_file) or os.path.exists(baseline_ssnm_whole_file)):
+
+    compute_syntactic_novelty_measure_simplified(groundtruth,
+                                                    baseline_result_file,baseline_ssnm_avg_file
+                                                    , baseline_ssnm_whole_file
+                                                    , remove_dup=1)    
+else:
+      print("This file exists: "+baseline_ssnm_avg_file+" or "+baseline_ssnm_whole_file)     
 
 # print("union size computation for Penalization")
 # alignemnt_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
@@ -226,7 +275,16 @@ time_semNovelty_file= semanticNovelty_diversity_data_path+"time_semNov_diluted_r
 if not os.path.exists(time_semNovelty_file):
     Avg_executiontime_by_k(semanticNovelty_result_file, time_semNovelty_file)
 else:
-    print("This file exists: "+time_semNovelty_file)        
-
+    print("This file exists: "+time_semNovelty_file)    
+    
+        
+time_baseline_file= baseline_diversity_data_path+"time_baseline_diluted_restricted.csv" 
+    
+if not os.path.exists(time_baseline_file):
+    Avg_executiontime_by_k(baseline_result_file, time_baseline_file)
+else:
+    print("This file exists: "+time_baseline_file)   
+    
+    
 
  
