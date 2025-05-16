@@ -65,7 +65,6 @@ class Starmie_Search:
          
 if __name__ == "__main__":
     # Example usage:
-    #alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
 
 
     s_search = Starmie_Search()
@@ -74,9 +73,11 @@ if __name__ == "__main__":
     # Starmie on Santos returning maximum 50 unionable dl tables  for each query
     #s_search.load_data()
 
+datafolder= "data/table-union-search-benchmark/small"
+#datafolder="data/santos"
 # evaluate Starmie 50 results at different k 
 # unionable reuslts are loaded here:
-first_20_starmie_with_scores="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
+first_20_starmie_with_scores=f"{datafolder}/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
 s_search.load_unionable_tables(first_20_starmie_with_scores) 
 #ground truth is here  
 #gtruth="data/santos/santosUnionBenchmark.pickle"
@@ -89,7 +90,7 @@ for query_name, tuples_list in s_search.unionable_data.items():
     sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
     # Store the sorted list in a new dictionary
     sorted_unionable_data[query_name] = sorted_list    
-starmie_search="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
+starmie_search=f"{datafolder}/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
 # now for k =2 to 20 create the file 
 # Define the output CSV file path
 output_csv_file = starmie_search

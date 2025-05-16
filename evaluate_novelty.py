@@ -55,8 +55,7 @@ def contains_query(row):
 
 
 def compute_counts(dataframe, k_column,query_name_column, tables_column):
-        exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+        exclude=set()
         print("numebr of row before excluding two queries"+ str(len(dataframe)))
         dataframe = dataframe[~dataframe[query_name_column].isin(exclude)]
         print("numebr of row after excluding two queries"+ str(len(dataframe)))
@@ -349,8 +348,7 @@ def get_ssnm_average(df_k, groundtruth_dic, remove_dup):
         workforce_management_information_a.csv
         workforce_management_information_b.csv
         """
-        exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+        exclude=set()
         queries = df_k['query_name'].unique()
         number_queries=0
         snm_total=0.0
@@ -375,8 +373,7 @@ def get_ssnm_whole(df_k, groundtruth_dic, k, remove_duplicates):
         workforce_management_information_a.csv
         workforce_management_information_b.csv
         """
-        exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+        exclude=set()
         queries = df_k['query_name'].unique()
         results_k = []
         for q in queries:
@@ -514,8 +511,7 @@ def get_snm_average(df_k, groundtruth_dic, remove_duplicate):
         workforce_management_information_a.csv
         workforce_management_information_b.csv
         """
-        exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+        exclude=set()
         queries = df_k['query_name'].unique()
         number_queries=0
         snm_total=0.0
@@ -606,8 +602,7 @@ def get_snm_whole(df_k, groundtruth_dic, k, remove_duplicate):
         workforce_management_information_a.csv
         workforce_management_information_b.csv
         """
-        exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+        exclude=set()
         queries = df_k['query_name'].unique()
         results_k = []
         for q in queries:
@@ -879,12 +874,13 @@ def process_single_query(args):
         - normalized: flag indicating if normalization is applied
         - alph: parameter alpha for nscore_table
         - beta: parameter beta for nscore_table
+        - batchsize: the quesry batch size
         - output_folder_by_query: output_folder_by_query
 
     Returns:
       The computed nscore (float) for the given query.
     """
-    q, k, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,output_folder_by_query = args
+    q, k, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,batchsize,output_folder_by_query = args
     start_time = time.time_ns()
     # Filter the search results for the current query.
     q_k_df_search_results = k_df_search_results[k_df_search_results['query_name'] == q]
@@ -940,7 +936,7 @@ def process_single_query(args):
     })
 
     # Write output to a CSV file named after the query (e.g., "myquery.csv")
-    output_filename = f"{q}_{k}.csv"
+    output_filename = f"{q}_k{k}_NQ{batchsize}.csv"
     output_df.to_csv(os.path.join(output_folder_by_query,output_filename), index=False)
     print(f"Written output file for query '{q}' to {output_filename}")
     
@@ -978,7 +974,7 @@ def choose_queries(N, Queries, excluded_queries):
     return [(query,len(columns[0])) for query, columns in sorted_items[:N]]
 
 
-def nscore_result(output_folder_by_query,result_file, output_file, alignments_file, query_path_, table_path_, alph, beta, Ks={2},Q_N=2,normalized=0):
+def nscore_result(output_folder_by_query,result_file, output_file, alignments_file, query_path_, table_path_, alph, beta, Ks={2},Q_N=10,normalized=0):
     """
     Compute the nscore for a given query and its unionable tables.
     This version parallelizes the per‑query computation.
@@ -1020,8 +1016,7 @@ def nscore_result(output_folder_by_query,result_file, output_file, alignments_fi
     qs = NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
     
     #set the returned number to 2
-    excluded_queries = {"workforce_management_information_a.csv",
-                   "workforce_management_information_b.csv"}
+    excluded_queries = set()
     top_queries=choose_queries(Q_N,qs,excluded_queries)
     top_query_names=[q[0] for q in top_queries]
     # Load search results.
@@ -1051,7 +1046,7 @@ def nscore_result(output_folder_by_query,result_file, output_file, alignments_fi
         
         # Prepare arguments for each query.
         args_list = [
-            (q, k_, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,output_folder_by_query)
+            (q, k_, k_df_search_results, alignments_, qs, tbles_, normalized, alph, beta,Q_N,output_folder_by_query)
             for q in queries_k
         ]
         
@@ -1118,8 +1113,7 @@ def nscore_result_old(result_file, output_file, alignments_file, query_path_ , t
             # Filter the dataframe for the current value of 'k'
               k_df_search_results= df_search_results[df_search_results['k'] == k_]
               #DUST does not create alignemnt for these two queries
-              exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+              exclude=set()
               queries_k = k_df_search_results['query_name'].unique()
               if(len(queries_k==0)):
                   print("no query ")
@@ -1276,8 +1270,7 @@ def compute_union_size_with_null(result_file, output_file, alignments_file, quer
             # Filter the dataframe for the current value of 'k'
               k_df_search_results= df_search_results[df_search_results['k'] == k_]
               #DUST does not create alignemnt for these two queries
-              exclude={"workforce_management_information_a.csv",
-                 "workforce_management_information_b.csv"}
+              exclude=set()
               queries_k = k_df_search_results['query_name'].unique()
               for q in queries_k:
                 # get the unionabe tables 
@@ -1426,104 +1419,42 @@ def stem( stemmer, tokens):
     
 
 if __name__=='__main__':
-    # gmc_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv"
-    # penalize_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-    # starmie_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-    # groundtruth="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
-
-    # gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
-    # penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
-    # starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
 
 
-    gmc_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
-    penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-    starmie_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-    semNovelty_result_file="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
+  
+    
     gmc_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/"
     penalized_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/"
     starmie_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/"
     semNovelty_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/"
-
-
- 
-    # gmc_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/new_gmc_results_diluted04_restricted.csv"
-    # penalize_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-    # starmie_result_file="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"
-    # groundtruth="data/table-union-search-benchmark/small/tus_small_noverlap_groundtruth_dlt_0.4.csv"
-
-    # gmc_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/"
-    # penalized_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/"
-    # starmie_diversity_data_path="data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/"
-
-
+    starmie0_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/starmie0/"
+    starmie1_diversity_data_path="data/ugen_v2/ugenv2_small/diveristy_data/search_results/starmie1/"
     
-    
+    gmc_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
+    penalize_result_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    starmie_result_file=f"{starmie_diversity_data_path}starmie_results_04diluted_restricted.csv"
+    semNovelty_result_file="data/ugen_v2/ugenv2_small/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+    starmie0_result_file="data/ugen_v2/ugenv2_small/diveristy_data/search_results/starmie0/search_result_starmie0_04diluted_restricted_pdeg1.csv"
+    starmie1_result_file="data/ugen_v2/ugenv2_small/diveristy_data/search_results/starmie1/search_result_starmie1_04diluted_restricted_pdeg1.csv"
+
 
     from multiprocessing import freeze_support
     freeze_support()  # optional on some platforms
     alpha=1.0
     beta=0.9
 
-    # nscore_result(output_folder,gmc_result_file,
-    #             gmc_diversity_data_path+"/nscore_gmc_04diluted_restricted_notnormal_K2_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
-
-
-    # output_folder=os.path.join(penalized_diversity_data_path,"nscore")
-    # nscore_result(output_folder,penalize_result_file,
-    #             penalized_diversity_data_path+"/nscore_pnlz_04diluted_restricted_notnormal_K2_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
     
-    # output_folder=os.path.join(starmie_diversity_data_path,"nscore")
-    # nscore_result(output_folder,starmie_result_file,
-    #             starmie_diversity_data_path+"/nscore_strm_04diluted_restricted_notnormal_K2_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/datalake",alpha,beta,0) 
-
-#ugenv2 small
-
-    #GMC
-    # output_folder=os.path.join(gmc_diversity_data_path,"nscore")
-    # Q_N= 10 #number of queries
-    # Ks={2} # top k
-    # nscore_result(output_folder,gmc_result_file,
-    #             gmc_diversity_data_path+f"/nscore_gmc_04diluted_restricted_notnormal_K2_{Q_N}_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 
+    diveristy_path=starmie1_diversity_data_path
+    res_file=starmie1_result_file
     
-    #semNovelty
-    output_folder=os.path.join(semNovelty_diversity_data_path,"nscore")
+    output_folder=os.path.join(diveristy_path,"nscore")
     Q_N= 19 #number of queries
-    Ks={2} # top k
-    nscore_result(output_folder,semNovelty_result_file,
-                semNovelty_diversity_data_path+f"/nscore_gmc_04diluted_restricted_notnormal_K2_{Q_N}_parallel.csv", 
+    k_=2
+    Ks={k_}# top k
+    nscore_result(output_folder,res_file,
+                diveristy_path+f"/nscore_04diluted_restricted_notnormal_K{k_}_QN{Q_N}_parallel.csv", 
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
                                             "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 
     
-# #Penalized
-    # Q_N=19 #number of queries
-    # Ks={3} # top k
-    # output_folder=os.path.join(penalized_diversity_data_path,"nscore")
-    # nscore_result(output_folder,penalize_result_file,
-    #             penalized_diversity_data_path+f"/nscore_pnl_04diluted_restricted_notnormal_K3_{Q_N}_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 
-#Starmie
-    # Q_N=10 #number of queries
-    # Ks={3} # top k
-    # output_folder=os.path.join(starmie_diversity_data_path,"nscore")
-    # nscore_result(output_folder,starmie_result_file,
-    #             starmie_diversity_data_path+f"/nscore_pnl_04diluted_restricted_notnormal_K3_{Q_N}_parallel.csv", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv",
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/query", 
-    #                                         "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/datalake",alpha,beta,Ks,Q_N,0) 

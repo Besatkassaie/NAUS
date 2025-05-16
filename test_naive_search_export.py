@@ -126,7 +126,7 @@ def main(args2=None):
                 else:
                   print("working on restricted data")
                   qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold, restrict=1 , 
-                                       gth="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_unionable_groundtruth_diluted.pickle")
+                                       gth="data/"+dataFolder+"/santos_union_groundtruth.pickle_diluted.pickle")
   
             else: # Bounds matching
                 qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)
@@ -139,9 +139,9 @@ def main(args2=None):
                 returnedResults_noscore[query[0]] = [r[1] for r in res]
             query_times.append(time.time() - query_start_time)
     #print(returnedResults)        
-    with open("/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
+    with open("data/"+dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults, file)   
-    with open("/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
+    with open("data/"+dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
                  pickle.dump(returnedResults_noscore, file)                
     # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
     print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))

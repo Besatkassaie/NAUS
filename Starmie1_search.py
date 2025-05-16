@@ -394,32 +394,23 @@ class Starmie1_Search:
 if __name__ == "__main__":
     # Example usage:
    
-   
     #dataFolder= "data/table-union-search-benchmark/small"
-    dataFolder="data/ugen_v2/ugenv2_small"
-    #dataFolder= "data/santos"
+    #dataFolder="data/ugen_v2/ugenv2_small"
+    dataFolder= "data/santos"
     #dataFolder="data/ugen_v2"
-    #alignment_Dust_file_name="tus_CL_KMEANS_cosine_alignment_all.csv"
-    #alignment_Dust_file_name="Santos_dlt_CL_KMEANS_cosine_alignment.csv"
+    #alignment_file_name="manual_alignment_tus_benchmark_all.csv"
+    alignment_file_name="Manual_Alignment_4gtruth_santos_all.csv"
     #alignment_Dust_file_name="ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
-    alignment_file_name="ugenv2_small_manual_alignment_all.csv"
+    #alignment_file_name="ugenv2_small_manual_alignment_all.csv"
 
     alignment_Dust=dataFolder+"/"+alignment_file_name
     first_50_starmie=dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    #search_results_file=dataFolder+"/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
-    search_results_file=dataFolder+"/diveristy_data/search_results/Baseline/search_result_baseline_04diluted_restricted_pdeg1.csv"
+    search_results_file=dataFolder+"/diveristy_data/search_results/starmie1/search_result_starmie1_04diluted_restricted_pdeg1.csv"
 
     dl_table_vectors = dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
     query_table_vectors =dataFolder+"/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
     
- 
-    
-    # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
-    # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Baseline/search_result_Baseline_04diluted_restricted_pdeg1.csv"
-    # dl_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    # query_table_vectors = "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    
+
  
 
     table_path = dl_table_vectors
@@ -429,21 +420,19 @@ if __name__ == "__main__":
     processed_path=dataFolder+"/proccessed/"
     index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
     
+ 
     
     
-    # # alignment_Dust="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
-    # first_50_starmie="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    # search_results_file="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/search_result_new_penalize_04diluted_restricted_pdeg1.csv"
-    
-    
-   
-     #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-    # first_50_starmie="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    # search_results_file="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/search_results/Baseline/search_result_baseline_04diluted_restricted_pdeg1.csv"
-    # dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    # query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    #dsize=20
+ 
+
+    table_path = dl_table_vectors
+
+    query_path_raw = dataFolder+"/"+"query"
+    table_path_raw = dataFolder+"/"+"datalake"
+    processed_path=dataFolder+"/proccessed/"
+    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
     dsize=20
+    
     penalize_search = Starmie1_Search(dsize, dataFolder, table_path, query_path_raw, table_path_raw, processed_path, index_file_path)
     penalize_search.load_column_alignment_data(alignment_Dust)
     penalize_search.load_unionable_tables(first_50_starmie)   

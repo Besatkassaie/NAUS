@@ -337,8 +337,7 @@ if __name__ == "__main__":
     # dl_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
     # query_table_vectors = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
     # #dsize=20
-    # #only for ugenv2-small that hae few ros we set domnain size 2
-    #dsize=2
+ 
     
     #santos
     # dl_table_vectors = "/u6/bkassaie/NAUS/data/santos/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
@@ -355,19 +354,23 @@ if __name__ == "__main__":
     # search_results_file="data/santos/diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
     #tus
-    # bpath="data/table-union-search-benchmark/small/"
-    # dl_table_vectors = f"{bpath}vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    # query_table_vectors = f"{bpath}vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    # dl_table_vectors_tabbie=f"{bpath}TABBIE_vectors/datalake/embeddings.pkl"
-    # q_table_vectors_tabbie=f"{bpath}TABBIE_vectors/query/embeddings.pkl"
-    # alignment_Dust=f"{bpath}tus_CL_KMEANS_cosine_alignment_all.csv"
-    # first_50_starmie=f"{bpath}diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
-    # semantic_novlety_search = Semantic_Novelty(dl_table_vectors)
-    # semantic_novlety_search.load_column_alignment_data(alignment_Dust)
-    # semantic_novlety_search.load_unionable_tables(first_50_starmie)   
-    # all_vectors=semantic_novlety_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
-    # all_table_vectors_Tabbie=semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie,q_table_vectors_tabbie)
-    # search_results_file=f"{bpath}diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+    #bpath="data/table-union-search-benchmark/small/"
+    bpath="data/santos/"
+
+    dl_table_vectors = f"{bpath}vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    query_table_vectors = f"{bpath}vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+    dl_table_vectors_tabbie=f"{bpath}TABBIE_vectors/datalake/embeddings.pkl"
+    q_table_vectors_tabbie=f"{bpath}TABBIE_vectors/query/embeddings.pkl"
+    #alignment_Dust=f"{bpath}manual_alignment_tus_benchmark_all.csv"
+    alignment_Dust=f"{bpath}Manual_Alignment_4gtruth_santos_all.csv"
+
+    first_50_starmie=f"{bpath}diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
+    semantic_novlety_search = Semantic_Novelty(dl_table_vectors)
+    semantic_novlety_search.load_column_alignment_data(alignment_Dust)
+    semantic_novlety_search.load_unionable_tables(first_50_starmie)   
+    all_vectors=semantic_novlety_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
+    all_table_vectors_Tabbie=semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie,q_table_vectors_tabbie)
+    search_results_file=f"{bpath}diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
 
 
@@ -386,20 +389,20 @@ if __name__ == "__main__":
     # all_table_vectors_Tabbie=semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie,q_table_vectors_tabbie)
     # search_results_file=f"{bpath}diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
-   #ugen_v2_small
-    bpath="data/ugen_v2/ugenv2_small/"
-    dl_table_vectors = f"{bpath}vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    query_table_vectors = f"{bpath}vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    dl_table_vectors_tabbie=f"{bpath}TABBIE_vectors/datalake/embeddings.pkl"
-    q_table_vectors_tabbie=f"{bpath}TABBIE_vectors/query/embeddings.pkl"
-    alignment_Dust=f"{bpath}ugenv2_small_manual_alignment_all.csv"
-    first_50_starmie=f"{bpath}diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
-    semantic_novlety_search = Semantic_Novelty(dl_table_vectors)
-    semantic_novlety_search.load_column_alignment_data(alignment_Dust)
-    semantic_novlety_search.load_unionable_tables(first_50_starmie)   
-    all_vectors=semantic_novlety_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
-    all_table_vectors_Tabbie=semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie,q_table_vectors_tabbie)
-    search_results_file=f"{bpath}diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
+#    #ugen_v2_small
+#     bpath="data/ugen_v2/ugenv2_small/"
+#     dl_table_vectors = f"{bpath}vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+#     query_table_vectors = f"{bpath}vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+#     dl_table_vectors_tabbie=f"{bpath}TABBIE_vectors/datalake/embeddings.pkl"
+#     q_table_vectors_tabbie=f"{bpath}TABBIE_vectors/query/embeddings.pkl"
+#     alignment_Dust=f"{bpath}ugenv2_small_manual_alignment_all.csv"
+#     first_50_starmie=f"{bpath}diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
+#     semantic_novlety_search = Semantic_Novelty(dl_table_vectors)
+#     semantic_novlety_search.load_column_alignment_data(alignment_Dust)
+#     semantic_novlety_search.load_unionable_tables(first_50_starmie)   
+#     all_vectors=semantic_novlety_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
+#     all_table_vectors_Tabbie=semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie,q_table_vectors_tabbie)
+#     search_results_file=f"{bpath}diveristy_data/search_results/semanticNovelty/search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
 
 
