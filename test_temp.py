@@ -119,24 +119,24 @@ starmie1_ssnm_out="data/ugen_v2/ugenv2_small/diveristy_data/search_results/starm
 
 gmc_ssnm_out="data/ugen_v2/ugenv2_small/diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup_filtered.csv"
 
-filter_and_group_by_k(pen_snm_in, lessth,pen_snm_out )
-filter_and_group_by_k_no_B(pen_ssnm_in, lessth,pen_ssnm_out )
+# filter_and_group_by_k(pen_snm_in, lessth,pen_snm_out )
+# filter_and_group_by_k_no_B(pen_ssnm_in, lessth,pen_ssnm_out )
 
-filter_and_group_by_k(semnove_snm_in, lessth,semnove_snm_out )
-filter_and_group_by_k_no_B(semnove_ssnm_in, lessth,semnove_ssnm_out )
+# filter_and_group_by_k(semnove_snm_in, lessth,semnove_snm_out )
+# filter_and_group_by_k_no_B(semnove_ssnm_in, lessth,semnove_ssnm_out )
 
 
 filter_and_group_by_k(starmie_snm_in, lessth,starmie_snm_out )
 filter_and_group_by_k_no_B(starmie_ssnm_in, lessth,starmie_ssnm_out )
 
-filter_and_group_by_k(starmie0_snm_in, lessth,starmie0_snm_out )
-filter_and_group_by_k_no_B(starmie0_ssnm_in, lessth,starmie0_ssnm_out )
+# filter_and_group_by_k(starmie0_snm_in, lessth,starmie0_snm_out )
+# filter_and_group_by_k_no_B(starmie0_ssnm_in, lessth,starmie0_ssnm_out )
 
-filter_and_group_by_k(starmie1_snm_in, lessth, starmie1_snm_out )
-filter_and_group_by_k_no_B(starmie1_ssnm_in, lessth,starmie1_ssnm_out )
+# filter_and_group_by_k(starmie1_snm_in, lessth, starmie1_snm_out )
+# filter_and_group_by_k_no_B(starmie1_ssnm_in, lessth,starmie1_ssnm_out )
 
 
-filter_and_group_by_k_no_B(gmc_ssnm_in, lessth,gmc_ssnm_out ) 
+# filter_and_group_by_k_no_B(gmc_ssnm_in, lessth,gmc_ssnm_out ) 
 # # Compute intersections
 # keys_set = set(groundtruth.keys())
 # common_elements = keys_set.intersection(all_values_set)

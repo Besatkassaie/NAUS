@@ -51,36 +51,10 @@ def draw_plots():
     pnl_res_time = benchmark+"diveristy_data/search_results/Penalized/time_new_penalize_diluted_restricted.csv"
     gmc_res_time = benchmark+"diveristy_data/search_results/GMC/time_gmc_new_diluted_restricted.csv"
     
-#     generate_k_table(pen_search_result_csv,star_search_result_csv,gmc_search_result_csv,search_result_output_text,search_result_output_png)
-#     draw_ssnm(base_output_path,gmc_res_ssnm,pnl_res_ssnm,starme_res_ssnm)
-#     draw_snm(base_output_path,pnl_res_snm,starme_res_snm)
-#    # draw_union_size (base_output_path,gmc_res_union_size,pnl_res_union_size,starme_res_union_size)
-#     draw_execution_time(base_output_path,gmc_res_time, pnl_res_time )
+
     
     
-    
-   #pnl_path1, pnl_path2, pnl_path3, pnl_path4, starme_path1, starme_path2, starme_path3, starme_path4
-    # draw_snm_all("/u6/bkassaie/NAUS/graphs/snm",
-    #               benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_tus+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv", 
-    #               benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
-    #               None,
-    #              None
-    #               )
-    
-    #   dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
-#   pnl_path1=None, pnl_path2=None, pnl_path3=None, pnl_path4=None,
-#                  starme_path1=None, starme_path2=None, starme_path3=None, starme_path4=None,
-#                  starme0_path1=None, starme0_path2=None, starme0_path3=None, starme0_path4=None,
-#                  starme1_path1=None, starme1_path2=None, starme1_path3=None, starme1_path4=None,
-#                  semnov_path1=None, semnov_path2=None, semnov_path3=None, semnov_path4=None
+   
     
     draw_snm_all_individual("/u6/bkassaie/NAUS/graphs/snm",
                   benchmark_tus+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
@@ -94,7 +68,7 @@ def draw_plots():
                   benchmark_tus+"diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv",
                   benchmark_santos+"diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv",
                   None,
-                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie1/starmie1_snm_diluted_restricted_avg_nodup_pdg1.csv", 
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv", 
                   benchmark_tus+"diveristy_data/search_results/starmie1/starmie1_snm_diluted_restricted_avg_nodup_pdg1.csv",
                   benchmark_santos+"diveristy_data/search_results/starmie1/starmie1_snm_diluted_restricted_avg_nodup_pdg1.csv",
                   None,
@@ -103,6 +77,32 @@ def draw_plots():
                   benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
                   None,
                   benchmark_ugenv2_small+ "diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv")
+    
+    draw_snm_all_individual("/u6/bkassaie/NAUS/graphs/snm",
+                  benchmark_tus+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_snm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie0/starmie0_snm_diluted_restricted_avg_nodup_pdg1.csv", 
+                  None,
+                  None,
+                  None,
+                  None, 
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1.csv")
+    
+    
+    
+    
     
     draw_snm_all_individual_filtered("/u6/bkassaie/NAUS/graphs/snm",
                   benchmark_tus+"diveristy_data/search_results/Penalized/pnl_snm_diluted_restricted_avg_nodup_pdg1.csv",
@@ -127,53 +127,22 @@ def draw_plots():
                   benchmark_ugenv2_small+ "diveristy_data/search_results/semanticNovelty/semNovel_snm_diluted_restricted_avg_nodup_pdg1_filtered.csv")
     
     
-    
-    # draw_ssnm_all("/u6/bkassaie/NAUS/graphs/ssnm",
-                  
-    #               benchmark_tus+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/new_pnl_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
-    #               benchmark_tus+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_new_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
-    #               benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
-    #               None,
-    #              None
-    #               ) 
-    
-    # dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
-    
-    # method1_dfs = read_files(method1_paths, 'ANTs')
-    # method2_dfs = read_files(method2_paths, 'Starmie')
-    # method3_dfs = read_files(method3_paths, 'GMC')
-    # method4_dfs = read_files(method4_paths, 'SemNov')
-    # method5_dfs = read_files(method5_paths, 'Starmie0')
-    # method6_dfs = read_files(method6_paths, 'Starmie1')
+
 
     draw_ssnm_individual("/u6/bkassaie/NAUS/graphs/ssnm",
                   benchmark_tus+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
                   benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
-                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-                  None,
-                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
-                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
-                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
-                  None,
-                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
                   benchmark_ugenv2_small+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
+                
                   benchmark_tus+"diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+ "diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
@@ -181,26 +150,53 @@ def draw_plots():
                   benchmark_tus+"diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
-                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv"
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv", 
+                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv"
                   ) 
-                 
+    draw_ssnm_individual("/u6/bkassaie/NAUS/graphs/ssnm",
+                  benchmark_tus+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv", 
+                
+                  benchmark_tus+"diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  None,
+                  None,
+                  None, 
+                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv"
+                  )    
+              
     draw_ssnm_individual_filtered("/u6/bkassaie/NAUS/graphs/ssnm",
                   benchmark_tus+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
                   benchmark_ugenv2_small+"diveristy_data/search_results/Penalized/pnl_ssnm_diluted_restricted_avg_nodup_filtered.csv",
-                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
-                  None,
-                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup_filtered.csv", 
-                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
-                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
-                  None,
-                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup_filtered.csv",
                   benchmark_tus+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
                   benchmark_ugenv2_small+"diveristy_data/search_results/semanticNovelty/semNovelty_ssnm_diluted_restricted_avg_nodup_filtered.csv",
+                  benchmark_tus+"diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/Starmie/starmie_ssnm_diluted_restricted_avg_nodup_filtered.csv", 
                   benchmark_tus+"diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+ "diveristy_data/search_results/starmie0/starmie0_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
@@ -208,7 +204,11 @@ def draw_plots():
                   benchmark_tus+"diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv",
                   benchmark_santos+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv",
                   None,
-                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup.csv"
+                  benchmark_ugenv2_small+ "diveristy_data/search_results/starmie1/starmie1_ssnm_diluted_restricted_avg_nodup_filtered.csv",
+                  benchmark_tus+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  benchmark_santos+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup.csv",
+                  None,
+                  benchmark_ugenv2_small+"diveristy_data/search_results/GMC/gmc_ssnm_diluted_restricted_avg_nodup_filtered.csv"
                   ) 
                  
     
@@ -276,8 +276,8 @@ def draw_plots():
     
     
     draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
-                            None
-                            ,None, 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv"
+                            ,"data/santos/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv", 
                             None, 
                            None, 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv", 
@@ -292,11 +292,34 @@ def draw_plots():
                             "data/santos/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
                            None, 
                           None, 
-                             "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
+                           None,
+                          None,
                            None, 
                           None
-                            , "shortestTimes.png")
+                            ,"longest")
+    
+    # draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
+    #                         None
+    #                         ,None, 
+    #                         None, 
+    #                        None, 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv", 
+    #                         "data/santos/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv",
+    #                        None,
+    #                       None, 
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+    #                         "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+    #                        None, 
+    #                       None,
+    #                         "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
+    #                         "data/santos/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
+    #                        None, 
+    #                       None, 
+    #                          "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
+    #                         "data/santos/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
+    #                        None, 
+    #                       None
+    #                         , "shortestTimes.png")
     
     
     # draw_execution_time_2("/u6/bkassaie/NAUS/graphs/executionTime", 
@@ -759,7 +782,7 @@ def draw_snm_all_individual(base_path,
                  starme1_path1=None, starme1_path2=None, starme1_path3=None, starme1_path4=None,
                  semnov_path1=None, semnov_path2=None, semnov_path3=None, semnov_path4=None):
     """
-    Draws separate SNM curves for each dataset, plotting all methods (ANTs, Starmie, Starmie0, Starmie1, SemNov) on the same figure.
+    Draws separate SNM curves for each dataset, plotting all methods (ANTs, Starmie, Starmie0, StarmieOne, SemNov) on the same figure.
     Each dataset gets its own plot.
     """
     import os
@@ -770,8 +793,8 @@ def draw_snm_all_individual(base_path,
     method_info = {
         'ANTs': ('green', 'o'),
         'Starmie': ('blue', 's'),
-        'Starmie0': ('purple', '^'),
-        'Starmie1': ('cyan', 'v'),
+        'StarmieGold': ('purple', '^'),
+        'StarmieOne': ('cyan', 'v'),
         'SemNov': ('orange', 'D')
     }
 
@@ -793,12 +816,12 @@ def draw_snm_all_individual(base_path,
 
     pnl_dfs = read_files(pnl_paths, 'ANTs')
     starme_dfs = read_files(starme_paths, 'Starmie')
-    starme0_dfs = read_files(starme0_paths, 'Starmie0')
-    starme1_dfs = read_files(starme1_paths, 'Starmie1')
+    starme0_dfs = read_files(starme0_paths, 'StarmieGold')
+    starme1_dfs = read_files(starme1_paths, 'StarmieOne')
     semnov_dfs = read_files(semnov_paths, 'SemNov')
 
     all_dfs = {}
-    for d in [pnl_dfs, starme_dfs, starme0_dfs, starme1_dfs, semnov_dfs]:
+    for d in [pnl_dfs, semnov_dfs, starme_dfs, starme0_dfs, starme1_dfs]:
         for idx, (method, df) in d.items():
             if idx not in all_dfs:
                 all_dfs[idx] = []
@@ -820,18 +843,20 @@ def draw_snm_all_individual(base_path,
                     color=color,
                     label=method)
 
-        ax.set_title(f"{dataset_name}", fontsize=14)
+        #ax.set_title(f"{dataset_name}", fontsize=14)
         ax.set_xlabel('l', fontsize=12)
         ax.set_ylabel('SNM', fontsize=12)
         ax.set_xticks(range(1, 11))
-        ax.set_ylim([0, 1.1])  # <- Updated upper limit from 1.0 to 1.1
-        ax.set_yticks(np.arange(0, 1.15, 0.05))
+        ax.set_ylim([0, 1.05])  # Extend slightly above 1
+        ax.set_yticks(np.arange(0, 1.01, 0.05))  # Only up to 1.0 in ticks
         ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
         ax.legend(fontsize=9, loc='lower left', frameon=False)
-
-        pdf_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.pdf")
-        png_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.png")
-        plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+        if (starme1_path1!=None): 
+            pdf_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}extended.pdf")
+            png_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}extended.png")
+        else : 
+            pdf_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.pdf")
+            png_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.png")      
         plt.savefig(png_path, dpi=300, bbox_inches='tight')
         plt.close()
 
@@ -844,7 +869,7 @@ def draw_snm_all_individual_filtered(base_path,
                  starme1_path1=None, starme1_path2=None, starme1_path3=None, starme1_path4=None,
                  semnov_path1=None, semnov_path2=None, semnov_path3=None, semnov_path4=None):
     """
-    Draws separate SNM curves for each dataset, plotting all methods (ANTs, Starmie, Starmie0, Starmie1, SemNov) on the same figure.
+    Draws separate SNM curves for each dataset, plotting all methods (ANTs, Starmie, StarmieGold, StarmieOne, SemNov) on the same figure.
     Each dataset gets its own plot.
     """
     import os
@@ -855,8 +880,8 @@ def draw_snm_all_individual_filtered(base_path,
     method_info = {
         'ANTs': ('green', 'o'),
         'Starmie': ('blue', 's'),
-        'Starmie0': ('purple', '^'),
-        'Starmie1': ('cyan', 'v'),
+        'StarmieGold': ('purple', '^'),
+        'StarmieOne': ('cyan', 'v'),
         'SemNov': ('orange', 'D')
     }
 
@@ -878,12 +903,12 @@ def draw_snm_all_individual_filtered(base_path,
 
     pnl_dfs = read_files(pnl_paths, 'ANTs')
     starme_dfs = read_files(starme_paths, 'Starmie')
-    starme0_dfs = read_files(starme0_paths, 'Starmie0')
-    starme1_dfs = read_files(starme1_paths, 'Starmie1')
+    starme0_dfs = read_files(starme0_paths, 'StarmieGold')
+    starme1_dfs = read_files(starme1_paths, 'StarmieOne')
     semnov_dfs = read_files(semnov_paths, 'SemNov')
 
     all_dfs = {}
-    for d in [pnl_dfs, starme_dfs, starme0_dfs, starme1_dfs, semnov_dfs]:
+    for d in [pnl_dfs, semnov_dfs, starme_dfs, starme0_dfs, starme1_dfs]:
         for idx, (method, df) in d.items():
             if idx not in all_dfs:
                 all_dfs[idx] = []
@@ -905,18 +930,17 @@ def draw_snm_all_individual_filtered(base_path,
                     color=color,
                     label=method)
 
-        ax.set_title(f"{dataset_name}", fontsize=14)
+        #ax.set_title(f"{dataset_name}", fontsize=14)
         ax.set_xlabel('l', fontsize=12)
         ax.set_ylabel('SNM', fontsize=12)
         ax.set_xticks(range(1, 11))
-        ax.set_ylim([0, 1.1])  # <- Updated upper limit from 1.0 to 1.1
-        ax.set_yticks(np.arange(0, 1.15, 0.05))
+        ax.set_ylim([0, 1.05])  # Extended just above 1 to show y=1 clearly
+        ax.set_yticks(np.arange(0, 1.01, 0.05))  # Y-axis ticks only up to 1.0
         ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.6)
         ax.legend(fontsize=9, loc='lower left', frameon=False)
 
         pdf_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}.pdf")
         png_path = os.path.join(base_path, f"snm_{dataset_name.replace(' ', '_')}_filtered.png")
-        plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
         plt.savefig(png_path, dpi=300, bbox_inches='tight')
         plt.close()
 
@@ -1207,7 +1231,7 @@ def draw_ssnm_individual_3Systems(base_path,
         # Set axis labels and title.
         ax.set_xlabel('l', fontsize=12)
         ax.set_ylabel('SSNM', fontsize=12)
-        ax.set_title(f"Benchmark: {dataset_names[i]}", fontsize=14)
+       #ax.set_title(f"Benchmark: {dataset_names[i]}", fontsize=14)
         ax.set_xticks(range(1, 11))      # Modify as needed based on your data.
         ax.set_ylim([0, 1])              # Modify as needed.
         ax.set_yticks(np.arange(0, 1.1, 0.1))
@@ -1245,8 +1269,8 @@ def draw_ssnm_individual(base_path,
       - Starmie (purple, s)
       - GMC (green, D)
       - SemNov (orange, ^)
-      - Starmie0 (cyan, v)
-      - Starmie1 (brown, P)
+      - StarmieGold (cyan, v)
+      - StarmieOne (brown, P)
 
     Skips missing files gracefully.
     """
@@ -1256,16 +1280,19 @@ def draw_ssnm_individual(base_path,
     from matplotlib.lines import Line2D
     import numpy as np
 
-    linestyles = ["-", "--", "-.", ":"]
+    #linestyles = ["-", "--", "-.", ":"]
     dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
 
+
+    
+    
     method_info = {
-        'ANTs': {'color': 'blue', 'marker': 'o'},
-        'Starmie': {'color': 'purple', 'marker': 's'},
-        'GMC': {'color': 'green', 'marker': 'D'},
-        'SemNov': {'color': 'orange', 'marker': '^'},
-        'Starmie0': {'color': 'cyan', 'marker': 'v'},
-        'Starmie1': {'color': 'brown', 'marker': 'P'}
+        'ANTs': {'color':'green', 'marker': 'o'},
+        'Starmie': {'color':'blue', 'marker': 's'},
+        'StarmieGold': {'color': 'purple', 'marker': '^'},
+        'StarmieOne': {'color': 'cyan', 'marker': 'v'},
+        'SemNov': {'color':'orange', 'marker': 'D'}, 
+        'GMC': {'color':'gray', 'marker': 'P'}
     }
 
     def read_files(paths, method_label):
@@ -1286,11 +1313,11 @@ def draw_ssnm_individual(base_path,
     method6_paths = [method6_path1, method6_path2, method6_path3, method6_path4]
 
     method1_dfs = read_files(method1_paths, 'ANTs')
-    method2_dfs = read_files(method2_paths, 'Starmie')
-    method3_dfs = read_files(method3_paths, 'GMC')
-    method4_dfs = read_files(method4_paths, 'SemNov')
-    method5_dfs = read_files(method5_paths, 'Starmie0')
-    method6_dfs = read_files(method6_paths, 'Starmie1')
+    method3_dfs = read_files(method3_paths, 'Starmie')
+    method6_dfs = read_files(method6_paths, 'GMC')
+    method2_dfs = read_files(method2_paths, 'SemNov')
+    method4_dfs = read_files(method4_paths, 'StarmieGold')
+    method5_dfs = read_files(method5_paths, 'StarmieOne')
 
     all_methods = method1_dfs + method2_dfs + method3_dfs + method4_dfs + method5_dfs + method6_dfs
 
@@ -1305,34 +1332,34 @@ def draw_ssnm_individual(base_path,
                 style = method_info.get(method, {})
                 color = style.get('color', 'black')
                 marker = style.get('marker', 'o')
-                linestyle = linestyles[i % len(linestyles)]
+                #linestyle = linestyles[i % len(linestyles)]
 
                 ax.plot(df['k'], df['avg_snm'],
                         marker=marker,
-                        linestyle=linestyle,
                         color=color,
                         label=method)
 
                 if method not in used_methods:
-                    legend_handles.append(Line2D([], [], color=color, linestyle=linestyle,
+                    legend_handles.append(Line2D([], [], color=color,
                                                  marker=marker, label=method))
                     used_methods.add(method)
 
         ax.set_xlabel('l', fontsize=12)
         ax.set_ylabel('SSNM', fontsize=12)
-        ax.set_title(f"{dataset_name}", fontsize=14)
+        #ax.set_title(f"{dataset_name}", fontsize=14)
         ax.set_xticks(range(1, 11))
-        ax.set_ylim([0, 1.1])  # ✅ y-axis upper limit updated
-        ax.set_yticks(np.arange(0, 1.11, 0.05))  # ✅ y-ticks adjusted
+        ax.set_ylim([0, 1.03])  # ✅ Slightly extend above 1.0
+        ax.set_yticks(np.arange(0, 1.01, 0.05))  # ✅ Limit y-tick labels to 1.0
         ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='lightgray')
 
         if legend_handles:
             ax.legend(handles=legend_handles, loc='lower left', fontsize=10, title=None)
 
         os.makedirs(base_path, exist_ok=True)
-        pdf_file = os.path.join(base_path, f"ssnm_{dataset_name}.pdf")
-        png_file = os.path.join(base_path, f"ssnm_{dataset_name}.png")
-        plt.savefig(pdf_file, format='pdf', bbox_inches='tight')
+        if (method5_path1!=None):
+            png_file = os.path.join(base_path, f"ssnm_{dataset_name}Extended.png")
+        else: 
+            png_file = os.path.join(base_path, f"ssnm_{dataset_name}.png")    
         plt.savefig(png_file, dpi=300, bbox_inches='tight')
         plt.close()
         
@@ -1345,15 +1372,7 @@ def draw_ssnm_individual_filtered(base_path,
                          method5_path1=None, method5_path2=None, method5_path3=None, method5_path4=None,
                          method6_path1=None, method6_path2=None, method6_path3=None, method6_path4=None):
     """
-    Draws individual plots for each dataset from up to six methods:
-      - ANTs (blue, o)
-      - Starmie (purple, s)
-      - GMC (green, D)
-      - SemNov (orange, ^)
-      - Starmie0 (cyan, v)
-      - Starmie1 (brown, P)
-
-    Skips missing files gracefully.
+    Draws SSNM plots per dataset and method, skipping missing files gracefully.
     """
     import os
     import pandas as pd
@@ -1361,16 +1380,15 @@ def draw_ssnm_individual_filtered(base_path,
     from matplotlib.lines import Line2D
     import numpy as np
 
-    linestyles = ["-", "--", "-.", ":"]
     dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
-
+     
     method_info = {
-        'ANTs': {'color': 'blue', 'marker': 'o'},
-        'Starmie': {'color': 'purple', 'marker': 's'},
-        'GMC': {'color': 'green', 'marker': 'D'},
-        'SemNov': {'color': 'orange', 'marker': '^'},
-        'Starmie0': {'color': 'cyan', 'marker': 'v'},
-        'Starmie1': {'color': 'brown', 'marker': 'P'}
+        'ANTs': {'color':'green', 'marker': 'o'},
+        'Starmie': {'color':'blue', 'marker': 's'},
+        'StarmieGold': {'color': 'purple', 'marker': '^'},
+        'StarmieOne': {'color': 'cyan', 'marker': 'v'},
+        'SemNov': {'color':'orange', 'marker': 'D'}, 
+        'GMC': {'color':'gray', 'marker': 'P'}
     }
 
     def read_files(paths, method_label):
@@ -1391,11 +1409,11 @@ def draw_ssnm_individual_filtered(base_path,
     method6_paths = [method6_path1, method6_path2, method6_path3, method6_path4]
 
     method1_dfs = read_files(method1_paths, 'ANTs')
-    method2_dfs = read_files(method2_paths, 'Starmie')
-    method3_dfs = read_files(method3_paths, 'GMC')
-    method4_dfs = read_files(method4_paths, 'SemNov')
-    method5_dfs = read_files(method5_paths, 'Starmie0')
-    method6_dfs = read_files(method6_paths, 'Starmie1')
+    method3_dfs = read_files(method3_paths, 'Starmie')
+    method2_dfs = read_files(method2_paths, 'SemNov')
+    method4_dfs = read_files(method4_paths, 'StarmieGold')
+    method5_dfs = read_files(method5_paths, 'StarmieOne')
+    method6_dfs = read_files(method6_paths, 'GMC')
 
     all_methods = method1_dfs + method2_dfs + method3_dfs + method4_dfs + method5_dfs + method6_dfs
 
@@ -1410,25 +1428,23 @@ def draw_ssnm_individual_filtered(base_path,
                 style = method_info.get(method, {})
                 color = style.get('color', 'black')
                 marker = style.get('marker', 'o')
-                linestyle = linestyles[i % len(linestyles)]
 
                 ax.plot(df['k'], df['avg_snm'],
                         marker=marker,
-                        linestyle=linestyle,
                         color=color,
                         label=method)
 
                 if method not in used_methods:
-                    legend_handles.append(Line2D([], [], color=color, linestyle=linestyle,
+                    legend_handles.append(Line2D([], [], color=color, 
                                                  marker=marker, label=method))
                     used_methods.add(method)
 
         ax.set_xlabel('l', fontsize=12)
         ax.set_ylabel('SSNM', fontsize=12)
-        ax.set_title(f"{dataset_name}", fontsize=14)
+        #ax.set_title(f"{dataset_name}", fontsize=14)
         ax.set_xticks(range(1, 11))
-        ax.set_ylim([0, 1.1])  # ✅ y-axis upper limit updated
-        ax.set_yticks(np.arange(0, 1.11, 0.05))  # ✅ y-ticks adjusted
+        ax.set_ylim([0, 1.03])  # ✅ Extend slightly beyond 1
+        ax.set_yticks(np.arange(0, 1.01, 0.05))  # ✅ Max label at 1.0 only
         ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='lightgray')
 
         if legend_handles:
@@ -1437,45 +1453,32 @@ def draw_ssnm_individual_filtered(base_path,
         os.makedirs(base_path, exist_ok=True)
         pdf_file = os.path.join(base_path, f"ssnm_{dataset_name}.pdf")
         png_file = os.path.join(base_path, f"ssnm_{dataset_name}_filtered.png")
-        plt.savefig(pdf_file, format='pdf', bbox_inches='tight')
         plt.savefig(png_file, dpi=300, bbox_inches='tight')
         plt.close()
                 
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
 def draw_execution_time_all(base_path,
                              gmc_res1=None, gmc_res2=None, gmc_res3=None, gmc_res4=None,
                              pnl_res1=None, pnl_res2=None, pnl_res3=None, pnl_res4=None,
                              semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None,
-                             starmie0_res1=None, starmie0_res2=None, starmie0_res3=None, starmie0_res4=None,
-                             starmie1_res1=None, starmie1_res2=None, starmie1_res3=None, starmie1_res4=None, filename=None):
-    import os
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import numpy as np
+                             StarmieGold_res1=None, StarmieGold_res2=None, StarmieGold_res3=None, StarmieGold_res4=None,
+                             StarmieOne_res1=None, StarmieOne_res2=None, StarmieOne_res3=None, StarmieOne_res4=None,
+                             filename=None):
+
+    method_info = {
+        'ANTs': {'color': 'green', 'marker': 'o'},
+        'Starmie': {'color': 'blue', 'marker': 's'},
+        'StarmieGold': {'color': 'purple', 'marker': '^'},
+        'StarmieOne': {'color': 'cyan', 'marker': 'v'},
+        'SemNov': {'color': 'orange', 'marker': 'D'}, 
+        'GMC': {'color': 'gray', 'marker': 'P'}
+    }
 
     dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
-    color_map = {
-        "TUS": "blue",
-        "Santos": "red",
-        "UgenV2": "green",
-        "UgenV2 small": "orange"
-    }
-
-    marker_map = {
-        "GMC": "^",
-        "ANTs": "o",
-        "SemNovel": "s",
-        "Starmie0": "v",
-        "Starmie1": "P"
-    }
-
-    line_style_map = {
-        "GMC": "--",
-        "ANTs": "-",
-        "SemNovel": "-.",
-        "Starmie0": ":",
-        "Starmie1": (0, (3, 1, 1, 1))  # custom dash style
-    }
-
     df_all_list = []
 
     def add_result(file, method_name, dataset_name):
@@ -1490,30 +1493,29 @@ def draw_execution_time_all(base_path,
     for i, res in enumerate([pnl_res1, pnl_res2, pnl_res3, pnl_res4]):
         add_result(res, 'ANTs', dataset_names[i])
     for i, res in enumerate([semnovel_res1, semnovel_res2, semnovel_res3, semnovel_res4]):
-        add_result(res, 'SemNovel', dataset_names[i])
-    for i, res in enumerate([starmie0_res1, starmie0_res2, starmie0_res3, starmie0_res4]):
-        add_result(res, 'Starmie0', dataset_names[i])
-    for i, res in enumerate([starmie1_res1, starmie1_res2, starmie1_res3, starmie1_res4]):
-        add_result(res, 'Starmie1', dataset_names[i])
+        add_result(res, 'SemNov', dataset_names[i])
+    for i, res in enumerate([StarmieGold_res1, StarmieGold_res2, StarmieGold_res3, StarmieGold_res4]):
+        add_result(res, 'StarmieGold', dataset_names[i])
+    for i, res in enumerate([StarmieOne_res1, StarmieOne_res2, StarmieOne_res3, StarmieOne_res4]):
+        add_result(res, 'StarmieOne', dataset_names[i])
 
     if not df_all_list:
         print("No valid data files found to plot.")
         return
 
     df_all = pd.concat(df_all_list, ignore_index=True)
-
     fig, ax = plt.subplots(figsize=(10, 7))
 
     handles_labels = []
     for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
+        style = method_info.get(method, {})
+        color = style.get('color', 'black')
+        marker = style.get('marker', 'o')
         line, = ax.plot(df_group['k'], df_group['exec_time'],
-                        marker=marker_map.get(method, 'x'),
-                        linestyle=line_style_map.get(method, '-'),
-                        color=color_map.get(dataset, 'black'),
-                        label=f"{dataset} - {method}")
+                        marker=marker, color=color, label=f"{dataset} - {method}")
         handles_labels.append((f"{dataset} - {method}", line))
 
-    # Sort legend items by dataset first, then method
+    # Sort legend by dataset, then method
     handles_labels.sort(key=lambda x: (dataset_names.index(x[0].split(' - ')[0]), x[0].split(' - ')[1]))
     labels, handles = zip(*[(label, handle) for label, handle in handles_labels])
 
@@ -1525,18 +1527,16 @@ def draw_execution_time_all(base_path,
     ax.set_yticks(np.linspace(y_min, y_max, 20))
     ax.grid(True, which='both', linestyle='--', linewidth=0.5, color='lightgray', alpha=0.7)
 
-    ax.legend(handles, labels,
-              loc='upper left',
-              fontsize=8,
-              frameon=False)
+    ax.legend(handles, labels, loc='upper left', fontsize=8, frameon=False)
 
     os.makedirs(base_path, exist_ok=True)
-    pdf_path = os.path.join(base_path, f"{filename}.pdf")
-    png_path = os.path.join(base_path, f"{filename}.png")
-    plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
+    if StarmieOne_res1!=None: 
+        png_path = os.path.join(base_path, f"{filename}Extended.png")
+    else: 
+        png_path = os.path.join(base_path, f"{filename}.png")
+ 
     plt.savefig(png_path, dpi=300, bbox_inches='tight')
     plt.close()
- 
  
  
 def draw_execution_time_2(base_path,

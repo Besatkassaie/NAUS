@@ -459,7 +459,7 @@ def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_r
         this function only makes sense to be run over diluted dataset
         we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
                             2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
-                            groundtruth: is the gound truth havinf unionable tables for each query
+                            groundtruth: is the gound truth having unionable tables for each query
         """                    
         if('csv' in groundtruth_file ): 
             groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)

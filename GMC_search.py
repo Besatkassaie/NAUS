@@ -1575,7 +1575,7 @@ class GMC_Search:
             # 4. Count how many times file1 >= baseline for each metric
             results = {
                 'k': k_value,
-                'F':   (merged['F']   >= merged['F']).sum()
+                'F':   (merged['F_1']   >= merged['F_2']).sum()
             }
 
             # 5. Write results
@@ -1861,7 +1861,7 @@ def d_div(self,s_dict : dict, metric = "cosine", normalize = False) -> dict:
 
       
 if __name__ == "__main__":
-    mode='F_value'
+    mode='integrate_F'
     if mode=='search':
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
@@ -1999,18 +1999,18 @@ if __name__ == "__main__":
     elif mode=="F_value":
         print("running gms search class in F_value mode to generate F_value evaluation metrics")
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
-        #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-        benchmark_path="/u6/bkassaie/NAUS/data/santos/"
-        #benchmark_path="data/table-union-search-benchmark/small/"
+        benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
+        #benchmark_path="/u6/bkassaie/NAUS/data/santos/"
+        # benchmark_path="data/table-union-search-benchmark/small/"
 
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
-        #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-        alignment_Dust="data/santos/Manual_Alignment_4gtruth_santos_all.csv"
+        alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
+        #alignment_Dust="data/santos/Manual_Alignment_4gtruth_santos_all.csv"
        
-        #alignment_Dust= "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
+        # alignment_Dust= "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
 
-        system="GMC"
-        resfilename="gmc_results_diluted04_restricted.csv"
+        # system="GMC"
+        # resfilename="gmc_results_diluted04_restricted.csv"
 
     
         # system="Starmie"
@@ -2026,8 +2026,8 @@ if __name__ == "__main__":
         # resfilename="search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
         
-        # system="Penalized"
-        # resfilename="search_result_penalize_04diluted_restricted_pdeg1.csv"
+        system="Penalized"
+        resfilename="search_result_penalize_04diluted_restricted_pdeg1.csv"
 
      
 
@@ -2058,7 +2058,7 @@ if __name__ == "__main__":
                 file_=f"{benchmark_path}diveristy_data/search_results/{system}/F_gmc_{i}.csv"
                 gmc_search.k=i
                 if not os.path.exists(file_): 
-                    file=gmc_search.F(res_csv_file, 
+                    file=gmc_search.compute_F(res_csv_file, 
                                                     f"{system}",
                                                      file_,
                                                     gmc_search.k
@@ -2205,8 +2205,8 @@ if __name__ == "__main__":
     elif mode=="integrate_F": 
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-            benchmark_path="/u6/bkassaie/NAUS/data/santos/"
-            #benchmark_path="data/table-union-search-benchmark/small/"
+            #benchmark_path="/u6/bkassaie/NAUS/data/santos/"
+            benchmark_path="data/table-union-search-benchmark/small/"
             
         #     # compare penalize to gmc(baseline)
             out_path=f"{benchmark_path}diveristy_data/GMC_params/"
@@ -2319,7 +2319,7 @@ if __name__ == "__main__":
             
             for i in range(2, 11): 
                 df_k=GMC_Search.analyse_gmc_F(f"{benchmark_path}diveristy_data/search_results/Penalized/F_gmc_{i}.csv",
-                                                    f"{benchmark_path}diveristy_data/search_results/starmie1/F _gmc_{i}.csv",
+                                                    f"{benchmark_path}diveristy_data/search_results/starmie1/F_gmc_{i}.csv",
                                                         i)
                 all_results.append(df_k)
             # Concatenate into one DataFrame

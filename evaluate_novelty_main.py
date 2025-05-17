@@ -8,8 +8,8 @@ import os
  # make sure that we do not have extra character in result if you have remove them  
 
 # #santos 
-datafolder="/u6/bkassaie/NAUS/data/santos/"
-gtruthfilename="santos_union_groundtruth.pickle_diluted.pickle"
+# datafolder="/u6/bkassaie/NAUS/data/santos/"
+# gtruthfilename="santos_union_groundtruth.pickle_diluted.pickle"
 
 #  tus small
 # datafolder="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/"
@@ -20,8 +20,8 @@ gtruthfilename="santos_union_groundtruth.pickle_diluted.pickle"
 # gtruthfilename="ugenv2_unionable_groundtruth_diluted.pickle"
 
 #ugen v2 small
-# datafolder="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-# gtruthfilename="ugenv2_small_unionable_groundtruth_diluted.pickle"
+datafolder="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
+gtruthfilename="ugenv2_small_unionable_groundtruth_diluted.pickle"
 
 
 gmc_result_file=datafolder+"diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
