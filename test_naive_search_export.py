@@ -1,152 +1,155 @@
+"""
+Script for testing and exporting naive search results with both scored and unscored outputs.
+This script performs table search using either exact or bounds matching and exports results
+in two formats: with and without scores.
+"""
+
 import numpy as np
-import random
 import pickle
 import argparse
 import mlflow
-from naive_search_export import NaiveSearcher
-from checkPrecisionRecall import saveDictionaryAsPickleFile, calcMetrics
 import time
+import os
 
-def generate_random_table(nrow, ncol):
-    return np.random.rand(nrow, ncol)
-
-def verify(table1, table2,threshold=0.6):
-    score = 0.0
-    nrow = len(table1)
-    ncol = len(table2)
-    graph = np.zeros(shape=(nrow,ncol),dtype=float)
-    for i in range(nrow):
-        for j in range(ncol):
-            sim = cosine_sim(table1[i],table2[j])
-            if sim > threshold:
-                graph[i,j] = sim
-    max_graph = make_cost_matrix(graph, lambda cost: (graph.max() - cost) if (cost != DISALLOWED) else DISALLOWED)
-    m = Munkres()
-    indexes = m.compute(max_graph)
-    for row,col in indexes:
-        score += graph[row,col]
-    return score,indexes
-
-def generate_test_data(num, ndim):
-    # for test only: randomly generate tables and 2 queries
-    # num: the number of tables in the dataset; ndim: dimension of column vectors
-    tables = []
-    queries = []
-    for i in range(num):
-        ncol = random.randint(2,9)
-        tbl = generate_random_table(ncol, ndim)
-        tables.append((i,tbl))
-    for j in range(2):
-        ncol = random.randint(2,9)
-        tbl = generate_random_table(ncol, ndim)
-        queries.append((j+num,tbl))
-    return tables, queries
+from naive_search_export import NaiveSearcher
 
 
-#if __name__ == '__main__':
-# this class used to export the result from Starmie in two format one with score and one without score 
-# then we 
 def main(args2=None):
+    """
+    Main function to run the naive search test and export results.
+    Exports results in two formats:
+    1. With scores: (table_id, score) pairs
+    2. Without scores: just table_ids
     
+    Args:
+        args2: Optional command line arguments
+    """
+    # Parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--encoder", type=str, default="sato", choices=['sherlock', 'sato', 'cl', 'tapex'])
-    parser.add_argument("--benchmark", type=str, default='santos')
-    parser.add_argument("--augment_op", type=str, default="drop_col")
-    parser.add_argument("--sample_meth", type=str, default="tfidf_entity")
-    # matching is the type of matching
-    parser.add_argument("--matching", type=str, default='exact') #exact or bounds (or greedy)
-    parser.add_argument("--table_order", type=str, default="column")
-    parser.add_argument("--run_id", type=int, default=0)
-    parser.add_argument("--single_column", dest="single_column", action="store_true")
-    # For error analysis
-    parser.add_argument("--bucket", type=int, default=0) # the error analysis has 5 equally-sized buckets
-    parser.add_argument("--analysis", type=str, default='col') # 'col', 'row', 'numeric'
-    parser.add_argument("--K", type=int, default=10)
-    parser.add_argument("--threshold", type=float, default=0.6)
-    # For Scalability experiments
-    parser.add_argument("--scal", type=float, default=1.00)
-    # mlflow tag
-    parser.add_argument("--mlflow_tag", type=str, default=None)
-    parser.add_argument("--restrict", type=int, default=0) # if is 1 means that restict your datalake only to unionables based on a ground truth 
+    
+    # Model configuration
+    parser.add_argument("--encoder", type=str, default="sato", 
+                      choices=['sherlock', 'sato', 'cl', 'tapex'],
+                      help='Encoder type to use')
+    parser.add_argument("--benchmark", type=str, default='santos',
+                      help='Benchmark dataset to use')
+    parser.add_argument("--augment_op", type=str, default="drop_col",
+                      help='Augmentation operation')
+    parser.add_argument("--sample_meth", type=str, default="tfidf_entity",
+                      help='Sampling method')
+    parser.add_argument("--matching", type=str, default='exact',
+                      choices=['exact', 'bounds'],
+                      help='Matching type: exact or bounds')
+    parser.add_argument("--table_order", type=str, default="column",
+                      help='Table ordering method')
+    
+    # Experiment configuration
+    parser.add_argument("--run_id", type=int, default=0,
+                      help='Run identifier')
+    parser.add_argument("--single_column", dest="single_column", action="store_true",
+                      help='Use single column mode')
+    parser.add_argument("--K", type=int, default=10,
+                      help='Number of top results to return')
+    parser.add_argument("--threshold", type=float, default=0.6,
+                      help='Similarity threshold')
+    parser.add_argument("--scal", type=float, default=1.00,
+                      help='Scaling factor')
+    parser.add_argument("--restrict", type=int, default=0,
+                      help='Restrict datalake to unionables based on ground truth')
+    
+    # Error analysis
+    parser.add_argument("--bucket", type=int, default=0,
+                      help='Error analysis bucket (0-4)')
+    parser.add_argument("--analysis", type=str, default='col',
+                      choices=['col', 'row', 'numeric'],
+                      help='Analysis type')
+    
+    # MLFlow configuration
+    parser.add_argument("--mlflow_tag", type=str, default=None,
+                      help='MLFlow tag')
 
     hp = parser.parse_args(args=args2)
 
-    # mlflow logging
-    for variable in ["encoder", "benchmark", "augment_op", "sample_meth", "matching", "table_order", "run_id", "single_column", "K", "threshold", "scal", "restrict"]:
+    # Log parameters to MLFlow
+    for variable in ["encoder", "benchmark", "augment_op", "sample_meth", "matching", 
+                    "table_order", "run_id", "single_column", "K", "threshold", 
+                    "scal", "restrict"]:
         mlflow.log_param(variable, getattr(hp, variable))
 
     if hp.mlflow_tag:
         mlflow.set_tag("tag", hp.mlflow_tag)
 
-    #dataFolder = hp.benchmark+"/small"
+    # Set up file paths based on encoder type
     dataFolder = hp.benchmark
-    # If the filepath to the pkl files are different, change here:
     if hp.encoder == 'cl':
-        query_path = "data/"+dataFolder+"/vectors/"+hp.encoder+"_query_"+hp.augment_op+"_"+hp.sample_meth+"_"+hp.table_order+"_"+str(hp.run_id)
-        table_path = "data/"+dataFolder+"/vectors/"+hp.encoder+"_datalake_"+hp.augment_op+"_"+hp.sample_meth+"_"+hp.table_order+"_"+str(hp.run_id)
-
+        # For column-level encoder, use more specific path structure
+        base_path = f"data/{dataFolder}/vectors/{hp.encoder}"
+        suffix = f"_{hp.augment_op}_{hp.sample_meth}_{hp.table_order}_{hp.run_id}"
         if hp.single_column:
-            query_path += "_singleCol"
-            table_path += "_singleCol"
-        query_path += ".pkl"
-        table_path += ".pkl"
+            suffix += "_singleCol"
+        query_path = f"{base_path}_query{suffix}.pkl"
+        table_path = f"{base_path}_datalake{suffix}.pkl"
     else:
-        query_path = "data/"+dataFolder+"/"+hp.encoder+"_query.pkl"
-        table_path = "data/"+dataFolder+"/"+hp.encoder+"_datalake.pkl"
+        # For other encoders, use simpler path structure
+        query_path = f"data/{dataFolder}/{hp.encoder}_query.pkl"
+        table_path = f"data/{dataFolder}/{hp.encoder}_datalake.pkl"
 
+    # Load query data
+    with open(query_path, "rb") as qfile:
+        queries = pickle.load(qfile)
+    print(f"Number of queries: {len(queries)}")
 
-    gt="/santos_small_union_groundtruth_diluted.pickle"
-    # Load the query file
-    qfile = open(query_path,"rb")
-    queries = pickle.load(qfile)
-    print("Number of queries: %d" % (len(queries)))
-    qfile.close()
-    # Call NaiveSearcher, which has linear search and bounds search, from naive_search.py
+    # Initialize searcher and results containers
     searcher = NaiveSearcher(table_path, hp.scal)
     returnedResults = {}
     returnedResults_noscore = {}
+    
+    # Process queries
     start_time = time.time()
-    # For error analysis of tables
-    analysis = hp.analysis
-    # bucketFile = open("data/"+dataFolder+"/buckets/query_"+analysis+"Bucket_"+str(hp.bucket)+".txt", "r")
-    # bucket = bucketFile.read()
-    queries.sort(key = lambda x: x[0])
     query_times = []
+    queries.sort(key=lambda x: x[0])
     qCount = 0
 
     for query in queries:
-            qCount += 1
-            if qCount % 10 == 0:
-                print("Processing query ",qCount, " of ", len(queries), " total queries.")
-        # if query[0] in bucket:
-            query_start_time = time.time()
-            if hp.matching == 'exact':
-                if(hp.restrict==0):
-                  qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold)
-                else:
-                  print("working on restricted data")
-                  qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold, restrict=1 , 
-                                       gth="data/"+dataFolder+gt)
-  
-            else: # Bounds matching
-                qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)
-            res = []
-            for tpl in qres:
-                tmp = (tpl[0],tpl[1])
-                res.append(tmp)
-                #with score
-                returnedResults[query[0]] = [(r[1],r[0]) for r in res]
-                returnedResults_noscore[query[0]] = [r[1] for r in res]
-            query_times.append(time.time() - query_start_time)
-    #print(returnedResults)        
-    with open("data/"+dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
-                 pickle.dump(returnedResults, file)   
-    with open("data/"+dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
-                 pickle.dump(returnedResults_noscore, file)                
-    # print("Average QUERY TIME: %s seconds " % (sum(query_times)/len(query_times)))
-    print("10th percentile: ", np.percentile(query_times, 10), " 90th percentile: ", np.percentile(query_times, 90))
-    print("--- Total Query Time: %s seconds ---" % (time.time() - start_time))
+        qCount += 1
+        if qCount % 10 == 0:
+            print(f"Processing query {qCount} of {len(queries)} total queries.")
 
- 
+        query_start_time = time.time()
+        
+        # Perform search based on matching type
+        if hp.matching == 'exact':
+            if hp.restrict == 0:
+                qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold)
+            else:
+                print("Working on restricted data")
+                gt_path = f"data/{dataFolder}/santos_small_union_groundtruth_diluted.pickle"
+                qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold,
+                                   restrict=1, gth=gt_path)
+        else:  # Bounds matching
+            qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)
+
+        # Process and store results
+        res = [(tpl[0], tpl[1]) for tpl in qres]
+        returnedResults[query[0]] = [(r[1], r[0]) for r in res]
+        returnedResults_noscore[query[0]] = [r[1] for r in res]
+        query_times.append(time.time() - query_start_time)
+
+    # Create output directory if it doesn't exist
+    output_dir = f"data/{dataFolder}/diveristy_data/search_results/Starmie"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Save results
+    with open(f"{output_dir}/top_20_Starmie_output_04diluted_restricted_withscore.pkl", 'wb') as file:
+        pickle.dump(returnedResults, file)
+    with open(f"{output_dir}/top_20_Starmie_output_04diluted_restricted_noscore.pkl", 'wb') as file:
+        pickle.dump(returnedResults_noscore, file)
+
+    # Print performance statistics
+    print(f"10th percentile: {np.percentile(query_times, 10):.2f}s")
+    print(f"90th percentile: {np.percentile(query_times, 90):.2f}s")
+    print(f"Total Query Time: {time.time() - start_time:.2f}s")
+
+
 if __name__ == '__main__':
     main()     

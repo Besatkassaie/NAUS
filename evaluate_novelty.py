@@ -1,486 +1,437 @@
+"""
+Module for evaluating novelty and diversity metrics in table search results.
+
+This module provides functions to compute various metrics for evaluating the novelty
+and diversity of table search results, including:
+- Syntactic Novelty Measure (SNM)
+- Simplified Syntactic Novelty Measure (SSNM)
+- Precision and Recall metrics
+- Execution time analysis
+- Duplicate detection
+
+The module is designed to work with both diluted and non-diluted datasets, and supports
+various search methods including GMC, Penalized, Starmie, and others.
+"""
+
+# Standard library imports
 import csv
-import pickle5 as p
-import pandas as pd
-from naive_search_Novelty import NaiveSearcherNovelty
-from nltk.tokenize import RegexpTokenizer
-from nltk.stem import PorterStemmer
-import numpy as np
-import utilities as utl
-import itertools
+import os
 import time
 import multiprocessing as mp
-import os
+import itertools
 
-# Set the multiprocessing start method to spawn to avoid CUDA reinitialization issues.
+# Third-party imports
+import pandas as pd
+import numpy as np
+import pickle5 as p
+from nltk.tokenize import RegexpTokenizer
+from nltk.stem import PorterStemmer
+
+# Local imports
+from naive_search_Novelty import NaiveSearcherNovelty
+import utilities as utl
+
+# Set the multiprocessing start method to spawn to avoid CUDA reinitialization issues
 mp.set_start_method('spawn', force=True)
-# from pyspark.sql import SparkSession
-# from pyspark.sql.functions import col, lit
-# from pyspark.sql.types import StructType, StructField, StringType, ArrayType
-# import pyspark.sql.functions as F
 
-#This file containes all the metrics used in our paper to evalute the novelty/diversity 
-#of the reranking 
+def Avg_executiontime_by_k(resultfile: str, outputfile: str) -> None:
+    """
+    Calculate and save the average execution time for each k value.
+    
+    Args:
+        resultfile: Path to the CSV file containing execution times
+        outputfile: Path to save the output CSV with average times
+    """
+    # Load the CSV file
+    df = pd.read_csv(resultfile, usecols=[0, 1, 2, 3])
+    column_names = df.columns.tolist()
+    
+    # Extract relevant columns
+    k_column = column_names[3]
+    time_column = column_names[2]
+    
+    # Calculate average execution time per k
+    grouped = df.groupby(k_column)[time_column].mean()
+    result_df = grouped.reset_index()
+    
+    # Rename columns for clarity
+    result_df.columns = ['k', 'exec_time']
+    
+    # Save results
+    result_df.to_csv(outputfile, index=False)
+    
+    # Print results
+    for k, avg_time in grouped.items():
+        print(f"k: {k}, Average execution time is: {avg_time}")
 
-def Avg_executiontime_by_k(resultfile, outputfile):
-        file_path = resultfile
-        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
-
-        # Extract column names for reference
-        column_names = df.columns.tolist()
-
-        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
-        k_column = column_names[3]  # Replace with the actual column name for k
-        time_column=column_names[2]
-        grouped = df.groupby(k_column)[time_column].mean()
-        result_df = grouped.reset_index()
-
-        # Rename the columns to 'k' and 'exec_time'
-        result_df.columns = ['k', 'exec_time']
-
-        # Write the DataFrame to a CSV file named 'outputfile.csv' without the index
-        result_df.to_csv(outputfile, index=False)
-
-
-# Print the results
-        for k, avg_time in grouped.items():
-             print(f"k: {k}, Average execution time is: {avg_time}")        
-
-def contains_query(row):
+def contains_query(row: pd.Series) -> bool:
+    """
+    Check if a query name is present in the tables list.
+    
+    Args:
+        row: DataFrame row containing 'query_name' and 'tables' columns
+        
+    Returns:
+        bool: True if query_name is in tables list, False otherwise
+    """
     tables = row['tables']
     if pd.isna(tables):
         return False
-    # split on commas, strip whitespace
     parts = [x.strip() for x in tables.split(',')]
     return row['query_name'] in parts
 
-
-def compute_counts(dataframe, k_column,query_name_column, tables_column):
-        exclude=set()
-        print("numebr of row before excluding two queries"+ str(len(dataframe)))
-        dataframe = dataframe[~dataframe[query_name_column].isin(exclude)]
-        print("numebr of row after excluding two queries"+ str(len(dataframe)))
-
-        result = []
-        unique_k_values = dataframe[k_column].unique()
-        for k in unique_k_values:
-            filtered_df = dataframe[dataframe[k_column] == k]
-            # count = filtered_df.apply(
-            # lambda row: row[query_name_column] in [x.strip() for x in row[tables_column].split(',')],
-            # axis=1
-            #   ).sum()
-            
-            count = filtered_df.apply(contains_query, axis=1).sum()
-            result.append({'k': k, 'count': count})
-        return pd.DataFrame(result)
-
-
-def query_duplicate_returned_exclude(result_file, output_file, exc_queris):
-        # Load the CSV file and read the first four columns, using the first row as column names
-        file_path = result_file  # Replace with the path to your CSV file
-        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
-
-        # Extract column names for reference
-        column_names = df.columns.tolist()
-
-        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
-        k_column = column_names[3]  # Replace with the actual column name for k
-        query_name_column = column_names[0]  # Replace with the actual column name for query name
-        tables_column = column_names[1]  # Replace with the actual column name for tables
-
-        # Filter out excluded queries
-        df = df[~df[query_name_column].isin(exc_queris)]
-
-        # Compute the results
-        results_df = compute_counts(df, k_column,query_name_column, tables_column)
-
-        # Output the results
-   
-        results_df.to_csv(output_file, index=False)
-
-
-
-
-def query_duplicate_returned(result_file, output_file):
-        # Load the CSV file and read the first four columns, using the first row as column names
-        file_path = result_file  # Replace with the path to your CSV file
-        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
-
-        # Extract column names for reference
-        column_names = df.columns.tolist()
-
-        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
-        k_column = column_names[3]  # Replace with the actual column name for k
-        query_name_column = column_names[0]  # Replace with the actual column name for query name
-        tables_column = column_names[1]  # Replace with the actual column name for tables
-
-   
-
-        # Compute the results
-        results_df = compute_counts(df, k_column,query_name_column, tables_column)
-
-        # Output the results
-   
-        results_df.to_csv(output_file, index=False)
-
-
-def analyse(file_penalize,file_gmc):
-
-
-            # Load the CSV files into DataFrames
-            x1 = pd.read_csv(file_penalize)  # Replace with your first CSV file name
-            x2 = pd.read_csv(file_gmc)  # Replace with your second CSV file name
-
-
-            # Find common queries
-            common_queries = set(x1['query']).intersection(set(x2['query']))
-
-            # Keep only rows with common queries
-            x1_filtered = x1[x1['query'].isin(common_queries)]
-            x2_filtered = x2[x2['query'].isin(common_queries)]
-
+def compute_counts(dataframe: pd.DataFrame, k_column: str, 
+                  query_name_column: str, tables_column: str) -> pd.DataFrame:
+    """
+    Compute counts of queries in tables for each k value.
     
-            
- 
-            # Merge filtered DataFrames on 'query' and 'k' to align rows for comparison
-            merged = pd.merge(x1_filtered, x2_filtered, on=['query', 'k'], suffixes=('_x1', '_x2'))
-
-            # Compare precision values and group by 'k' to count queries with greater precision in x1
-            result = merged.groupby('k').apply(lambda df: (df['Prec_x1'] >= df['Prec_x2']).sum())
-
-            # Display the result
-            print("Number of queries with greater or equal precision in "+file_penalize+" for each k:")
-            print(result)
- 
-            
-                        # Compare precision values and group by 'k' to count queries with greater precision in x1
-            result2 = merged.groupby('k').apply(lambda df: (df['Recall_x1'] >= df['Recall_x2']).sum())
-
-            # Display the result
-            print("Number of queries with greater or equal recall in "+file_penalize+" for each k:")
-            print(result2)
-
-            
-    # Group by 'k' and compute statistics for Prec, Recall, and Ideal Recall
-            stats_x1 = x1_filtered.groupby('k').agg({
-                'Prec': ['mean', 'median', 'std'],
-                'Recall': ['mean', 'median', 'std'],
-                'Ideal Recall': ['mean', 'median', 'std']
-            })
-
-            # Rename columns for clarity
-            stats_x1.columns = ['_'.join(col).strip() for col in stats_x1.columns.values]
-
-            # Display the statistics
-            print("Grouped Statistics for x1_filtered by k:")
-            print(stats_x1)
-    
-    
-            stats_x2 = x2_filtered.groupby('k').agg({
-                'Prec': ['mean', 'median', 'std'],
-                'Recall': ['mean', 'median', 'std'],
-                'Ideal Recall': ['mean', 'median', 'std']
-            })
-
-            # Rename columns for clarity
-            stats_x2.columns = ['_'.join(col).strip() for col in stats_x2.columns.values]
-
-            # Display the statistics
-            print("Grouped Statistics for x2_filtered by k:")
-            print(stats_x2)
-
-
-def loadDictionaryFromPickleFile(dictionaryPath):
-        ''' Load the pickle file as a dictionary
-        Args:
-            dictionaryPath: path to the pickle file
-        Return: dictionary from the pickle file
-        '''
-        filePointer=open(dictionaryPath, 'rb')
-        dictionary = p.load(filePointer)
-        filePointer.close()
-        return dictionary
-
-  # a function to calculate  precision recall and MAP per query
-def Cal_P_R_Map(resultFile, gtPath, output_file_):
-        ''' Calculate and log the performance metrics: MAP, Precision@k, Recall@k
     Args:
-        max_k: the maximum K value (e.g. for SANTOS benchmark, max_k = 10. For TUS benchmark, max_k = 60)
-        k_range: different k s that are reported in the result
-        gtPath: file path to the groundtruth
-        resPath: file path to the raw results from the model
-    Return: MAP, P@K, R@K'''
-        groundtruth = loadDictionaryFromPickleFile(gtPath)
-    # resultFile = loadDictionaryFromPickleFile(resPath)
-        file_path = resultFile
-        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
-
-        # Extract column names for reference
-        column_names = df.columns.tolist()
-
-        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
-        k_column = column_names[3]  # Replace with the actual column name for k
-        query_name_column = column_names[0]  # Replace with the actual column name for query name
-        tables_column = column_names[1]  # Replace with the actual column name for tables
-        unique_k_values = df[k_column].unique() # existing k
-        precision_array = []
-        recall_array = []
-        ideal_recall=[]
-        result_query_k={}
-        for k in unique_k_values:
-                # for this k go through the df and create a dictionary from query to list of returned tables 
-                filtered_df = df[df['k'] == k]
-
-                # Initialize the dictionary
-                resultFile = {}
-
-                # Iterate over filtered rows
-                for _, row in filtered_df.iterrows():
-                    query_name = row['query_name']
-                    tablenames_set = set(row['tables'].split(','))  # Split and convert to set for uniqueness
-                    
-                    # Add or update the dictionary
-                    if query_name not in resultFile:
-                        resultFile[query_name] = list(tablenames_set)
-                    else:
-                        resultFile[query_name] = list(set(resultFile[query_name]) | tablenames_set)
-
-                true_positive = 0
-                false_positive = 0
-                false_negative = 0
-                rec = 0
-                
-                for table in resultFile:
-                    # t28 tables have less than 60 results. So, skipping them in the analysis.
-                        if table in groundtruth:
-                            groundtruth_set = set(groundtruth[table])
-                            groundtruth_set = {x.split(".")[0] for x in groundtruth_set}
-                            result_set = resultFile[table][:k]
-                            result_set = [x.split(".")[0] for x in result_set]
-                            result_set = [item.strip() for item in result_set]
-                            result_set = [item.replace("]", '') for item in result_set]
-
-
-
-                            # find_intersection = true positives
-                            find_intersection = set(result_set).intersection(groundtruth_set)
-                            tp = len(find_intersection)
-                            fp = k - tp
-                            fn = len(groundtruth_set) - tp
-                            if len(groundtruth_set)>=k: 
-                                true_positive += tp
-                                false_positive += fp
-                                false_negative += fn
-                            rec += tp / (tp+fn)
-                            pecs_q_k= tp/(tp+fp) # prec for k for query
-                            rec_q_k=tp / (tp+fn)
-                            if(k<len(groundtruth[table])):
-                                ideal_recall_q_k=k/len(groundtruth[table])
-                            else:
-                                ideal_recall_q_k=1
-                            result_query_k[(k, table)]=[pecs_q_k,rec_q_k,ideal_recall_q_k]
-                            
-                ideal_recall.append(k/float(len(groundtruth[table]))) 
-                precision = true_positive / (true_positive + false_positive)
-                recall = rec/len(resultFile)
-                precision_array.append(precision)
-                recall_array.append(recall)
-
-
-
-            
-        print("k values:")
-        print(unique_k_values)
-        print("precision_array")
-        print(precision_array)
-        print("ideal_recall")
-        print(ideal_recall)
-
-        print("recall_array")
-        print(recall_array)
+        dataframe: Input DataFrame containing search results
+        k_column: Name of the column containing k values
+        query_name_column: Name of the column containing query names
+        tables_column: Name of the column containing table lists
         
-        # Output CSV file name
-        output_file = output_file_
-
-        # Write data to CSV
-        with open(output_file, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            
-            # Write the header
-            writer.writerow(["k", "query", "Prec", "Recall", "Ideal Recall"])
-            
-            # Write the rows
-            for (k1, k2), values in result_query_k.items():
-                writer.writerow([k1, k2] + values)
-
-        print(f"Data successfully written to {output_file}")
-
-        #return mean_avg_pr, precision_array[max_k-1], recall_array[max_k-1] 
-        return None
+    Returns:
+        DataFrame containing k values and their corresponding counts
+    """
+    exclude = set()
+    print(f"Number of rows before excluding queries: {len(dataframe)}")
+    dataframe = dataframe[~dataframe[query_name_column].isin(exclude)]
+    print(f"Number of rows after excluding queries: {len(dataframe)}")
     
-
-def compute_syntactic_novelty_measure_simplified(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_, remove_dup=0):
-        """
-        this function only makes sense to be run over diluted dataset
-        we assume 2 things: 1- the list of dl_tables for each query is sorted descending bu unionability score
-                            2-  search_result file is a csv has atleast  these columns: query_name,	tables,	execution_time,	k  
-                            groundtruth: is the gound truth havinf unionable tables for each query
-        """                    
-        if('csv' in groundtruth_file ): 
-            groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)
-        else: 
-            groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
-
-        input_file = search_result
-        columns_to_load = ['query_name', 'tables', 'k']
-        df = pd.read_csv(input_file, usecols=columns_to_load)
-
-        # Get the unique values of 'k' in the dataframe
-        unique_k_values = df['k'].unique()
-
-        # Initialize an empty list to collect the results
-        results = []
-        results_whole=[]
-
-        # Iterate over each unique 'k' and process the dataframe
-        for k in unique_k_values:
-            # Filter the dataframe for the current value of 'k'
-            subset_df = df[df['k'] == k]
-            
-            # Calculate the average SNM using the custom function
-            print("k is: "+str(k))
-            avg_snm, invalid_snm = get_ssnm_average(subset_df, groundtruth, remove_dup)
-            temp_whole=get_ssnm_whole(subset_df, groundtruth, k, remove_dup)
-            results_whole.extend(temp_whole)
-            # Append the result as a dictionary
-            results.append({'k': k, 'avg_snm': avg_snm, 'q_invalid_snm:':invalid_snm})
-           
-        # Convert the results into a dataframe
-        result_df = pd.DataFrame(results)
+    result = []
+    unique_k_values = dataframe[k_column].unique()
     
-        # Write the result dataframe to a new CSV file
-        output_file_agv = snm_avg_result_path_
-        result_df.to_csv(output_file_agv, index=False)
+    for k in unique_k_values:
+        filtered_df = dataframe[dataframe[k_column] == k]
+        count = filtered_df.apply(contains_query, axis=1).sum()
+        result.append({'k': k, 'count': count})
         
-        result_whole=pd.DataFrame(results_whole)
-        result_whole.to_csv(snm_whole_result_path_, index=False)
+    return pd.DataFrame(result)
 
-      
-      
+def query_duplicate_returned_exclude(result_file: str, output_file: str, exc_queris: set) -> None:
+    """
+    Process search results and count duplicates, excluding specified queries.
+    
+    Args:
+        result_file: Path to the CSV file containing search results
+        output_file: Path to save the output CSV with duplicate counts
+        exc_queris: Set of query names to exclude from analysis
+    """
+    # Load the CSV file
+    df = pd.read_csv(result_file, usecols=[0, 1, 2, 3])
+    column_names = df.columns.tolist()
+    
+    # Extract column names
+    k_column = column_names[3]
+    query_name_column = column_names[0]
+    tables_column = column_names[1]
+    
+    # Filter out excluded queries
+    df = df[~df[query_name_column].isin(exc_queris)]
+    
+    # Compute and save results
+    results_df = compute_counts(df, k_column, query_name_column, tables_column)
+    results_df.to_csv(output_file, index=False)
+
+def query_duplicate_returned(result_file: str, output_file: str) -> None:
+    """
+    Process search results and count duplicates for all queries.
+    
+    Args:
+        result_file: Path to the CSV file containing search results
+        output_file: Path to save the output CSV with duplicate counts
+    """
+    # Load the CSV file
+    df = pd.read_csv(result_file, usecols=[0, 1, 2, 3])
+    column_names = df.columns.tolist()
+    
+    # Extract column names
+    k_column = column_names[3]
+    query_name_column = column_names[0]
+    tables_column = column_names[1]
+    
+    # Compute and save results
+    results_df = compute_counts(df, k_column, query_name_column, tables_column)
+    results_df.to_csv(output_file, index=False)
+
+def analyse(file_penalize: str, file_gmc: str) -> None:
+    """
+    Compare precision and recall metrics between two search methods.
+    
+    Args:
+        file_penalize: Path to CSV file containing results from penalized method
+        file_gmc: Path to CSV file containing results from GMC method
+    """
+    # Load results from both methods
+    x1 = pd.read_csv(file_penalize)
+    x2 = pd.read_csv(file_gmc)
+    
+    # Find common queries
+    common_queries = set(x1['query']).intersection(set(x2['query']))
+    
+    # Filter to common queries
+    x1_filtered = x1[x1['query'].isin(common_queries)]
+    x2_filtered = x2[x2['query'].isin(common_queries)]
+    
+    # Merge for comparison
+    merged = pd.merge(x1_filtered, x2_filtered, on=['query', 'k'], suffixes=('_x1', '_x2'))
+    
+    # Compare precision
+    result = merged.groupby('k').apply(lambda df: (df['Prec_x1'] >= df['Prec_x2']).sum())
+    print(f"Number of queries with greater or equal precision in {file_penalize} for each k:")
+    print(result)
+    
+    # Compare recall
+    result2 = merged.groupby('k').apply(lambda df: (df['Recall_x1'] >= df['Recall_x2']).sum())
+    print(f"Number of queries with greater or equal recall in {file_penalize} for each k:")
+    print(result2)
+    
+    # Compute statistics for first method
+    stats_x1 = x1_filtered.groupby('k').agg({
+        'Prec': ['mean', 'median', 'std'],
+        'Recall': ['mean', 'median', 'std'],
+        'Ideal Recall': ['mean', 'median', 'std']
+    })
+    stats_x1.columns = ['_'.join(col).strip() for col in stats_x1.columns.values]
+    print("Grouped Statistics for x1_filtered by k:")
+    print(stats_x1)
+    
+    # Compute statistics for second method
+    stats_x2 = x2_filtered.groupby('k').agg({
+        'Prec': ['mean', 'median', 'std'],
+        'Recall': ['mean', 'median', 'std'],
+        'Ideal Recall': ['mean', 'median', 'std']
+    })
+    stats_x2.columns = ['_'.join(col).strip() for col in stats_x2.columns.values]
+    print("Grouped Statistics for x2_filtered by k:")
+    print(stats_x2)
+
+def loadDictionaryFromPickleFile(dictionaryPath: str) -> dict:
+    """
+    Load a dictionary from a pickle file.
+    
+    Args:
+        dictionaryPath: Path to the pickle file
         
+    Returns:
+        dict: Dictionary loaded from the pickle file
+    """
+    with open(dictionaryPath, 'rb') as filePointer:
+        dictionary = p.load(filePointer)
+    return dictionary
+
+def compute_syntactic_novelty_measure_simplified(
+    groundtruth_file: str,
+    search_result: str,
+    snm_avg_result_path_: str,
+    snm_whole_result_path_: str,
+    remove_dup: int = 0
+) -> None:
+    """
+    Compute Simplified Syntactic Novelty Measure (SSNM) for search results.
+    
+    This function is designed to work with diluted datasets and assumes:
+    1. The list of datalake tables for each query is sorted by unionability score
+    2. The search result file is a CSV with columns: query_name, tables, execution_time, k
+    
+    Args:
+        groundtruth_file: Path to ground truth file (pickle or CSV)
+        search_result: Path to CSV file containing search results
+        snm_avg_result_path_: Path to save average SSNM results
+        snm_whole_result_path_: Path to save detailed SSNM results
+        remove_dup: Flag to remove duplicates (0 or 1)
+    """
+    # Load ground truth
+    if 'csv' in groundtruth_file:
+        groundtruth = utl.loadDictionaryFromCsvFile(groundtruth_file)
+    else:
+        groundtruth = loadDictionaryFromPickleFile(groundtruth_file)
+    
+    # Load search results
+    df = pd.read_csv(search_result, usecols=['query_name', 'tables', 'k'])
+    unique_k_values = df['k'].unique()
+    
+    # Initialize result containers
+    results = []
+    results_whole = []
+    
+    # Process each k value
+    for k in unique_k_values:
+        print(f"Processing k: {k}")
+        subset_df = df[df['k'] == k]
         
-        print("caluculate Simplified SNM for the input result file for different k")
+        # Calculate average SSNM
+        avg_snm, invalid_snm = get_ssnm_average(subset_df, groundtruth, remove_dup)
+        temp_whole = get_ssnm_whole(subset_df, groundtruth, k, remove_dup)
+        
+        # Store results
+        results_whole.extend(temp_whole)
+        results.append({
+            'k': k,
+            'avg_snm': avg_snm,
+            'q_invalid_snm': invalid_snm
+        })
+    
+    # Save results
+    result_df = pd.DataFrame(results)
+    result_df.to_csv(snm_avg_result_path_, index=False)
+    
+    result_whole = pd.DataFrame(results_whole)
+    result_whole.to_csv(snm_whole_result_path_, index=False)
+    
+    print("Calculated Simplified SNM for the input result file for different k")
 
-def get_ssnm_average(df_k, groundtruth_dic, remove_dup):
-        """we go through all queries except for these two that do not exist in dust alignment 
-        workforce_management_information_a.csv
-        workforce_management_information_b.csv
-        """
-        exclude=set()
-        queries = df_k['query_name'].unique()
-        number_queries=0
-        snm_total=0.0
-        q_not_valid_snm=set()
-        for q in queries:
-                        if q not in exclude: 
-                          df_k_q = df_k[df_k['query_name'] == q]
-                          groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm,L, G=get_ssnm_query(df_k_q, groundtruth_dic_q, remove_dup)
-                          if(q_snm==-1):
-                           q_not_valid_snm.add(q)
-                          else:
-                            number_queries=number_queries+1
- 
-                            snm_total=snm_total+q_snm
-                        else: 
-                            print("excluded query is found")    
-        return  (float(snm_total)/ float(number_queries), q_not_valid_snm) 
-       
-def get_ssnm_whole(df_k, groundtruth_dic, k, remove_duplicates):
-        """we go through all queries except for these two that do not exist in dust alignment:
-        workforce_management_information_a.csv
-        workforce_management_information_b.csv
-        """
-        exclude=set()
-        queries = df_k['query_name'].unique()
-        results_k = []
-        for q in queries:
-                        if q not in exclude: 
-                          df_k_q = df_k[df_k['query_name'] == q]
-                          groundtruth_dic_q=groundtruth_dic[q]
-                          q_snm, L, G=get_ssnm_query(df_k_q, groundtruth_dic_q, remove_duplicates)
-                          results_k.append({'k': k, 'query': q,'snm': q_snm, 'L':L, 'G':G})
-                        else: 
-                            print("excluded query is found")    
-        return   results_k    
+def get_ssnm_average(df_k: pd.DataFrame, groundtruth_dic: dict, remove_dup: int) -> tuple[float, set]:
+    """
+    Calculate average SSNM across all queries.
     
+    Args:
+        df_k: DataFrame filtered for a specific k value
+        groundtruth_dic: Dictionary containing ground truth data
+        remove_dup: Flag to remove duplicates (0 or 1)
+        
+    Returns:
+        tuple: (average SSNM, set of invalid query names)
+    """
+    exclude = set()  # Queries to exclude
+    queries = df_k['query_name'].unique()
+    number_queries = 0
+    snm_total = 0.0
+    q_not_valid_snm = set()
     
-def get_ssnm_query(df_q, groundtruth_tables, remove_duplicates):
-       # list of unionable tables in groundtruth
-     
-       df_q.dropna(subset=['tables'], inplace=True)
-       if len(df_q)==0:
-           return 0, 0, 0
-       tables_result_list=[x.strip() for x in df_q['tables'].tolist()[0].split(',')]
-       tables_result_list = [ item.replace("[", "").replace("'", "").replace("]", "") for item in tables_result_list ]
+    for q in queries:
+        if q not in exclude:
+            df_k_q = df_k[df_k['query_name'] == q]
+            groundtruth_dic_q = groundtruth_dic[q]
+            q_snm, L, G = get_ssnm_query(df_k_q, groundtruth_dic_q, remove_dup)
+            
+            if q_snm == -1:
+                q_not_valid_snm.add(q)
+            else:
+                number_queries += 1
+                snm_total += q_snm
+        else:
+            print("Excluded query found")
+    
+    return (float(snm_total) / float(number_queries), q_not_valid_snm)
 
-       
-       tables_result_set=set(tables_result_list)
-       #these two holds the expected pair name of the visited file names which are not yet paired   
-       visited_diluted_waiting_for_set=set()
-       # the not deluted seen so far
-       visited_no_diluted_waiting_for_set=set()
-       groundtruth_tables_set=set(groundtruth_tables)
+def get_ssnm_whole(df_k: pd.DataFrame, groundtruth_dic: dict, k: int, remove_duplicates: int) -> list:
+    """
+    Calculate SSNM for each query individually.
+    
+    Args:
+        df_k: DataFrame filtered for a specific k value
+        groundtruth_dic: Dictionary containing ground truth data
+        k: Current k value
+        remove_duplicates: Flag to remove duplicates (0 or 1)
+        
+    Returns:
+        list: List of dictionaries containing SSNM results per query
+    """
+    exclude = set()  # Queries to exclude
+    queries = df_k['query_name'].unique()
+    results_k = []
+    
+    for q in queries:
+        if q not in exclude:
+            df_k_q = df_k[df_k['query_name'] == q]
+            groundtruth_dic_q = groundtruth_dic[q]
+            q_snm, L, G = get_ssnm_query(df_k_q, groundtruth_dic_q, remove_duplicates)
+            results_k.append({
+                'k': k,
+                'query': q,
+                'snm': q_snm,
+                'L': L,
+                'G': G
+            })
+        else:
+            print("Excluded query found")
+    
+    return results_k
 
-       groundtruth_tables_set = { item.replace("[", "").replace("'", "").replace("]","") for item in groundtruth_tables_set }
-       tables_result_set = { item.replace("[", "").replace("'", "").replace("]","") for item in tables_result_set }
-       
-       G=len(tables_result_set.intersection(groundtruth_tables_set))
-       L=0.0  #number of unionable diluted comes alone in result
-       if (G==0):
-            print("no unionable tables in the results")
-            return -1, L, G # not valid snm exists for this query
-       else: 
-           for t in tables_result_list:
-                if t in groundtruth_tables_set: # is unionable
-                    deluted_=is_diluted_version(t)
-                    if(deluted_==-1):
-                        # check whther you have seen its diluted pair or not 
-                         if(t in visited_diluted_waiting_for_set):
-                                visited_diluted_waiting_for_set.remove(t)    # pair is seen so remove from  waiting list
-                         else: 
-                             visited_no_diluted_waiting_for_set.add(t)
-                    
-                    else: 
-                        if deluted_ in visited_no_diluted_waiting_for_set:
-                            visited_no_diluted_waiting_for_set.remove(deluted_)  # good pair original came before dilutes
-                        else:    
-                            visited_diluted_waiting_for_set.add(deluted_)    # 
-                        
-       L= len(visited_diluted_waiting_for_set) # not paired with original
-       if remove_duplicates==1:
-           #consider blatant duplicates in the computation
-           query_name=df_q['query_name'].tolist()[0]
-           dilutedname_query_name=query_name.replace('.csv', '_dlt.csv')
-           if(query_name in tables_result_list and dilutedname_query_name in tables_result_list):
-               L=L+1
-           if(query_name in tables_result_list and dilutedname_query_name  not in tables_result_list):
-               L=L+1
-       
-       
-       
-       ssnm= 1-(float(L)/G)
-       return ssnm, L, G   
-   
-   
-def is_diluted_version(fname):
-       """if it has _dlt showes is diluted then retrun original file name 
-           else retrun -1"""
-       if('_dlt' in fname) :
-            return fname.replace('_dlt', '')
-       else: 
-        return -1    
+def get_ssnm_query(df_q: pd.DataFrame, groundtruth_tables: list, remove_duplicates: int) -> tuple[float, float, int]:
+    """
+    Calculate SSNM for a single query.
     
+    Args:
+        df_q: DataFrame containing results for a single query
+        groundtruth_tables: List of ground truth tables
+        remove_duplicates: Flag to remove duplicates (0 or 1)
+        
+    Returns:
+        tuple: (SSNM score, L value, G value)
+    """
+    # Clean and prepare data
+    df_q.dropna(subset=['tables'], inplace=True)
+    if len(df_q) == 0:
+        return 0, 0, 0
     
+    # Process table names
+    tables_result_list = [x.strip() for x in df_q['tables'].tolist()[0].split(',')]
+    tables_result_list = [item.replace("[", "").replace("'", "").replace("]", "") 
+                         for item in tables_result_list]
+    
+    # Create sets for comparison
+    tables_result_set = set(tables_result_list)
+    visited_diluted_waiting_for_set = set()
+    visited_no_diluted_waiting_for_set = set()
+    groundtruth_tables_set = {item.replace("[", "").replace("'", "").replace("]", "") 
+                            for item in groundtruth_tables}
+    
+    # Calculate G (number of correct matches)
+    G = len(tables_result_set.intersection(groundtruth_tables_set))
+    L = 0.0  # Number of unpaired diluted tables
+    
+    if G == 0:
+        print("No unionable tables in the results")
+        return -1, L, G
+    
+    # Process each table
+    for t in tables_result_list:
+        if t in groundtruth_tables_set:  # Is unionable
+            deluted_ = is_diluted_version(t)
+            if deluted_ == -1:  # Not diluted
+                if t in visited_diluted_waiting_for_set:
+                    visited_diluted_waiting_for_set.remove(t)
+                else:
+                    visited_no_diluted_waiting_for_set.add(t)
+            else:  # Is diluted
+                if deluted_ in visited_no_diluted_waiting_for_set:
+                    visited_no_diluted_waiting_for_set.remove(deluted_)
+                else:
+                    visited_diluted_waiting_for_set.add(deluted_)
+    
+    # Calculate L (unpaired diluted tables)
+    L = len(visited_diluted_waiting_for_set)
+    
+    # Handle duplicates if requested
+    if remove_duplicates == 1:
+        query_name = df_q['query_name'].tolist()[0]
+        dilutedname_query_name = query_name.replace('.csv', '_dlt.csv')
+        if query_name in tables_result_list and dilutedname_query_name in tables_result_list:
+            L += 1
+        if query_name in tables_result_list and dilutedname_query_name not in tables_result_list:
+            L += 1
+    
+    # Calculate final SSNM score
+    ssnm = 1 - (float(L) / G)
+    return ssnm, L, G
+
+def is_diluted_version(fname: str) -> str:
+    """
+    Check if a filename represents a diluted version and return the original name.
+    
+    Args:
+        fname: Filename to check
+        
+    Returns:
+        str: Original filename if diluted, -1 otherwise
+    """
+    if '_dlt' in fname:
+        return fname.replace('_dlt', '')
+    return -1
+
 def compute_syntactic_novelty_measure(groundtruth_file, search_result, snm_avg_result_path_, snm_whole_result_path_, remove_duplicate=0):
         """
         this function only makes sense to be run over diluted dataset
@@ -1094,105 +1045,6 @@ def nscore_result(output_folder_by_query,result_file, output_file, alignments_fi
             writer.writerow([key, value])
     
     return result    
-def nscore_result_old(result_file, output_file, alignments_file, query_path_ , table_path_, alph, beta,normalized=0):
-    #this function computse the nscore for a given query and its unionable tables 
-        try:
-                # Load the CSV file into a pandas DataFrame
-                alignments_ = pd.read_csv(alignments_file)
-
-                # Verify that the required columns are present
-                required_columns = ['query_table_name', 'query_column', 'query_column#',
-                                    'dl_table_name', 'dl_column#', 'dl_column']
-                if not all(column in alignments_.columns for column in required_columns):
-                    missing_columns = [col for col in required_columns if col not in alignments_.columns]
-                    raise ValueError(f"Missing required columns in data: {missing_columns}")
-
-                print("alignments_file loaded successfully")
-            
-        except FileNotFoundError:
-                print(f"Error: File not found at {alignments_file}")
-            
-        except ValueError as e:
-                print(f"Error: {e}")
-            
-        except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-            
-            
-        # find out how many groups of unionable there are in the alignment file for each query: 
-        # to do so find the unique combinations of  query_table_name, query_column#  for each query 
-
-        tbles_=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_)
-        qs=NaiveSearcherNovelty.read_csv_files_to_dict(query_path_)
-            
-        # Initialize an empty DataFrame with the desired columns
-        columns = ["query", "k", "null_union_size", "normalized"]
-        df_output = pd.DataFrame(columns=columns)  
-        columns_to_load = ['query_name', 'tables', 'k']
-        df_search_results = pd.read_csv(result_file, usecols=columns_to_load)
-
-        # Get the unique values of 'k' in the dataframe
-        unique_k_values = df_search_results['k'].unique()    
-        result={}
-        unique_k_values={2, 3}
-        for k_ in unique_k_values:
-              print("k: "+str(k_))
-            # Filter the dataframe for the current value of 'k'
-              k_df_search_results= df_search_results[df_search_results['k'] == k_]
-              #DUST does not create alignemnt for these two queries
-              exclude=set()
-              queries_k = k_df_search_results['query_name'].unique()
-              if(len(queries_k==0)):
-                  print("no query ")
-              # remove excluded 
-              queries_k = np.setdiff1d(queries_k, np.array(list(exclude)))
-
-              number_of_queries=len(queries_k)
-              sum_nscore=0
-              for q in queries_k:
-                # get the unionabe tables 
-                    q_k_df_search_results= k_df_search_results[k_df_search_results['query_name'] == q]
-                    q_unionable_tables=q_k_df_search_results["tables"]
-                    print("query table: "+q)
-                    q_unionable_tables_list= [x.strip() for x in q_unionable_tables.iloc[0].split(',')]
-                    lst_query=qs[q]
-                    # Create column names as the indices of the inner lists
-                    columns_ = [i for i in range(len(lst_query))]
-
-                     # Transpose the column-major data to row-major for DataFrame creation
-                    df_query = pd.DataFrame(data=list(zip(*lst_query)), columns=columns_)
-                    #intially has tha same column as the query but grow horizontally
-                    df_constructed_table=df_query
-                    print("number of rows in the query dataframe+ "+str(len(df_query)))
-
-                    for dl_t in q_unionable_tables_list:
-                    # get from alignmnet which columns are aligned for each table 
-                      condition1 = alignments_['query_table_name'] == q
-                      condition2 = alignments_['dl_table_name'] == dl_t
-
-                      # Filter rows that satisfy both conditions
-                      filtered_align = alignments_[condition1 & condition2]
-                      # get datalake table and make if dataframe
-                      dl_t=dl_t.replace("[", "").replace("'", "").replace("]","")
-                      dl_t=dl_t.replace("]", "").replace("'", "").replace("]", "")
-                      dl_list=tbles_[dl_t]
-                      columns_dl= [i for i in range(len(dl_list))]
-                      df_dl = pd.DataFrame(data=list(zip(*dl_list)), columns=columns_dl)
-
-
-                      print("number of rows in the concatinated dataframe+ "+str(len(df_constructed_table)))
-                      df_constructed_table=perform_concat(q,dl_t,filtered_align,df_constructed_table,df_dl, normalized )
-                    nscore_query=nscore_table(df_constructed_table,alph, beta)  
-                    sum_nscore= nscore_query+sum_nscore
-              avg_sncore=  sum_nscore/number_of_queries
-              result[k_]=avg_sncore  
-              print(f"k {k_}  avg_sncore {avg_sncore}")  
-                
-        with open(output_file, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            for key, value in result.items():
-                writer.writerow([key, value])
-        return result
 
 def nscore_table(table_datafram, alph, beta):
     
@@ -1444,6 +1296,113 @@ def stem( stemmer, tokens):
         """Applies stemming to the tokens."""
         return [stemmer.stem(token) for token in tokens]          
     
+
+def Cal_P_R_Map(resultFile: str, gtPath: str, output_file_: str) -> None:
+    """
+    Calculate and log performance metrics (MAP, Precision@k, Recall@k) per query.
+    
+    Args:
+        resultFile: Path to CSV file containing search results
+        gtPath: Path to ground truth file
+        output_file_: Path to save the output CSV with metrics
+    """
+    # Load ground truth
+    groundtruth = loadDictionaryFromPickleFile(gtPath)
+    
+    # Load search results
+    df = pd.read_csv(resultFile, usecols=[0, 1, 2, 3])
+    column_names = df.columns.tolist()
+    
+    # Extract column names
+    k_column = column_names[3]
+    query_name_column = column_names[0]
+    tables_column = column_names[1]
+    
+    # Get unique k values
+    unique_k_values = df[k_column].unique()
+    
+    # Initialize result containers
+    precision_array = []
+    recall_array = []
+    ideal_recall = []
+    result_query_k = {}
+    
+    # Process each k value
+    for k in unique_k_values:
+        # Filter results for current k
+        filtered_df = df[df[k_column] == k]
+        
+        # Create mapping from query to returned tables
+        resultFile = {}
+        for _, row in filtered_df.iterrows():
+            query_name = row[query_name_column]
+            tablenames_set = set(row[tables_column].split(','))
+            
+            if query_name not in resultFile:
+                resultFile[query_name] = list(tablenames_set)
+            else:
+                resultFile[query_name] = list(set(resultFile[query_name]) | tablenames_set)
+        
+        # Initialize metrics
+        true_positive = 0
+        false_positive = 0
+        false_negative = 0
+        rec = 0
+        
+        # Calculate metrics for each query
+        for table in resultFile:
+            if table in groundtruth:
+                # Process ground truth and results
+                groundtruth_set = {x.split(".")[0] for x in groundtruth[table]}
+                result_set = [x.split(".")[0] for x in resultFile[table][:k]]
+                result_set = [item.strip().replace("]", '') for item in result_set]
+                
+                # Calculate intersection (true positives)
+                find_intersection = set(result_set).intersection(groundtruth_set)
+                tp = len(find_intersection)
+                fp = k - tp
+                fn = len(groundtruth_set) - tp
+                
+                # Update metrics
+                if len(groundtruth_set) >= k:
+                    true_positive += tp
+                    false_positive += fp
+                    false_negative += fn
+                
+                rec += tp / (tp + fn)
+                
+                # Calculate per-query metrics
+                pecs_q_k = tp / (tp + fp)  # precision for k for query
+                rec_q_k = tp / (tp + fn)   # recall for k for query
+                
+                # Calculate ideal recall
+                ideal_recall_q_k = min(k / len(groundtruth[table]), 1)
+                
+                # Store results
+                result_query_k[(k, table)] = [pecs_q_k, rec_q_k, ideal_recall_q_k]
+        
+        # Calculate aggregate metrics
+        ideal_recall.append(k / float(len(groundtruth[table])))
+        precision = true_positive / (true_positive + false_positive)
+        recall = rec / len(resultFile)
+        
+        precision_array.append(precision)
+        recall_array.append(recall)
+    
+    # Print summary statistics
+    print("k values:", unique_k_values)
+    print("precision_array:", precision_array)
+    print("ideal_recall:", ideal_recall)
+    print("recall_array:", recall_array)
+    
+    # Write results to CSV
+    with open(output_file_, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["k", "query", "Prec", "Recall", "Ideal Recall"])
+        for (k1, k2), values in result_query_k.items():
+            writer.writerow([k1, k2] + values)
+    
+    print(f"Data successfully written to {output_file_}")
 
 if __name__=='__main__':
 
