@@ -77,10 +77,5 @@ The approach can be evaluated using various metrics:
 
 If you use this code in your research, please cite:
 ```
-@inproceedings{nargesian2018table,
-  title={Table Union Search on Open Data},
-  author={Nargesian, Fatemeh and Zhu, Erkang and Pu, Ken Q and Miller, Ren{\'e}e J},
-  booktitle={Proceedings of the VLDB Endowment},
-  year={2018}
-}
+
 ```
