@@ -26,19 +26,9 @@ class Stamie0_Search:
     of column similarity scores.
     """
 
-    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path, index_file_path ):
+    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path):
             self.alignment_data=None
             self.unionable_tables=None
-       
-            
-            #dataFolder="santos"
-            # dataFolder="table-union-search-benchmark/small"
-            # dataFolder="ugen_v2/ugenv2_small"
-            # table_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-            # query_path_raw = "data/"+dataFolder+"/"+"query"
-            # table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            # processed_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/proccessed/"
-            # index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -66,25 +56,6 @@ class Stamie0_Search:
             self.table_raw_lol_proccessed=table_raw_lol_proccessed
         
             table_raw_index={}
-
-        
-            index_exists = os.path.isfile(index_file_path)
-            if index_exists:
-            #load it  
-                print("loading Joise Index......")
-                with open(index_file_path, 'rb') as file:
-                    table_raw_index = pickle.load(file)
-            else:    
-                print("building Joise Index......")
-
-                for key, value in table_raw_proccessed_los.items():
-                    
-                    index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
-                    table_raw_index[key]= index   
-                    
-                # write in a pickle file  
-                with open(index_file_path, 'wb') as file:
-                        pickle.dump(table_raw_index, file)   
             
             
             self.table_raw_index=table_raw_index
@@ -189,9 +160,7 @@ class Stamie0_Search:
 
                             
                                 #see what is the number of unique values in the query+ dl columns that are list of list 
-                                # we have a threshold to determine the smallness of domain called DS(domain size)
-                                # Besat to change: here we do not merge tokens from all cell to 
-                                # gether for each column maybe this will change later ?
+                            
                                 domain_estimate=set.union(set(q_column_q),set(dl_column_dl) )
                                 if(len(domain_estimate)<DSize):
                                     distance=self.Jensen_Shannon_distances(q_column_q,dl_column_dl,domain_estimate)
@@ -420,7 +389,7 @@ if __name__ == "__main__":
     query_path_raw = dataFolder+"/"+"query"
     table_path_raw = dataFolder+"/"+"datalake"
     processed_path=dataFolder+"/proccessed/"
-    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
+    #index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
     
     
     

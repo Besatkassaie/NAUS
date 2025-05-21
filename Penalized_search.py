@@ -17,6 +17,10 @@ import utilities as utl
 from SetSimilaritySearch import all_pairs
 from GMC_search import GMC_Search
 import numpy as np
+import argparse
+import logging
+from pathlib import Path
+import sys
 
 
 
@@ -25,7 +29,7 @@ class Penalized_Search:
     Pe: Penalized_Search is a class for performing penalized re_ranking of unionable tables for Novelty based  unionable  table search.
     """
 
-    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path, index_file_path ):
+    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path ):
             self.alignment_data=None
             self.unionable_tables=None
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
@@ -51,32 +55,12 @@ class Penalized_Search:
                 # write the proccessed result having columns as set to a pickle file 
             dl_tbls_processed_lol_file_name="dl_tbls_processed_lol.pkl"
             self.dl_tbls_processed_lol_file_name=dl_tbls_processed_lol_file_name
-            table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path,self. tables_raw,"lol", 1, 1)
+            table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor, 
+                                                                                  dl_tbls_processed_lol_file_name,
+                                                                                  processed_path,self. tables_raw,"lol", 1, 1)
             self.table_raw_lol_proccessed=table_raw_lol_proccessed
         
-            table_raw_index={}
 
-        
-            index_exists = os.path.isfile(index_file_path)
-            if index_exists:
-            #load it  
-                print("loading Joise Index......")
-                with open(index_file_path, 'rb') as file:
-                    table_raw_index = pickle.load(file)
-            else:    
-                print("building Joise Index......")
-
-                for key, value in table_raw_proccessed_los.items():
-                    
-                    index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
-                    table_raw_index[key]= index   
-                    
-                # write in a pickle file  
-                with open(index_file_path, 'wb') as file:
-                        pickle.dump(table_raw_index, file)   
-            
-            
-            self.table_raw_index=table_raw_index
             self.table_path=table_path
             #DSize is a hyper parameter
             self.dsize=dsize
@@ -380,74 +364,157 @@ class Penalized_Search:
 
           
 if __name__ == "__main__":
-    # Example usage:
-   
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
 
-    #dataFolder= "data/table-union-search-benchmark/small"
-    dataFolder= "data/santos/small"
-    #dataFolder="data/ugen_v2/ugenv2_small"
-    #dataFolder= "data/santos"
-    #dataFolder="data/ugen_v2"
-    #alignment_file_name="manual_alignment_tus_benchmark_all.csv"
-    alignment_file_name="Manual_Alignment_4gtruth_santos_small_all.csv"
-    #alignment_Dust_file_name="ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
-    #alignment_file_name="ugenv2_small_manual_alignment_all.csv"
+    def parse_args():
+        """Parse command line arguments."""
+        parser = argparse.ArgumentParser(
+            description='Penalized Search: Re-ranking of unionable tables for Novelty-based search',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+        
+        # Required arguments
+        parser.add_argument('--data_folder', type=str, required=True,
+                          help='Path to the data folder containing benchmark data')
+        
+        parser.add_argument('--alignment_file', type=str, required=True,
+                          help='Name of the alignment file (e.g., Manual_Alignment_4gtruth_santos_small_all.csv)')
+        
+        # Optional arguments
+        parser.add_argument('--k_range', type=str, default='2-11',
+                          help='Range of k values to evaluate in format "start-end" (default: 2-11)')
+        
+        parser.add_argument('--p_degree', type=float, default=1.0,
+                          help='Penalty degree for re-ranking (default: 1.0)')
+        
+        parser.add_argument('--domain_size', type=int, default=20,
+                          help='Domain size threshold for diversity calculations (default: 20)')
+        
+        parser.add_argument('--output_file', type=str,
+                          help='Path to output file (default: data_folder/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg{p_degree}.csv)')
+        
+        parser.add_argument('--verbose', action='store_true',
+                          help='Enable verbose logging')
+        
+        return parser.parse_args()
 
-    alignment_Dust=dataFolder+"/"+alignment_file_name
-    first_50_starmie=dataFolder+"/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"    
-    search_results_file=dataFolder+"/diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg1.csv"
+    def validate_paths(args):
+        """Validate that all required paths exist."""
+        data_folder = Path(args.data_folder)
+        required_paths = {
+            'data_folder': data_folder,
+            'query_folder': data_folder / 'query',
+            'datalake_folder': data_folder / 'datalake',
+            'processed_folder': data_folder / 'proccessed',
+            'vectors_folder': data_folder / 'vectors',
+            'alignment_file': data_folder / args.alignment_file
+        }
+        
+        for name, path in required_paths.items():
+            if not path.exists():
+                raise FileNotFoundError(f"{name} path does not exist: {path}")
 
-    dl_table_vectors = dataFolder+"/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-    query_table_vectors =dataFolder+"/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
-    
- 
+    def setup_paths(args):
+        """Setup all required paths for the search."""
+        data_folder = Path(args.data_folder)
+        
+        paths = {
+            'alignment_file': data_folder / args.alignment_file,
+            'starmie_results': data_folder / 'diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl',
+            'dl_vectors': data_folder / 'vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl',
+            'query_vectors': data_folder / 'vectors/cl_query_drop_col_tfidf_entity_column_0.pkl',
+            'query_raw': data_folder / 'query',
+            'table_raw': data_folder / 'datalake',
+            'processed': data_folder / 'proccessed'
+        }
+        
+        # Set default output file if not specified
+        if not args.output_file:
+            paths['output_file'] = data_folder / f'diveristy_data/search_results/Penalized/search_result_penalize_04diluted_restricted_pdeg{args.p_degree}.csv'
+        else:
+            paths['output_file'] = Path(args.output_file)
+            
+        return paths
 
+    def run_search(penalize_search, k, p_degree, all_vectors, output_file):
+        """Run the penalized search for a specific k value."""
+        try:
+            logger.info(f"Running search for k={k}, p_degree={p_degree}")
+            results = penalize_search.perform_search_optimized(p_degree, k, all_vectors)
+            
+            # Prepare results for writing
+            mode = 'a' if output_file.exists() else 'w'
+            with open(output_file, mode, newline='') as file:
+                writer = csv.writer(file)
+                
+                # Write header if new file
+                if mode == 'w':
+                    writer.writerow(['query_name', 'tables', 'penalized_execution_time', 'k', 'pdegree'])
+                
+                # Write results
+                for key, (result, secs) in results.items():
+                    result = [r[0] for r in result]  # Extract table names
+                    result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                    writer.writerow([key[0], result_str, secs, key[1], key[2]])
+            
+            logger.info(f"Results for k={k} written to {output_file}")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error running search for k={k}: {str(e)}")
+            raise
 
-    table_path = dl_table_vectors
-
-    query_path_raw = dataFolder+"/"+"query"
-    table_path_raw = dataFolder+"/"+"datalake"
-    processed_path=dataFolder+"/proccessed/"
-    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
-    
-    
-    
-  
-    dsize=20
-    penalize_search = Penalized_Search(dsize, dataFolder, table_path, query_path_raw, table_path_raw, processed_path, index_file_path)
-    penalize_search.load_column_alignment_data(alignment_Dust)
-    penalize_search.load_unionable_tables(first_50_starmie)   
-    all_vectors=penalize_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
-    
-    for i in range(2,11):   
-
-        k=i     
-        p_degree=1          
-        relsutls=penalize_search.perform_search_optimized(p_degree,k, all_vectors)
-        result_dic={}
-
-        if os.path.exists(search_results_file):
-                with open(search_results_file, mode='a', newline='') as file:
-                    writer = csv.writer(file)
-                    # Write the data
-                    for key_, (result, secs) in relsutls.items():
-                        # Join the list of results into a string, if needed
-                        result=[r[0] for r in result ]
-                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                        writer.writerow([key_[0], result_str,secs,key_[1],key_[2] ])
-                        result_dic[key_[0]]=(result,secs)
-        else: 
-                print("result file does not exist. Writing results to file.")
-
-                with open(search_results_file, mode='w', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(['query_name', 'tables','penalized_execution_time', 'k', 'pdegree'])
-
-                    # Write the data
-                    for key_, (result, secs) in relsutls.items():
-                        # Join the list of results into a string, if needed
-                        result=[r[0] for r in result ]
-                        result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                        writer.writerow([key_[0], result_str,secs,key_[1],key_[2] ])
-                        result_dic[key_[0]]=(result,secs)
-       
+    try:
+        # Parse and validate arguments
+        args = parse_args()
+        if args.verbose:
+            logger.setLevel(logging.DEBUG)
+            
+        # Validate paths
+        validate_paths(args)
+        
+        # Setup paths
+        paths = setup_paths(args)
+        
+        # Initialize search
+        logger.info("Initializing penalized search")
+        penalize_search = Penalized_Search(
+            args.domain_size,
+            str(paths['data_folder']),
+            str(paths['dl_vectors']),
+            str(paths['query_raw']),
+            str(paths['table_raw']),
+            str(paths['processed'])
+        )
+        
+        # Load required data
+        logger.info("Loading alignment data")
+        penalize_search.load_column_alignment_data(str(paths['alignment_file']))
+        
+        logger.info("Loading unionable tables")
+        penalize_search.load_unionable_tables(str(paths['starmie_results']))
+        
+        logger.info("Loading vector representations")
+        all_vectors = penalize_search.load_starmie_vectors(
+            str(paths['dl_vectors']),
+            str(paths['query_vectors'])
+        )
+        
+        # Run search for each k value
+        start_k, end_k = map(int, args.k_range.split('-'))
+        all_results = {}
+        
+        for k in range(start_k, end_k + 1):
+            results = run_search(penalize_search, k, args.p_degree, all_vectors, paths['output_file'])
+            all_results.update(results)
+            
+        logger.info("Search completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}")
+        sys.exit(1)

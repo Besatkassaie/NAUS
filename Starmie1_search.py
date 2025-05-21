@@ -27,7 +27,7 @@ class Starmie1_Search:
     
     """
 
-    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path, index_file_path ):
+    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path):
             self.alignment_data=None
             self.unionable_tables=None
        
@@ -58,29 +58,12 @@ class Starmie1_Search:
             table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path,self. tables_raw,"lol", 1, 1)
             self.table_raw_lol_proccessed=table_raw_lol_proccessed
         
-            table_raw_index={}
+    
 
         
-            index_exists = os.path.isfile(index_file_path)
-            if index_exists:
-            #load it  
-                print("loading Joise Index......")
-                with open(index_file_path, 'rb') as file:
-                    table_raw_index = pickle.load(file)
-            else:    
-                print("building Joise Index......")
-
-                for key, value in table_raw_proccessed_los.items():
-                    
-                    index = SearchIndex(value, similarity_func_name="jaccard", similarity_threshold=0.0)
-                    table_raw_index[key]= index   
-                    
-                # write in a pickle file  
-                with open(index_file_path, 'wb') as file:
-                        pickle.dump(table_raw_index, file)   
+    
             
             
-            self.table_raw_index=table_raw_index
             self.table_path=table_path
             #DSize is a hyper parameter
             self.dsize=dsize
@@ -414,19 +397,9 @@ if __name__ == "__main__":
     query_path_raw = dataFolder+"/"+"query"
     table_path_raw = dataFolder+"/"+"datalake"
     processed_path=dataFolder+"/proccessed/"
-    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
     
  
     
-    
- 
-
-    table_path = dl_table_vectors
-
-    query_path_raw = dataFolder+"/"+"query"
-    table_path_raw = dataFolder+"/"+"datalake"
-    processed_path=dataFolder+"/proccessed/"
-    index_file_path=dataFolder+"/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
     dsize=20
     
     penalize_search = Starmie1_Search(dsize, dataFolder, table_path, query_path_raw, table_path_raw, processed_path, index_file_path)
