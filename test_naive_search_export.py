@@ -95,7 +95,7 @@ def main(args2=None):
         table_path = "data/"+dataFolder+"/"+hp.encoder+"_datalake.pkl"
 
 
-   
+    gt="/santos_small_union_groundtruth_diluted.pickle"
     # Load the query file
     qfile = open(query_path,"rb")
     queries = pickle.load(qfile)
@@ -126,7 +126,7 @@ def main(args2=None):
                 else:
                   print("working on restricted data")
                   qres = searcher.topk(hp.encoder, query, hp.K, threshold=hp.threshold, restrict=1 , 
-                                       gth="data/"+dataFolder+"/santos_union_groundtruth.pickle_diluted.pickle")
+                                       gth="data/"+dataFolder+gt)
   
             else: # Bounds matching
                 qres = searcher.topk_bounds(hp.encoder, query, hp.K, threshold=hp.threshold)

@@ -32,14 +32,6 @@ class Starmie1_Search:
             self.unionable_tables=None
        
             
-            #dataFolder="santos"
-            # dataFolder="table-union-search-benchmark/small"
-            # dataFolder="ugen_v2/ugenv2_small"
-            # table_path = "/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
-            # query_path_raw = "data/"+dataFolder+"/"+"query"
-            # table_path_raw = "data/"+dataFolder+"/"+"datalake"
-            # processed_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/proccessed/"
-            # index_file_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/indices/Joise_Index_DL_tus_tokenized_bot.pkl"
             lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
 
             
@@ -396,10 +388,14 @@ if __name__ == "__main__":
    
     #dataFolder= "data/table-union-search-benchmark/small"
     #dataFolder="data/ugen_v2/ugenv2_small"
-    dataFolder= "data/santos"
+    #dataFolder= "data/santos"
+    dataFolder= "data/santos/small"
+
     #dataFolder="data/ugen_v2"
     #alignment_file_name="manual_alignment_tus_benchmark_all.csv"
-    alignment_file_name="Manual_Alignment_4gtruth_santos_all.csv"
+    #alignment_file_name="Manual_Alignment_4gtruth_santos_all.csv"
+    alignment_file_name="Manual_Alignment_4gtruth_santos_small_all.csv"
+
     #alignment_Dust_file_name="ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
     #alignment_file_name="ugenv2_small_manual_alignment_all.csv"
 

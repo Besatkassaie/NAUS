@@ -73,6 +73,33 @@ def compute_counts(dataframe, k_column,query_name_column, tables_column):
             result.append({'k': k, 'count': count})
         return pd.DataFrame(result)
 
+
+def query_duplicate_returned_exclude(result_file, output_file, exc_queris):
+        # Load the CSV file and read the first four columns, using the first row as column names
+        file_path = result_file  # Replace with the path to your CSV file
+        df = pd.read_csv(file_path, usecols=[0, 1, 2, 3])
+
+        # Extract column names for reference
+        column_names = df.columns.tolist()
+
+        # Assuming 'k', 'query_name', and 'tables' are part of the loaded columns
+        k_column = column_names[3]  # Replace with the actual column name for k
+        query_name_column = column_names[0]  # Replace with the actual column name for query name
+        tables_column = column_names[1]  # Replace with the actual column name for tables
+
+        # Filter out excluded queries
+        df = df[~df[query_name_column].isin(exc_queris)]
+
+        # Compute the results
+        results_df = compute_counts(df, k_column,query_name_column, tables_column)
+
+        # Output the results
+   
+        results_df.to_csv(output_file, index=False)
+
+
+
+
 def query_duplicate_returned(result_file, output_file):
         # Load the CSV file and read the first four columns, using the first row as column names
         file_path = result_file  # Replace with the path to your CSV file

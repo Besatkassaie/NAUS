@@ -395,10 +395,13 @@ if __name__ == "__main__":
    
     #dataFolder= "data/table-union-search-benchmark/small"
     #dataFolder="data/ugen_v2/ugenv2_small"
-    dataFolder= "data/santos"
+    #dataFolder= "data/santos"
+    dataFolder= "data/santos/small"
     #dataFolder="data/ugen_v2"
     #alignment_file_name="manual_alignment_tus_benchmark_all.csv"
-    alignment_file_name="Manual_Alignment_4gtruth_santos_all.csv"
+    #alignment_file_name="Manual_Alignment_4gtruth_santos_all.csv"
+    alignment_file_name="Manual_Alignment_4gtruth_santos_small_all.csv"
+
     #alignment_Dust_file_name="ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
     #alignment_file_name="ugenv2_small_manual_alignment_all.csv"
 

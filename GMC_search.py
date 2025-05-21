@@ -1865,13 +1865,13 @@ if __name__ == "__main__":
     if mode=='search':
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-        #benchmark_path="/u6/bkassaie/NAUS/data/santos/"
-        benchmark_path="data/table-union-search-benchmark/small/"
+        benchmark_path="/u6/bkassaie/NAUS/data/santos/small/"
+        #benchmark_path="data/table-union-search-benchmark/small/"
 
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-        alignment_Dust="data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
-        #alignment_Dust="data/santos/Manual_Alignment_4gtruth_santos_all.csv"
+        #alignment_Dust="data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
+        alignment_Dust=benchmark_path+"Manual_Alignment_4gtruth_santos_small_all.csv"
 
         #alignment_Dust= "data/table-union-search-benchmark/small/tus_CL_KMEANS_cosine_alignment_all.csv"
 
@@ -1929,12 +1929,12 @@ if __name__ == "__main__":
         print("running gms search class in evalution mode to generate additional evaluation metrics")
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-        benchmark_path="/u6/bkassaie/NAUS/data/santos/"
+        benchmark_path="/u6/bkassaie/NAUS/data/santos/small/"
         #benchmark_path="data/table-union-search-benchmark/small/"
 
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-        alignment_Dust="data/santos/Manual_Alignment_4gtruth_santos_all.csv"
+        alignment_Dust="data/santos/small/Manual_Alignment_4gtruth_santos_small_all.csv"
        
         #alignment_Dust= "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
 
@@ -1999,18 +1999,18 @@ if __name__ == "__main__":
     elif mode=="F_value":
         print("running gms search class in F_value mode to generate F_value evaluation metrics")
         #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
-        benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-        #benchmark_path="/u6/bkassaie/NAUS/data/santos/"
+        #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
+        benchmark_path="/u6/bkassaie/NAUS/data/santos/small/"
         # benchmark_path="data/table-union-search-benchmark/small/"
 
         #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_CL_KMEANS_cosine_alignment_diluted.csv"
-        alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
-        #alignment_Dust="data/santos/Manual_Alignment_4gtruth_santos_all.csv"
+        #alignment_Dust="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/ugenv2_small_manual_alignment_all.csv"
+        alignment_Dust="data/santos/small/Manual_Alignment_4gtruth_santos_small_all.csv"
        
         # alignment_Dust= "/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/manual_alignment_tus_benchmark_all.csv"
 
-        # system="GMC"
-        # resfilename="gmc_results_diluted04_restricted.csv"
+        system="GMC"
+        resfilename="gmc_results_diluted04_restricted.csv"
 
     
         # system="Starmie"
@@ -2026,8 +2026,8 @@ if __name__ == "__main__":
         # resfilename="search_result_semNovelty_04diluted_restricted_pdeg1.csv"
 
         
-        system="Penalized"
-        resfilename="search_result_penalize_04diluted_restricted_pdeg1.csv"
+        # system="Penalized"
+        # resfilename="search_result_penalize_04diluted_restricted_pdeg1.csv"
 
      
 
@@ -2068,7 +2068,7 @@ if __name__ == "__main__":
     elif mode=="integrateResult": 
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-            benchmark_path="/u6/bkassaie/NAUS/data/santos/"
+            benchmark_path="/u6/bkassaie/NAUS/data/santos/small/"
             #benchmark_path="data/table-union-search-benchmark/small/"
             
         #     # compare penalize to gmc(baseline)
@@ -2205,8 +2205,8 @@ if __name__ == "__main__":
     elif mode=="integrate_F": 
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/"
             #benchmark_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-            #benchmark_path="/u6/bkassaie/NAUS/data/santos/"
-            benchmark_path="data/table-union-search-benchmark/small/"
+            benchmark_path="/u6/bkassaie/NAUS/data/santos/small/"
+            #benchmark_path="data/table-union-search-benchmark/small/"
             
         #     # compare penalize to gmc(baseline)
             out_path=f"{benchmark_path}diveristy_data/GMC_params/"

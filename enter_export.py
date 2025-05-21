@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG)
 # we run this to export result of native starmie 
 #dataFolder="ugen_v2/ugenv2_small"
 #dataFolder="table-union-search-benchmark/small"
-dataFolder="santos"
+dataFolder="santos/small"
 
 args2 = ['--encoder', 'cl', '--benchmark', dataFolder, 
         '--augment_op', 'drop_col','--sample_meth', 'tfidf_entity',

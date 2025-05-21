@@ -13,17 +13,8 @@ class Starmie_Search:
         :param search_parameters: Dictionary containing parameters for the search (optional).
         """
         self.k=0
-        # self.data_source = data_source
         self.results = []
-        # self.data = None
-        # self.unionability = None
-        # self.diversity = None
-        # self.diversity_scores=None
-        # self.unionability_scores=None
-        # self.unionable_data=None
-        # self.alignment_for_diversity_gmc_file=None
-        # self.query_dl_table_vector_df=None # vector represenation of tables given (query) 
-        # self.query_s_i_s_j_vector_df=None # vector representation of tables given (query and si)
+  
 
     def load_data(self):
         """
@@ -73,44 +64,44 @@ if __name__ == "__main__":
     # Starmie on Santos returning maximum 50 unionable dl tables  for each query
     #s_search.load_data()
 
-datafolder= "data/table-union-search-benchmark/small"
-#datafolder="data/santos"
-# evaluate Starmie 50 results at different k 
-# unionable reuslts are loaded here:
-first_20_starmie_with_scores=f"{datafolder}/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
-s_search.load_unionable_tables(first_20_starmie_with_scores) 
-#ground truth is here  
-#gtruth="data/santos/santosUnionBenchmark.pickle"
-#now convert the format of first_50_starmie_with_scores to gmc result format in csv: query_name, tables, execution time, k
-# here we put zero for all execution time for now 
-# Iterate over the dictionary and sort the values
-sorted_unionable_data = {}
-for query_name, tuples_list in s_search.unionable_data.items():
-    # Sort the list of tuples based on the second element
-    sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
-    # Store the sorted list in a new dictionary
-    sorted_unionable_data[query_name] = sorted_list    
-starmie_search=f"{datafolder}/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
-# now for k =2 to 20 create the file 
-# Define the output CSV file path
-output_csv_file = starmie_search
-    # Open the CSV file for writing
-with open(output_csv_file, mode="a", newline="") as csv_file:
-    # Define the CSV writer
-    csv_writer = csv.writer(csv_file)
-    
-    # Write the header row
-    csv_writer.writerow(["query_name", "tables", "execution_time", "k"])
-    for k_ in range(2, 11):
-    # Iterate over the sorted dictionary
-            for query_name, tuples_list in sorted_unionable_data.items():
-                utables=[]
-                for i in range(0, k_):
-                    try:
-                    # Extract the first value of the tuple
-                         utables.append(tuples_list[i][0])
-                    except Exception as e:
-                        print (str(e)+"for K="+str(k_)+" and query "+ query_name)
-                        break
-                    # Write the row with k = 0 and time = 0
-                csv_writer.writerow([query_name, utables, 0, k_])
+    #datafolder= "data/table-union-search-benchmark/small"
+    datafolder="data/santos/small"
+    # evaluate Starmie 50 results at different k 
+    # unionable reuslts are loaded here:
+    first_20_starmie_with_scores=f"{datafolder}/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_withscore.pkl"
+    s_search.load_unionable_tables(first_20_starmie_with_scores) 
+    #ground truth is here  
+    #gtruth="data/santos/santosUnionBenchmark.pickle"
+    #now convert the format of first_50_starmie_with_scores to gmc result format in csv: query_name, tables, execution time, k
+    # here we put zero for all execution time for now 
+    # Iterate over the dictionary and sort the values
+    sorted_unionable_data = {}
+    for query_name, tuples_list in s_search.unionable_data.items():
+        # Sort the list of tuples based on the second element
+        sorted_list = sorted(tuples_list, key=lambda x: x[1],  reverse=True)
+        # Store the sorted list in a new dictionary
+        sorted_unionable_data[query_name] = sorted_list    
+    starmie_search=f"{datafolder}/diveristy_data/search_results/Starmie/starmie_results_04diluted_restricted.csv"    
+    # now for k =2 to 20 create the file 
+    # Define the output CSV file path
+    output_csv_file = starmie_search
+        # Open the CSV file for writing
+    with open(output_csv_file, mode="a", newline="") as csv_file:
+        # Define the CSV writer
+        csv_writer = csv.writer(csv_file)
+        
+        # Write the header row
+        csv_writer.writerow(["query_name", "tables", "execution_time", "k"])
+        for k_ in range(2, 11):
+        # Iterate over the sorted dictionary
+                for query_name, tuples_list in sorted_unionable_data.items():
+                    utables=[]
+                    for i in range(0, k_):
+                        try:
+                        # Extract the first value of the tuple
+                            utables.append(tuples_list[i][0])
+                        except Exception as e:
+                            print (str(e)+"for K="+str(k_)+" and query "+ query_name)
+                            break
+                        # Write the row with k = 0 and time = 0
+                    csv_writer.writerow([query_name, utables, 0, k_])

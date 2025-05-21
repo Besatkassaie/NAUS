@@ -8,20 +8,20 @@ import os
  # make sure that we do not have extra character in result if you have remove them  
 
 # #santos 
-# datafolder="/u6/bkassaie/NAUS/data/santos/"
-# gtruthfilename="santos_union_groundtruth.pickle_diluted.pickle"
+# datafolder="/u6/bkassaie/NAUS/data/santos/small/"
+# gtruthfilename="santos_small_union_groundtruth_diluted.pickle"
 
 #  tus small
-# datafolder="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/"
-# gtruthfilename="tus_small_noverlap_groundtruth_all.csv"
+datafolder="/u6/bkassaie/NAUS/data/table-union-search-benchmark/small/"
+gtruthfilename="tus_small_noverlap_groundtruth_all.csv"
 
 #ugen v2
 # datafolder="/u6/bkassaie/NAUS/data/ugen_v2/"
 # gtruthfilename="ugenv2_unionable_groundtruth_diluted.pickle"
 
 #ugen v2 small
-datafolder="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-gtruthfilename="ugenv2_small_unionable_groundtruth_diluted.pickle"
+# datafolder="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
+# gtruthfilename="ugenv2_small_unionable_groundtruth_diluted.pickle"
 
 
 gmc_result_file=datafolder+"diveristy_data/search_results/GMC/gmc_results_diluted04_restricted.csv"
@@ -82,6 +82,56 @@ if not os.path.exists(starmie1_dup_file):
     query_duplicate_returned(starmie1_result_file,starmie1_dup_file)
 else:
     print("This file exists: "+starmie1_dup_file)      
+       
+ 
+##########################Ugen-v2 small compute duplicate exclude some queries
+
+# the queries having more than 12 unionable tables  to make sure they have 10 non duplicate unionable 
+exclude_set={'Art-History_YZMEPGTH_ugen_v2.csv', 'Veterinary-Medicine_V4B1K1KD_ugen_v2.csv', 
+             'Criminology_JHT51TIW_ugen_v2.csv', 'Cooking_ZUIB5SQ0_ugen_v2.csv', 'Architecture_EPZHPCF0_ugen_v2.csv', 
+             'Horticulture_FAALFS04_ugen_v2.csv', 'Math_XSK28T7A_ugen_v2.csv', 'Economics_XSEF6Y39_ugen_v2.csv',
+             'Philosophy_SK28T7A9_ugen_v2.csv', 'International-Relations_YFSPEFRJ_ugen_v2.csv', 'Religion_8F1CBFNO_ugen_v2.csv',
+             'Fashion_80QMAA7H_ugen_v2.csv', 'Medicine_CVFJJ50Y_ugen_v2.csv', 'Culture_4QOD4K7Y_ugen_v2.csv',
+             'Sociology_GIQHG9JR_ugen_v2.csv'}
+ 
+dup_pen_file=penalized_diversity_data_path+"search_result_penalize_diluted_restricted_duplicate_excluded.csv"
+if not os.path.exists(dup_pen_file):
+
+    query_duplicate_returned_exclude(penalize_result_file,dup_pen_file, exclude_set)
+else:
+    print("This file exists: "+dup_pen_file)
+dup_gmc_file=   gmc_diversity_data_path+"search_result_gmc_new_diluted_restricted_duplicate_excluded.csv" 
+    
+if not os.path.exists(dup_gmc_file):
+    query_duplicate_returned_exclude(gmc_result_file,dup_gmc_file, exclude_set)
+else:
+    print("This file exists: "+dup_gmc_file)    
+    
+starmie_dup_file=starmie_diversity_data_path+"search_result_starmie_diluted_restricted_duplicate_excluded.csv"
+if not os.path.exists(starmie_dup_file):
+    query_duplicate_returned_exclude(starmie_result_file,starmie_dup_file,exclude_set)
+else:
+    print("This file exists: "+starmie_dup_file) 
+    
+semanticNovelty_dup_file=semanticNovelty_diversity_data_path+"search_result_semNovel_diluted_restricted_duplicate_excluded.csv"
+if not os.path.exists(semanticNovelty_dup_file):
+    query_duplicate_returned_exclude(semanticNovelty_result_file,semanticNovelty_dup_file, exclude_set)
+else:
+    print("This file exists: "+semanticNovelty_dup_file)     
+    
+starmie0_dup_file=starmie0_diversity_data_path+"search_result_starmie0_diluted_restricted_duplicate_excluded.csv"
+if not os.path.exists(starmie0_dup_file):
+    query_duplicate_returned_exclude(starmie0_result_file,starmie0_dup_file, exclude_set)
+else:
+    print("This file exists: "+starmie0_dup_file)       
+    
+starmie1_dup_file=starmie1_diversity_data_path+"search_result_starmie1_diluted_restricted_duplicate_excluded.csv"
+if not os.path.exists(starmie1_dup_file):
+    query_duplicate_returned_exclude(starmie1_result_file,starmie1_dup_file, exclude_set)
+else:
+    print("This file exists: "+starmie1_dup_file)          
+       
+       
        
 ################Compute SNM######################    
 
@@ -283,7 +333,12 @@ else:
     print("This file exists: "+time_starmie1_file)   
 
 
-        
+time_starmie_file= starmie_diversity_data_path+"time_starmie_04diluted_restricted.csv" 
+    
+if not os.path.exists(time_starmie_file):
+    Avg_executiontime_by_k(starmie_result_file, time_starmie_file)
+else:
+    print("This file exists: "+time_starmie_file)           
          
     
     

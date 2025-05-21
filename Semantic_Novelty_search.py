@@ -355,14 +355,14 @@ if __name__ == "__main__":
 
     #tus
     #bpath="data/table-union-search-benchmark/small/"
-    bpath="data/santos/"
+    bpath="data/santos/small/"
 
     dl_table_vectors = f"{bpath}vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
     query_table_vectors = f"{bpath}vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
     dl_table_vectors_tabbie=f"{bpath}TABBIE_vectors/datalake/embeddings.pkl"
     q_table_vectors_tabbie=f"{bpath}TABBIE_vectors/query/embeddings.pkl"
     #alignment_Dust=f"{bpath}manual_alignment_tus_benchmark_all.csv"
-    alignment_Dust=f"{bpath}Manual_Alignment_4gtruth_santos_all.csv"
+    alignment_Dust=f"{bpath}Manual_Alignment_4gtruth_santos_small_all.csv"
 
     first_50_starmie=f"{bpath}diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
     semantic_novlety_search = Semantic_Novelty(dl_table_vectors)

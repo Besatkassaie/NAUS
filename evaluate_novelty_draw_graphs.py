@@ -12,8 +12,8 @@ def draw_plots():
     #base_output_path="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/diveristy_data/graphs"
     #base_output_path="/u6/bkassaie/NAUS/data/ugen_v2/diveristy_data/graphs"
 
-    #base_output_path="data/santos/diveristy_data/graphs"
-    base_output_path="data/table-union-search-benchmark/small/diveristy_data/graphs"
+    base_output_path="data/santos/small/diveristy_data/graphs"
+    #base_output_path="data/table-union-search-benchmark/small/diveristy_data/graphs"
 
     #benchmark="/u6/bkassaie/NAUS/data/ugen_v2/"
     #benchmark="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
@@ -22,7 +22,7 @@ def draw_plots():
     
     benchmark_ugenv2="/u6/bkassaie/NAUS/data/ugen_v2/"
     benchmark_ugenv2_small="/u6/bkassaie/NAUS/data/ugen_v2/ugenv2_small/"
-    benchmark_santos= "data/santos/"
+    benchmark_santos= "data/santos/small/"
     benchmark_tus="data/table-union-search-benchmark/small/"
     
     #--------------------- search result paths -------------------#
@@ -250,26 +250,32 @@ def draw_plots():
 
     
     
+
+    
     
     draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv"
-                            ,"data/santos/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv", 
+                            ,"data/santos/small/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv", 
                             None, 
                            None, 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv", 
-                            "data/santos/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv",
                            None,
                           None, 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
                            None, 
                           None,
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
                            None, 
                           None, 
                              "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/starmie1/time_starmie1_diluted_restricted.csv",
+                           None, 
+                          None, 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/time_starmie_04diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/Starmie/time_starmie_04diluted_restricted.csv",
                            None, 
                           None
                             ,"longest")
@@ -277,26 +283,30 @@ def draw_plots():
     
     draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv"
-                            ,"data/santos/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv", 
+                            ,"data/santos/small/diveristy_data/search_results/GMC/time_gmc_diluted_restricted.csv", 
                             None, 
                            None, 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv", 
-                            "data/santos/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/Penalized/time_penalize_diluted_restricted.csv",
                            None,
                           None, 
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/semanticNovelty/time_semNov_diluted_restricted.csv",
                            None, 
                           None,
                             "data/table-union-search-benchmark/small/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
-                            "data/santos/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/starmie0/time_starmie0_diluted_restricted.csv",
                            None, 
                           None, 
                            None,
                           None,
                            None, 
+                          None, 
+                            "data/table-union-search-benchmark/small/diveristy_data/search_results/Starmie/time_starmie_04diluted_restricted.csv",
+                            "data/santos/small/diveristy_data/search_results/Starmie/time_starmie_04diluted_restricted.csv",
+                           None, 
                           None
-                            ,"longest")
+                        ,"longest")
     
     # draw_execution_time_all("/u6/bkassaie/NAUS/graphs/executionTime", 
     #                         None
@@ -1467,18 +1477,34 @@ def draw_execution_time_all(base_path,
                              semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None,
                              StarmieGold_res1=None, StarmieGold_res2=None, StarmieGold_res3=None, StarmieGold_res4=None,
                              StarmieOne_res1=None, StarmieOne_res2=None, StarmieOne_res3=None, StarmieOne_res4=None,
+                             Starmie_res1=None, Starmie_res2=None, Starmie_res3=None, Starmie_res4=None,
                              filename=None):
 
-    method_info = {
-        'ANTs': {'color': 'green', 'marker': 'o'},
-        'Starmie': {'color': 'blue', 'marker': 's'},
-        'StarmieGold': {'color': 'purple', 'marker': '^'},
-        'StarmieOne': {'color': 'cyan', 'marker': 'v'},
-        'SemNov': {'color': 'orange', 'marker': 'D'}, 
-        'GMC': {'color': 'gray', 'marker': 'P'}
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    method_colors = {
+        'ANTs': 'green',
+        'Starmie': 'blue',
+        'StarmieGold': 'purple',
+        'StarmieOne': 'cyan',
+        'SemNov': 'orange',
+        'GMC': 'gray'
     }
 
     dataset_names = ["TUS", "Santos", "UgenV2", "UgenV2 small"]
+    marker_styles = ['o', 's', '^', 'v', 'D', 'P', '*', 'X', '<', '>']
+
+    # Generate unique markers per (method, dataset)
+    method_dataset_markers = {}
+    marker_index = 0
+    for method in method_colors.keys():
+        for dataset in dataset_names:
+            method_dataset_markers[(method, dataset)] = marker_styles[marker_index % len(marker_styles)]
+            marker_index += 1
+
     df_all_list = []
 
     def add_result(file, method_name, dataset_name):
@@ -1498,6 +1524,8 @@ def draw_execution_time_all(base_path,
         add_result(res, 'StarmieGold', dataset_names[i])
     for i, res in enumerate([StarmieOne_res1, StarmieOne_res2, StarmieOne_res3, StarmieOne_res4]):
         add_result(res, 'StarmieOne', dataset_names[i])
+    for i, res in enumerate([Starmie_res1, Starmie_res2, Starmie_res3, Starmie_res4]):
+        add_result(res, 'Starmie', dataset_names[i])
 
     if not df_all_list:
         print("No valid data files found to plot.")
@@ -1508,9 +1536,8 @@ def draw_execution_time_all(base_path,
 
     handles_labels = []
     for (dataset, method), df_group in df_all.groupby(['dataset', 'method']):
-        style = method_info.get(method, {})
-        color = style.get('color', 'black')
-        marker = style.get('marker', 'o')
+        color = method_colors.get(method, 'black')
+        marker = method_dataset_markers.get((method, dataset), 'o')
         line, = ax.plot(df_group['k'], df_group['exec_time'],
                         marker=marker, color=color, label=f"{dataset} - {method}")
         handles_labels.append((f"{dataset} - {method}", line))
@@ -1530,15 +1557,11 @@ def draw_execution_time_all(base_path,
     ax.legend(handles, labels, loc='upper left', fontsize=8, frameon=False)
 
     os.makedirs(base_path, exist_ok=True)
-    if StarmieOne_res1!=None: 
-        png_path = os.path.join(base_path, f"{filename}Extended.png")
-    else: 
-        png_path = os.path.join(base_path, f"{filename}.png")
- 
+    png_path = os.path.join(base_path, f"{filename}Extended.png" if StarmieOne_res1 is not None else f"{filename}.png")
     plt.savefig(png_path, dpi=300, bbox_inches='tight')
     plt.close()
- 
- 
+    
+    
 def draw_execution_time_2(base_path,
                              pnl_res1=None, pnl_res2=None, pnl_res3=None, pnl_res4=None,
                              semnovel_res1=None, semnovel_res2=None, semnovel_res3=None, semnovel_res4=None):
