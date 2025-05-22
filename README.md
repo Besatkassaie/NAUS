@@ -1,8 +1,8 @@
 # Novel Table Search (NTS) 
 
-This repository contans  code for novel table search paper. We have proposed a novelty aware table search with two new evalution metrics  which enhances the discovery of unionable tables by incorporating both semantic and lexical similarity measures.
+ We have proposed a novelty aware table search with two new evalution metrics  which enhances the discovery of unionable tables by incorporating both semantic and lexical similarity measures. This repository contans  code for novel table search paper.
 
-![Overall](/u6/bkassaie/NAUS/overall.jpg)
+![Overall](overall.jpg)
 
 ## Overview
 
