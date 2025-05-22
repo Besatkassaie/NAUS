@@ -13,12 +13,11 @@ The code base contain 6 classes each correspond to one of the systems:
 5. StarmieGold: StarmieO_search.py
 6. StarmieOne: Starmie1_search.py
 
-We also include the code developed to construct the tailored datasets. 
 
 
 ## Datasets
-Datasets and different datarepresenations and ground truth is shared in this link: 
-
+The repository also includes the code developed for constructing the customized benchmark datasets and performing data dilution.
+The datasets, along with various data representations and ground truth files, are shared at the following link:
 
 ## Extedned Version of Paper
 
