@@ -1,6 +1,8 @@
-# Table Union Search with Penalized Approach
+# Novel Table Search (NTS) 
 
-This repository implements a novel penalized search approach for table union search, which enhances the discovery of unionable tables by incorporating both semantic and lexical similarity measures.
+This repository contans  code for novel table search paper. We have proposed a novelty aware table search with two new evalution metrics  which enhances the discovery of unionable tables by incorporating both semantic and lexical similarity measures.
+
+![Overall](/u6/bkassaie/NAUS/overall.jpg)
 
 ## Overview
 
