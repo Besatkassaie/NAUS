@@ -1,9 +1,12 @@
 import pandas as pd
 from naive_search_Novelty import NaiveSearcherNovelty
 import test_naive_search_Novelty
+from SetSimilaritySearch import SearchIndex
 from  process_column import TextProcessor
 import pickle
 import os
+from preprocess_align import gmc_alignmnet_by_query
+from preprocess_align import initialize_globally
 import csv
 import numpy as np
 import time
@@ -12,58 +15,22 @@ from scipy.spatial import distance
 from collections import Counter
 import utilities as utl
 from SetSimilaritySearch import all_pairs
+from GMC_search import GMC_Search
 import numpy as np
 import argparse
 
 
 
-class Starmie1_Search:
+class Semantic_Novelty:
     """
-    Stamie1_Search is a class for performing  re_ranking of unionable tables using Stamie scoring with manula alignemnt and geting average 
-    of column similarity scores.
-    
+    Pe: Semantic_Novelty is a class for performing 
+    penalized re_ranking of unionable tables for Novelty based  unionable  table search.
     """
 
-    def __init__(self, dsize, dataFolder, table_path, query_path_raw, table_path_raw,processed_path):
+    def __init__(self, table_path):
             self.alignment_data=None
-            self.unionable_tables=None
-       
-            
-            lex_data = pd.DataFrame(columns=["q_table", "q_col", "dl_table","dl_col","lexical_distance"])
-
-            
-            text_processor = TextProcessor()
-
-            # we preprocess the values in tables both query and data lake tables
-            
-            self.tables_raw=NaiveSearcherNovelty.read_csv_files_to_dict(table_path_raw)
-            
-            #the normalized/tokenized/original with no duplicates  dl(data lake) tables are stored in table_raw_proccessed_los
-            table_raw_proccessed_los={}
-            
-                # write the proccessed result having columns as set to a pickle file 
-            dl_tbls_processed_set_file_name="dl_tbls_processed_set.pkl"
-            
-            
-            table_raw_proccessed_los=test_naive_search_Novelty.getProcessedTables(text_processor, dl_tbls_processed_set_file_name, processed_path, self.tables_raw,"los", 1, 1)
-            # process dl tables and save as list of lists 
-            self.table_raw_proccessed_los=table_raw_proccessed_los
-            table_raw_lol_proccessed={}
-                # write the proccessed result having columns as set to a pickle file 
-            dl_tbls_processed_lol_file_name="dl_tbls_processed_lol.pkl"
-            self.dl_tbls_processed_lol_file_name=dl_tbls_processed_lol_file_name
-            table_raw_lol_proccessed=test_naive_search_Novelty.getProcessedTables(text_processor,  dl_tbls_processed_lol_file_name,processed_path,self. tables_raw,"lol", 1, 1)
-            self.table_raw_lol_proccessed=table_raw_lol_proccessed
-        
-    
-
-        
-    
-            
-            
+            self.unionable_tables=None       
             self.table_path=table_path
-            #DSize is a hyper parameter
-            self.dsize=dsize
         
         
         
@@ -78,8 +45,7 @@ class Starmie1_Search:
     
     
         
-    def load_starmie_vectors(self,  dl_table_vectors ,query_table_vectors):
-        '''load starmie vectors for query and data lake and retrun as dictionaries'''
+    def load_starmie_vectors(self, dl_table_vectors, query_table_vectors):
 
         qfile = open(query_table_vectors,"rb")
             # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
@@ -95,6 +61,56 @@ class Starmie1_Search:
         dl_dict = {item[0]: item[1] for item in tables}
         
         return (queries_dict,dl_dict)     
+    
+            
+    def load_Tabbie_Table_vectors(self, dl_table_vectors, query_table_vectors):
+
+        qfile = open(query_table_vectors,"rb")
+            # queries is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(numpy.ndarray) for columns) 
+        queries_dict = pickle.load(qfile)
+        # make as dictnary from first item to secon item 
+
+        tfile = open(dl_table_vectors,"rb")
+        dl_dict = pickle.load(tfile)
+        # tables is a list of tuples ; tuple of (str(filename), numpy.ndarray(vectors(each verstor is a numpy.ndarray) for columns) 
+
+        
+        return (queries_dict,dl_dict)     
+    
+    
+    def get_table_based_similarity(self, query_name, dl_table_name, all_vectors_tabbie):
+        '''fro every column pairs from query and datalake table calculate the unionability and write in a file'''
+        '''columns to be out: q_table, q_col, dl_table, dl_col, similarity'''
+        # check whethter file exists load it other wise generate and write 
+        
+        if query_name.endswith('.csv'):
+             query_name_= query_name[:-4]
+        else: 
+            query_name_=query_name
+                
+        if dl_table_name.endswith('.csv'):
+             dl_table_name_= dl_table_name[:-4]  
+        else: 
+             dl_table_name_= dl_table_name       
+        queries_dict = all_vectors_tabbie[0]
+        dl_dict=all_vectors_tabbie[1]
+
+        sim_data = pd.DataFrame(columns=["q_table","dl_table","table_similarity"])
+        try:
+            q_vector=queries_dict[query_name_]
+            dl_t_vector=dl_dict[dl_table_name_]
+            similarity_table = self._cosine_sim(q_vector,dl_t_vector)
+        
+
+            # Add a row with the current q_table, dl_table, and similarity_score
+            sim_data =pd.DataFrame({"q_table": [query_name], "dl_table": [dl_table_name], "table_similarity": [similarity_table]})
+        except Exception as e:
+            RED   = "\033[31m"
+            RESET = "\033[0m"
+            print(f"{RED}could not find {query_name} or {dl_table_name}{RESET}")
+            return   sim_data 
+            
+        return   sim_data   
         
     def get_column_based_similarity(self, query_name, dl_table_name, all_vectors):
         '''fro every column pairs from query and datalake table calculate the unionability and write in a file'''
@@ -238,220 +254,139 @@ class Starmie1_Search:
    
     
     
-    def perform_search_optimized(self, p_degree, k, all_vectors):
+    def perform_search_optimized(self, p_degree, k, all_vectors, all_table_vectors_Tabbie):
         # Load the required data
 
-        
+      # we are going to first compute the unionability score column wised and aggragate them
+      # but this time we are penalizing the aggregated  unionablity score by thae same formula as before but minusing the cosine similarity between the table embedings 
         all_ranked_result = {}
 
                   
         q_table_names = self.alignment_data['query_table_name'].unique()
             # for every query now compute the similarity scores with dt tables 
-          
         for query_name in q_table_names:
-                    start_time = time.time_ns()  
-                    
-                    grouped_scores_q_total = pd.DataFrame(columns=["q_table", "dl_table",'starmie1_unionability_score'])
-
+                   
+                    start_time = time.time_ns()
                     # get q columns vectors 
                     # Get all rows corresponding to the current query_name
                     query_rows = self.alignment_data[self.alignment_data['query_table_name'] == query_name]
                     # Get all unique dl_table_names for the current query_name
                     dl_table_names = query_rows['dl_table_name'].unique()
                         # Iterate over each dl_table_name
+                    # 2) Prepare empty container
+                    mergeddata = pd.DataFrame()
                     for dl_table_name in dl_table_names:
-                                    lexdis = self.get_column_based_lexical_distance(query_name,dl_table_name )
-                                    sim_data = self.get_column_based_similarity(query_name,dl_table_name , all_vectors)
+                            sim_data_columnwise = self.get_column_based_similarity(query_name,dl_table_name , all_vectors)
+                            
+                            # aggregate
+                            data_tableunionability = (sim_data_columnwise.groupby(["q_table", "dl_table"], as_index=False)["similarity"].sum().rename(columns={"similarity": "table_uninability"}))
+                            data_table_sim_tabbie = self.get_table_based_similarity(query_name,dl_table_name , all_table_vectors_Tabbie)
+                            
+                            
+                            
+                                                        # b) merge on the two key columns
+                            tmp = pd.merge(
+                                data_tableunionability,
+                                data_table_sim_tabbie,
+                                on=["q_table", "dl_table"],
+                                how="inner"
+                            )
 
+                            # c) compute (table_uninability - 1)**p_degree * table_uninability
+                            tmp["penalized_unionability_score"] = (
+                                (1- tmp["table_similarity"]) ** p_degree
+                                * tmp["table_uninability"]
+                            )
 
-                                    # Merge lexdis and sim_data for efficient computation
-                                    merged_data = pd.merge(
-                                        lexdis,
-                                        sim_data,
-                                        on=["q_table", "dl_table", "q_col", "dl_col"],
-                                        how="inner",
-                                        suffixes=("_lex", "_sim")
-                                    )
-
-                                    # Calculate penalized unionability scores for each row
-                                    merged_data['starmie1_unionability_score'] = (
-                                         merged_data['similarity']
-                                    )
-
-                                    # Group by query table and data lake table to aggregate scores
-                                    grouped_scores = merged_data.groupby(["q_table", "dl_table"])['starmie1_unionability_score'].mean().reset_index()
-
-                                    grouped_scores_q_total=pd.concat([grouped_scores,grouped_scores_q_total])
+                            # d) append to your rolling result
+                            mergeddata = pd.concat([mergeddata, tmp], ignore_index=True)
+                            
+                
 
                              
                                        
                     # Filter scores for the current query and sort by score
                     top_k_result = (
-                        grouped_scores_q_total[grouped_scores_q_total['q_table'] == query_name]
-                        .sort_values(by="starmie1_unionability_score", ascending=False)
+                        mergeddata[mergeddata['q_table'] == query_name]
+                        .sort_values(by="penalized_unionability_score", ascending=False)
                         .head(k)
                     )
 
             # Store the results
                     all_ranked_result[(query_name, k, p_degree)] = (
-                        list(top_k_result[["dl_table",'starmie1_unionability_score']].to_records(index=False)),
-                        (time.time_ns() - start_time) / 10 ** 9
+                        list(top_k_result[["dl_table",'penalized_unionability_score']].to_records(index=False)),
+                        round((time.time_ns() - start_time) / 10 ** 9, 2)
                     )
 
         return all_ranked_result
 
-    def _lexicalsim_Pair(self, query_column, table_column):
-        # The input sets must be a Python list of iterables (i.e., lists or sets).
-            sets = [query_column, set(table_column)]
-            #sets = [[1,2,3], [3,4,5], [2,3,4], [5,6,7]]
-
-            # all_pairs returns an iterable of tuples.
-            pairs = all_pairs(sets, similarity_func_name="jaccard", similarity_threshold=0.0)
-            l_pairs=list(pairs)
-            # [(1, 0, 0.2), (2, 0, 0.5), (2, 1, 0.5), (3, 1, 0.2)]
-            # Each tuple is (<index of the first set>, <index of the second set>, <similarity>).
-            # The indexes are the list indexes of the input sets.
-            if len(l_pairs)==0:
-                return 0
-            else:
-                return l_pairs[0][2]
-    def item_frequency(self, lst):
-            return dict(Counter(lst))
-        
-   
-    def  Jensen_Shannon_distances(self,query_column,dl_column,domain_estimate):
-            # build the x axis for both columns converting the  domain_estimate to a set of tuples
-                            # each tuple <item label, item index in x axis>
-                x_axis={}
-                i=0
-                for item in domain_estimate:
-                    x_axis[item]=i
-                    i=i+1
-                
-                #now build the probability array   
-                frequency_q= self.item_frequency(query_column)
-                frequency_dl= self.item_frequency(dl_column)
-                
-                list_length_q=len(query_column)
-                list_length_dl=len(dl_column)
-                
-                
-                #probability arrays
-                array_q  = np.zeros(len(domain_estimate)) 
-                array_dl = np.zeros(len(domain_estimate)) 
-                
-                for item in domain_estimate:
-                    index_= x_axis[item]
-                    if(item in frequency_q):
-                        freq_q_item= frequency_q[item]
-                        array_q[index_]=freq_q_item/float(list_length_q)
-                    else: 
-                        array_q[index_]=0
-                    if (item in frequency_dl):   
-                        freq_dl_item= frequency_dl[item]
-                        array_dl[index_]=freq_dl_item/float(list_length_dl)
-                    else: 
-                        array_dl[index_]=0    
-                    
-                #The Jensen-Shannon distances
-                dis_qdl=distance.jensenshannon(array_q,array_dl) 
-                dis_dlq=distance.jensenshannon(array_dl,array_q)     
-                if(dis_qdl!=dis_dlq):
-                        raise ValueError('the distance metric is asymmetric')  
-                else:  
-                        return dis_dlq  
-            
-
-          
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Starmie1 Search for table unionability')
+def main():
+    parser = argparse.ArgumentParser(description='Semantic Novelty Search for Table Union Search')
     
     # Required arguments
     parser.add_argument('--data-folder', type=str, required=True,
-                      help='Path to the data folder containing query and datalake tables')
+                      help='Path to the data folder containing vectors and alignment files')
     parser.add_argument('--alignment-file', type=str, required=True,
                       help='Name of the alignment file (e.g., Manual_Alignment_4gtruth_santos_small_all.csv)')
     
     # Optional arguments with defaults
-    parser.add_argument('--domain-size', type=int, default=20,
-                      help='Domain size threshold for small domains (default: 20)')
     parser.add_argument('--k-range', type=str, default='2-10',
-                      help='Range of k values to evaluate (default: 2-10)')
+                      help='Range of k values to evaluate (e.g., "2-10")')
     parser.add_argument('--p-degree', type=int, default=1,
                       help='Penalty degree for scoring (default: 1)')
-    parser.add_argument('--output-dir', type=str, default=None,
-                      help='Directory for output files (default: data_folder/diveristy_data/search_results/starmie1)')
+    parser.add_argument('--output-dir', type=str, default='diveristy_data/search_results/semanticNovelty',
+                      help='Directory for output files')
     
     args = parser.parse_args()
     
     # Construct paths
-    data_folder = args.data_folder
-    alignment_file = os.path.join(data_folder, args.alignment_file)
+    base_path = args.data_folder.rstrip('/')
+    dl_table_vectors = f"{base_path}/vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl"
+    query_table_vectors = f"{base_path}/vectors/cl_query_drop_col_tfidf_entity_column_0.pkl"
+    dl_table_vectors_tabbie = f"{base_path}/TABBIE_vectors/datalake/embeddings.pkl"
+    q_table_vectors_tabbie = f"{base_path}/TABBIE_vectors/query/embeddings.pkl"
+    alignment_file = f"{base_path}/{args.alignment_file}"
+    first_50_starmie = f"{base_path}/diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl"
     
-    # Set up vector paths
-    dl_table_vectors = os.path.join(data_folder, "vectors/cl_datalake_drop_col_tfidf_entity_column_0.pkl")
-    query_table_vectors = os.path.join(data_folder, "vectors/cl_query_drop_col_tfidf_entity_column_0.pkl")
-    
-    # Set up raw data paths
-    query_path_raw = os.path.join(data_folder, "query")
-    table_path_raw = os.path.join(data_folder, "datalake")
-    processed_path = os.path.join(data_folder, "proccessed")
-    
-    # Set up output path
-    if args.output_dir is None:
-        output_dir = os.path.join(data_folder, "diveristy_data/search_results/starmie1")
-    else:
-        output_dir = args.output_dir
-    
+    # Create output directory if it doesn't exist
+    output_dir = f"{base_path}/{args.output_dir}"
     os.makedirs(output_dir, exist_ok=True)
-    search_results_file = os.path.join(output_dir, f"search_result_starmie1_04diluted_restricted_pdeg{args.p_degree}.csv")
+    search_results_file = f"{output_dir}/search_result_semNovelty_04diluted_restricted_pdeg{args.p_degree}.csv"
     
-    # Initialize search
-    starmie_search = Starmie1_Search(
-        dsize=args.domain_size,
-        dataFolder=data_folder,
-        table_path=dl_table_vectors,
-        query_path_raw=query_path_raw,
-        table_path_raw=table_path_raw,
-        processed_path=processed_path
-    )
+    # Initialize and run search
+    semantic_novlety_search = Semantic_Novelty(dl_table_vectors)
+    semantic_novlety_search.load_column_alignment_data(alignment_file)
+    semantic_novlety_search.load_unionable_tables(first_50_starmie)
     
-    # Load data
-    print("Loading alignment data...")
-    starmie_search.load_column_alignment_data(alignment_file)
-    
-    print("Loading unionable tables...")
-    first_round_results = os.path.join(data_folder, "diveristy_data/search_results/Starmie/top_20_Starmie_output_04diluted_restricted_noscore.pkl")
-    starmie_search.load_unionable_tables(first_round_results)
-    
-    print("Loading Starmie vectors...")
-    all_vectors = starmie_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
+    all_vectors = semantic_novlety_search.load_starmie_vectors(dl_table_vectors, query_table_vectors)
+    all_table_vectors_Tabbie = semantic_novlety_search.load_Tabbie_Table_vectors(dl_table_vectors_tabbie, q_table_vectors_tabbie)
     
     # Parse k range
     k_start, k_end = map(int, args.k_range.split('-'))
     
-    # Perform search for each k value
-    print(f"Performing search for k values from {k_start} to {k_end}...")
+    # Run search for each k value
     for k in range(k_start, k_end + 1):
         print(f"Processing k={k}...")
-        results = starmie_search.perform_search_optimized(args.p_degree, k, all_vectors)
+        results = semantic_novlety_search.perform_search_optimized(args.p_degree, k, all_vectors, all_table_vectors_Tabbie)
         
         # Write results
-        file_exists = os.path.exists(search_results_file)
-        mode = 'a' if file_exists else 'w'
-        
-        with open(search_results_file, mode=mode, newline='') as file:
-            writer = csv.writer(file)
-            
-            # Write header if new file
-            if not file_exists:
-                writer.writerow(['query_name', 'tables', 'stamie1_execution_time', 'k', 'pdegree'])
-            
-            # Write results
-            for key_, (result, secs) in results.items():
-                result = [r[0] for r in result]
-                result_str = ', '.join(result) if isinstance(result, list) else str(result)
-                writer.writerow([key_[0], result_str, secs, key_[1], key_[2]])
-    
-    print(f"Search completed. Results written to {search_results_file}")
+        if os.path.exists(search_results_file):
+            with open(search_results_file, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                for key_, (result, secs) in results.items():
+                    result = [r[0] for r in result]
+                    result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                    writer.writerow([key_[0], result_str, secs, key_[1], key_[2]])
+        else:
+            print("Creating new results file...")
+            with open(search_results_file, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['query_name', 'tables', 'semanticnovelty_execution_time', 'k', 'pdegree'])
+                for key_, (result, secs) in results.items():
+                    result = [r[0] for r in result]
+                    result_str = ', '.join(result) if isinstance(result, list) else str(result)
+                    writer.writerow([key_[0], result_str, secs, key_[1], key_[2]])
+
+if __name__ == "__main__":
+    main()
    
